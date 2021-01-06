@@ -140,12 +140,16 @@ def write_unary_operations(G, struct, f_h, f_cpp):
     # So this doesn't extend to a non-orthonormal basis
     # Will leave for now, until I need to add in a generic inverse
 
-    f_h.write("double norm2(const {name} &x) ".format(name=struct.name)+"{\n")
-    f_h.write("    return inner(x, x);\n")
-    f_h.write("}\n")
-    f_h.write("double norm(const {name} &x) ".format(name=struct.name)+"{\n")
-    f_h.write("    return std::sqrt(inner(x, x));\n")
-    f_h.write("}\n")
+    # Norm and norm2
+    # Only do this for homogeneous multivectors, where dot(x, x) is a scalar
+
+    if homogeneous:
+        f_h.write("double norm2(const {name} &x) ".format(name=struct.name)+"{\n")
+        f_h.write("    return inner(x, x);\n")
+        f_h.write("}\n")
+        f_h.write("double norm(const {name} &x) ".format(name=struct.name)+"{\n")
+        f_h.write("    return std::sqrt(inner(x, x));\n")
+        f_h.write("}\n")
 
 
 def _write_product_body(lhs_struct, rhs_struct, return_struct, results, f_cpp):
@@ -298,7 +302,7 @@ def write_binary_operations(G, struct1, struct2, structs, f_h, f_cpp):
     _write_inner_product(G, struct1, struct2, structs, f_h, f_cpp)
 
 def write_printing(struct, f_h, f_cpp):
-    f_h.write("std::ostream& operator<<(std::ostream& outs, const {name} &x);".format(name=struct.name))
+    f_h.write("std::ostream& operator<<(std::ostream& outs, const {name} &x);\n\n".format(name=struct.name))
     f_cpp.write("std::ostream& operator<<(std::ostream& outs, const {name} &x) ".format(name=struct.name)+"{\n")
     elements = []
     for var in struct.variables:
@@ -307,4 +311,4 @@ def write_printing(struct, f_h, f_cpp):
             elements.append("std::endl")
     f_cpp.write("    outs << {};\n".format(" << ".join(elements)))
     f_cpp.write("    return outs;\n")
-    f_cpp.write("}\n")
+    f_cpp.write("}\n\n")

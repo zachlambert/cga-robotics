@@ -44,7 +44,23 @@ class Struct:
     def set_print_newlines(self, *var_list):
         self.print_newlines = var_list
 
-def make_grades(G):
+def make_structs(G):
+
+    structs = []
+
+    # VECTOR3
+
+    Vector3 = Struct(
+        "Vector3",
+        ["e1", "e2", "e3"],
+        ["e1", "e2", "e3"],
+        ["double e1", "double e2", "double e3"],
+    )
+    Vector3.set_equal("e1", "e1")
+    Vector3.set_equal("e2", "e2")
+    Vector3.set_equal("e3", "e3")
+
+    structs.append(Vector3)
 
     # VECTOR
 
@@ -64,6 +80,8 @@ def make_grades(G):
     Vector.set_var_expression("ei", [(-1, "e4"), (1, "e5")])
     Vector.set_blade_expression("e4", [(1, "eo"), (-0.5, "ei")])
     Vector.set_blade_expression("e5", [(1, "eo"), (0.5, "ei")])
+
+    structs.append(Vector)
 
     # BIVECTOR
 
@@ -97,6 +115,8 @@ def make_grades(G):
     Bivector.set_blade_expression("e35", [(1, "e3o"), (0.5, "e3i")])
 
     Bivector.set_equal("eoi", "e45")
+
+    structs.append(Bivector)
 
     # TRIVECTOR
 
@@ -132,6 +152,8 @@ def make_grades(G):
     Trivector.set_equal("e2oi", "e245")
     Trivector.set_equal("e3oi", "e345")
 
+    structs.append(Trivector)
+
     # QUADVECTOR
 
     Quadvector = Struct(
@@ -152,7 +174,10 @@ def make_grades(G):
     Quadvector.set_opposite("e31oi", "e1345")
     Quadvector.set_equal("e12oi", "e1245")
 
-    Bivector.set_equal("eoi", "e45")
+    Quadvector.set_equal("eoi", "e45")
+
+    structs.append(Quadvector)
+
 
     # PSEUDOSCALAR
 
@@ -164,9 +189,40 @@ def make_grades(G):
     )
     Pseudoscalar.set_equal("p", "e12345")
 
-    return [Vector, Bivector, Trivector, Quadvector, Pseudoscalar]
+    structs.append(Pseudoscalar)
 
-def make_compounds(G, grades_dict):
+
+    # BIVECTOR3
+
+    Bivector3 = Struct(
+        "Bivector3",
+        ["e12", "e13", "e23"],
+        ["e23", "e31", "e12"],
+        ["double e23", "double e31", "double e12"]
+    )
+    Bivector3.set_equal("e23", "e23")
+    Bivector3.set_opposite("e31", "e13")
+    Bivector3.set_equal("e12", "e12")
+
+    structs.append(Bivector3)
+
+
+    # ROTOR3
+
+    Rotor3 = Struct(
+        "Rotor3",
+        ["1", "e12", "e13", "e23"],
+        ["s", "b.e23", "b.e31", "b.e12"],
+        ["double s", "Bivector3 b"]
+    )
+    Rotor3.set_equal("s", "1")
+    Rotor3.copy("b.", Bivector3)
+
+    structs.append(Rotor3)
+
+
+    # ROTOR
+
     Rotor = Struct(
         "Rotor",
         G.grade(0) + G.grade(2),
@@ -178,8 +234,13 @@ def make_compounds(G, grades_dict):
         ["double s", "Bivector b"]
     )
     Rotor.set_equal("s", "1");
-    Rotor.copy("b.", grades_dict["Bivector"])
+    Rotor.copy("b.", Bivector)
     Rotor.set_print_newlines("s", "b.e12", "b.e3o", "b.e3i")
+
+    structs.append(Rotor)
+
+
+    # VERSOR
 
     Versor = Struct(
         "Versor",
@@ -193,9 +254,14 @@ def make_compounds(G, grades_dict):
         ["double s", "Bivector b", "Quadvector q"]
     )
     Versor.set_equal("s", "1");
-    Versor.copy("b.", grades_dict["Bivector"])
-    Versor.copy("q.", grades_dict["Quadvector"])
+    Versor.copy("b.", Bivector)
+    Versor.copy("q.", Quadvector)
     Versor.set_print_newlines("s", "b.e12", "b.e3o", "b.e3i", "b.eoi", "q.e123i")
+
+    structs.append(Versor)
+
+
+    # MULTIVECTOR
 
     Multivector = Struct(
         "Multivector",
@@ -213,16 +279,31 @@ def make_compounds(G, grades_dict):
         ["double s", "Vector v", "Bivector b", "Trivector t", "Quadvector q", "double p"]
     )
     Multivector.set_equal("s", "1");
-    Multivector.copy("v.", grades_dict["Vector"])
-    Multivector.copy("b.", grades_dict["Bivector"])
-    Multivector.copy("t.", grades_dict["Trivector"])
-    Multivector.copy("q.", grades_dict["Quadvector"])
+    Multivector.copy("v.", Vector)
+    Multivector.copy("b.", Bivector)
+    Multivector.copy("t.", Trivector)
+    Multivector.copy("q.", Quadvector)
     Multivector.set_equal("p", "e12345")
     Multivector.set_print_newlines(
         "s", "v.e3", "b.e12", "b.e3o", "b.e3i", "b.eoi",
         "t.e123", "t.12o", "t.e12i", "t.e3oi", "q.e123i", "q.e12oi")
 
-    return [Rotor, Versor, Multivector]
+    structs.append(Multivector)
+
+    # Before returning structs, put them in order of least to most general
+    # Quantify specificity by the number of variables
+
+    ordered_structs = []
+    for struct in structs:
+        i = 0
+        while i < len(ordered_structs):
+            if len(struct.variables) < len(ordered_structs[i].variables):
+                break
+            else:
+                i+=1
+        ordered_structs.insert(i, struct)
+
+    return ordered_structs
 
 def main():
     sig = [1, 1, 1, 1, -1]
@@ -234,8 +315,7 @@ def main():
     # When a multivector is returned, it is up to the code using it to extract
     # the relevant parts of it
 
-    grades = make_grades(G)
-    structs = grades + make_compounds(G, { grade.name: grade for grade in grades} )
+    structs = make_structs(G)
 
     # Create a "Scalar" struct for the double return type
     Scalar = Struct(
