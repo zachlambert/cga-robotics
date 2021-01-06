@@ -12,12 +12,11 @@ def get_mapping(func, G, lhs, rhs, structs):
 
     for lhs_blade in lhs.blades:
         for rhs_blade in rhs.blades:
-            lhs_vectors = G.blade_to_vectors(lhs_blade)
-            rhs_vectors = G.blade_to_vectors(rhs_blade)
-            coef, vectors = func(G, lhs_vectors, rhs_vectors)
+            coef, vectors = func(G, lhs_blade, rhs_blade)
             if coef == 0:
                 continue
             blade = G.vectors_to_blade(vectors)
+            # print(lhs_blade, "*", rhs_blade, " = ", coef, "*",blade)
             if not blade in results:
                 results[blade] = []
             results[blade].append((coef, lhs_blade, rhs_blade))

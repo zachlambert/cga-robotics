@@ -25,9 +25,8 @@ class Algebra:
     def __init__(self, sig):
         self.n = len(sig)
         self.sig = sig
-        combinations = combination(n, n)
         self.blades = ["1"]
-        for comb in combination(n, n):
+        for comb in combination(self.n, self.n):
             self.blades.append(self.vectors_to_blade(comb))
 
     def blade_to_vectors(self, blade):
@@ -40,7 +39,7 @@ class Algebra:
         if len(vectors) == 0:
             return "1"
         else:
-            blade = "e" + "".join([str(vector) for vector in vectors])
+            return "e" + "".join([str(vector) for vector in vectors])
 
     def blade_grade(self, blade):
         if blade=="1":

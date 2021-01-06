@@ -5,8 +5,8 @@
 def _product(G, A, B, product="geometric"):
     # A, B = blades
     # a, b = list of vectors
-    a = G.basis_to_blades(A)
-    b = G.basis_to_blades(B)
+    a = G.blade_to_vectors(A)
+    b = G.blade_to_vectors(B)
 
     # Result
     coef = 1
@@ -20,9 +20,9 @@ def _product(G, A, B, product="geometric"):
             ind = b.index(a[0])
             num_swaps = len(a)-1 + b.index(a[0])
             if num_swaps%2 == 1:
-                sign = -sign
+                coef = -coef
             b.pop(ind)
-            sign *= G.sig[a[0]-1]
+            coef *= G.sig[a[0]-1]
         else:
             vectors.append(a[0])
         a.pop(0)
@@ -35,7 +35,7 @@ def _product(G, A, B, product="geometric"):
             i-=1
             num_swaps+=1
         if num_swaps%2==1:
-            sign = -sign
+            coef = -coef
         vectors.insert(i+1, b[0])
         b.pop(0)
 

@@ -1,14 +1,14 @@
 # First, generate blades
 
-from algebra import Algebra, Blade
+from algebra import Algebra
 from write import write_includes, write_struct, write_unary_operations, write_binary_operations
 
 class Struct:
-    def __init__(self, name, blades, variables, types):
+    def __init__(self, name, blades, variables, members):
         self.name = name
         self.blades = blades
-        self.variables = variables
-        self.types = types
+        self.variables = variables # e1, e2, e12, b.e12, etc
+        self.members = members # double e1, double e2, Bivector b, etc
         self.var_expressions = {}
         self.blade_expressions = {}
         # var_expressions defines expressions for each variable in terms of basis blades
@@ -48,7 +48,7 @@ def make_grades(G):
         "Vector",
         G.grade(1),
         ["e1", "e2", "e3", "eo", "ei"],
-        ["double" for i in range(5)]
+        ["double e1", "double e2", "double e3", "double eo", "double ei"]
     )
 
     Vector.set_equal("e1", "e1")
@@ -66,7 +66,10 @@ def make_grades(G):
         "Bivector",
         G.grade(2),
         ["e23", "e31", "e12", "e1o", "e2o", "e3o", "e1i", "e2i", "e3i", "eoi"],
-        ["double" for i in range(10)]
+        ["double e23", "double e31", "double e12",
+         "double e1o", "double e2o", "double e3o",
+         "double e1i", "double e2i", "double e3i",
+         "double eoi"]
     )
 
     Bivector.set_equal("e23", "e23")
@@ -95,7 +98,10 @@ def make_grades(G):
         "Trivector",
         G.grade(3),
         ["e123", "e23o", "e31o", "e12o", "e23i", "e31i", "e12i", "e1oi", "e2oi", "e3oi"],
-        ["double" for i in range(10)]
+        ["double e123",
+         "double e23o", "double e31o", "double e12o",
+         "double e23i", "double e31i", "double e12i",
+         "double e1oi", "double e2oi", "double e3oi"],
     )
 
     Trivector.set_equal("e123", "e123")
@@ -125,7 +131,7 @@ def make_grades(G):
         "Quadvector",
         G.grade(4),
         ["e123o", "e123i", "e23oi", "e31oi", "e12oi"],
-        ["double" for i in range(5)]
+        ["double e123o", "double e123i", "double e23oi", "double e31oi", "double e12oi"],
     )
 
     Quadvector.set_var_expression("e123o", [(0.5, "e1234"), (0.5, "e1235")])
@@ -145,31 +151,63 @@ def make_grades(G):
     Pseudoscalar = Struct(
         "Pseudoscalar",
         G.grade(5),
-        ["I5"],
-        ["double"]
+        ["p"],
+        ["double p"]
     )
-    Pseudoscalar.set_equal("I5", "e12345")
+    Pseudoscalar.set_equal("p", "e12345")
 
     return [Vector, Bivector, Trivector, Quadvector, Pseudoscalar]
 
-def make_compounds(grades_dict):
-    Rotor = Struct("Rotor", ["s", "b"], ["double", "Bivector"], [0, 2])
+def make_compounds(G, grades_dict):
+    Rotor = Struct(
+        "Rotor",
+        G.grade(0) + G.grade(2),
+        ["s",
+         "b.e23", "b.e31", "b.e12",
+         "b.e1o", "b.e2o", "b.e3o",
+         "b.e1i", "b.e2i", "b.e3i",
+         "b.eoi"],
+        ["double s", "Bivector b"]
+    )
     Rotor.set_equal("s", "1");
     Rotor.copy("b.", grades_dict["Bivector"])
 
-    Versor = Struct("Versor", ["double s", "Bivector b", "Quadvector q"])
-    Rotor.set_equal("s", "1");
+    Versor = Struct(
+        "Versor",
+        G.grade(0) + G.grade(2) + G.grade(4),
+        ["s",
+         "b.e23", "b.e31", "b.e12",
+         "b.e1o", "b.e2o", "b.e3o",
+         "b.e1i", "b.e2i", "b.e3i",
+         "b.eoi",
+         "q.e123o", "q.e123i", "q.e23oi", "q.e31oi", "q.e12oi"],
+        ["double s", "Bivector b", "Quadvector q"]
+    )
+    Versor.set_equal("s", "1");
     Versor.copy("b.", grades_dict["Bivector"])
     Versor.copy("q.", grades_dict["Quadvector"])
 
-    Multivector = Struct("Multivector",
-        ["double s", "Vector v", "Bivector b", "Trivector t", "Quadvector q", "Pseudoscalar p"])
-    Rotor.set_equal("s", "1");
-    Versor.copy("v.", grades_dict["Vector"])
-    Versor.copy("b.", grades_dict["Bivector"])
-    Versor.copy("t.", grades_dict["Trivector"])
-    Versor.copy("q.", grades_dict["Quadvector"])
-    Versor.copy("p.", grades_dict["Pseudoscalar"])
+    Multivector = Struct(
+        "Multivector",
+        G.blades,
+        ["s",
+         "v.e1", "v.e2", "v.e3", "v.eo", "v.ei",
+         "b.e23", "b.e31", "b.e12",
+         "b.e1o", "b.e2o", "b.e3o",
+         "b.e1i", "b.e2i", "b.e3i",
+         "b.eoi",
+         "t.e123", "t.e23o", "t.e31o", "t.e12o", "t.e23i", "t.e31i", "t.e12i",
+         "t.e1oi", "t.e2oi", "t.e3oi",
+         "q.e123o", "q.e123i", "q.e23oi", "q.e31oi", "q.e12oi",
+         "p"],
+        ["double s", "Vector v", "Bivector b", "Trivector t", "Quadvector q", "double p"]
+    )
+    Multivector.set_equal("s", "1");
+    Multivector.copy("v.", grades_dict["Vector"])
+    Multivector.copy("b.", grades_dict["Bivector"])
+    Multivector.copy("t.", grades_dict["Trivector"])
+    Multivector.copy("q.", grades_dict["Quadvector"])
+    Multivector.set_equal("p", "e12345")
 
     return [Rotor, Versor, Multivector]
 
@@ -178,24 +216,44 @@ def main():
 
     G = Algebra(sig)
 
-    grades = make_grades()
-    structs = grades + make_compounds({ grade.name: grade for grade in grades})
+    # Don't generate operations with the generic multivector, but use a
+    # generic multivector to hold results when a more compact struct doesn't exist
+    # When a multivector is returned, it is up to the code using it to extract
+    # the relevant parts of it
+
+    grades = make_grades(G)
+    structs = grades + make_compounds(G, { grade.name: grade for grade in grades} )
+
+    # Create a "Scalar" struct for the double return type
+    Scalar = Struct(
+        "double",
+        G.grade(0),
+        [""],
+        None
+    )
+    Scalar.set_equal("", "1")
 
     h_base = "include/"
     cpp_base = "src/"
 
     with open(h_base+"cga_gen.h", "w") as f_h:
         with open(cpp_base+"cga_gen.cpp", "w") as f_cpp:
-            write_includes(f_h)
+            write_includes(f_h, f_cpp)
             for struct in structs:
                 write_struct(G, struct, f_h, f_cpp)
                 write_unary_operations(G, struct, f_h, f_cpp)
             for i in range(len(structs)):
                 for j in range(i, len(structs)):
+                    # Skip binary operations with multivector operands
+                    if structs[i].name=="Multivector" or structs[j].name=="Multivector":
+                        continue
                     write_binary_operations(G, structs[i], structs[j], structs, f_h, f_cpp)
             # norm and norm2 need the inner product, so put after binary operations
-            for struct in structs:
-                write_unary_operations(G, struct, f_h, f_cpp)
+            # for struct in structs:
+            #     write_unary_operations(G, struct, f_h, f_cpp)
+
+            # # Also write unary operations for the multivector
+            # write_unary_operations(G, Multivector. f_h, f_cpp)
 
 if __name__ == "__main__":
     main()
