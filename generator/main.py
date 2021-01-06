@@ -44,8 +44,9 @@ def make_grades(G):
 
     # VECTOR
 
-    Vector = Struct("Vector",
-        ["e1", "e2", "e3", "e4", "e5"]
+    Vector = Struct(
+        "Vector",
+        G.grade(1),
         ["e1", "e2", "e3", "eo", "ei"],
         ["double" for i in range(5)]
     )
@@ -61,10 +62,11 @@ def make_grades(G):
 
     # BIVECTOR
 
-    Bivector = Struct("Bivector",
+    Bivector = Struct(
+        "Bivector",
+        G.grade(2),
         ["e23", "e31", "e12", "e1o", "e2o", "e3o", "e1i", "e2i", "e3i", "eoi"],
-        ["double" for i in range(10)],
-        2
+        ["double" for i in range(10)]
     )
 
     Bivector.set_equal("e23", "e23")
@@ -84,6 +86,47 @@ def make_grades(G):
     Bivector.set_blade_expression("e25", [(1, "e2o"), (0.5, "e2i")])
     Bivector.set_blade_expression("e34", [(1, "e3o"), (-0.5, "e3i")])
     Bivector.set_blade_expression("e35", [(1, "e3o"), (0.5, "e3i")])
+
+    Bivector.set_equal("eoi", "e45")
+
+    # TRIVECTOR
+
+    Trivector = Struct(
+        "Trivector",
+        G.grade(3),
+        ["e123", "e23o", "e31o", "e12o", "e23i", "e31i", "e12i", "e1oi", "e2oi", "e3oi"],
+        ["double" for i in range(10)]
+    )
+
+    Trivector.set_equal("e123", "e123")
+
+    Trivector.set_var_expression("e23o", [(0.5, "e234"), (0.5, "e235")])
+    Trivector.set_var_expression("e31o", [(-0.5, "e134"), (-0.5, "e135")])
+    Trivector.set_var_expression("e12o", [(0.5, "e124"), (0.5, "e125")])
+
+    Trivector.set_var_expression("e23i", [(-1, "e234"), (1, "e235")])
+    Trivector.set_var_expression("e31i", [(1, "e134"), (-1, "e135")])
+    Trivector.set_var_expression("e12i", [(-1, "e124"), (1, "e125")])
+
+    Trivector.set_blade_expression("e234", [(1, "e23o"), (-0.5, "e23i")])
+    Trivector.set_blade_expression("e235", [(1, "e23o"), (0.5, "e23i")])
+    Trivector.set_blade_expression("e134", [(-1, "e31o"), (0.5, "e31i")])
+    Trivector.set_blade_expression("e135", [(-1, "e31o"), (-0.5, "e31i")])
+    Trivector.set_blade_expression("e124", [(1, "e12o"), (-0.5, "e12i")])
+    Trivector.set_blade_expression("e125", [(1, "e12o"), (0.5, "e12i")])
+
+    Trivector.set_equal("e1oi", "e145")
+    Trivector.set_equal("e2oi", "e245")
+    Trivector.set_equal("e3oi", "e345")
+
+    # QUADVECTOR
+
+    Quadvector = Struct(
+        "Quadvector",
+        G.grade(4),
+        ["e123o", "e123i", "e23oi", "e31oi", "e12oi"],
+        ["double" for i in range(5)]
+    )
 
     Bivector.set_equal("eoi", "e45")
 
@@ -111,10 +154,9 @@ def make_compounds(grades_dict):
     return [Rotor]#, Versor, Multivector]
 
 def main():
-    n = 5
     sig = [1, 1, 1, 1, -1]
 
-    G = Algebra(n, sig)
+    G = Algebra(sig)
 
     grades = make_grades()
     structs = grades + make_compounds({ grade.name: grade for grade in grades})
