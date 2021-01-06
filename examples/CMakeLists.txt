@@ -5,5 +5,6 @@ function(add_example name)
     target_link_libraries(${name} cga)
 endfunction()
 
-add_example(conformal)
-add_example(chain)
+add_example(structs)
+add_example(geometry_3d)
+# add_example(chain)

@@ -5,7 +5,7 @@ def write_includes(f_h, f_cpp):
     f_h.write("#include <cmath>\n")
     f_h.write("#include <iostream>\n")
     f_h.write("\n")
-    f_cpp.write("#include \"cga_gen.h\"\n")
+    f_cpp.write("#include \"cga.h\"\n")
     f_cpp.write("\n")
 
 def write_struct(G, struct, f_h, f_cpp):
@@ -128,7 +128,7 @@ def write_unary_operations(G, struct, f_h, f_cpp):
                     return_expressions.append("x.{}".format(var))
             return_expression = "{" + ", ".join(return_expressions) + "}"
 
-    f_h.write("{} reverse(const {} &x) ".format(return_type, struct.name)+"{\n")
+    f_h.write("inline {} reverse(const {} &x) ".format(return_type, struct.name)+"{\n")
     f_h.write("    return {};\n".format(return_expression))
     f_h.write("}\n")
 
@@ -144,10 +144,10 @@ def write_unary_operations(G, struct, f_h, f_cpp):
     # Only do this for homogeneous multivectors, where dot(x, x) is a scalar
 
     if homogeneous:
-        f_h.write("double norm2(const {name} &x) ".format(name=struct.name)+"{\n")
+        f_h.write("inline double norm2(const {name} &x) ".format(name=struct.name)+"{\n")
         f_h.write("    return inner(x, x);\n")
         f_h.write("}\n")
-        f_h.write("double norm(const {name} &x) ".format(name=struct.name)+"{\n")
+        f_h.write("inline double norm(const {name} &x) ".format(name=struct.name)+"{\n")
         f_h.write("    return std::sqrt(inner(x, x));\n")
         f_h.write("}\n")
 
@@ -231,7 +231,7 @@ def _write_geometric_product(G, struct1, struct2, structs, f_h, f_cpp):
     f_h.write("\n")
 
     if struct1.name != struct2.name:
-        f_h.write("{ret} operator*(const {lhs} &lhs, const {rhs} &rhs)\n".format(
+        f_h.write("inline {ret} operator*(const {lhs} &lhs, const {rhs} &rhs)\n".format(
             ret=return_struct.name, lhs=struct2.name, rhs=struct1.name))
         f_h.write("{\n")
         f_h.write("    return rhs*lhs;\n")
@@ -256,7 +256,7 @@ def _write_outer_product(G, struct1, struct2, structs, f_h, f_cpp):
     f_h.write("\n")
 
     if struct1.name != struct2.name:
-        f_h.write("{ret} outer(const {lhs} &lhs, const {rhs} &rhs)\n".format(
+        f_h.write("inline {ret} outer(const {lhs} &lhs, const {rhs} &rhs)\n".format(
             ret=return_struct.name, lhs=struct2.name, rhs=struct1.name))
         f_h.write("{\n")
         f_h.write("    return outer(rhs, lhs);\n")
@@ -281,7 +281,7 @@ def _write_inner_product(G, struct1, struct2, structs, f_h, f_cpp):
     f_h.write("\n")
 
     if struct1.name != struct2.name:
-        f_h.write("{ret} inner(const {lhs} &lhs, const {rhs} &rhs)\n".format(
+        f_h.write("inline {ret} inner(const {lhs} &lhs, const {rhs} &rhs)\n".format(
             ret=return_struct.name, lhs=struct2.name, rhs=struct1.name))
         f_h.write("{\n")
         f_h.write("    return inner(rhs, lhs);\n")
@@ -306,9 +306,9 @@ def write_printing(struct, f_h, f_cpp):
     f_cpp.write("std::ostream& operator<<(std::ostream& outs, const {name} &x) ".format(name=struct.name)+"{\n")
     elements = []
     for var in struct.variables:
-        elements.append("x."+var)
+        elements.append("\"{}=\"<<x.{}<<\" \"".format(var, var))
         if var in struct.print_newlines:
             elements.append("std::endl")
-    f_cpp.write("    outs << {};\n".format(" << ".join(elements)))
+    f_cpp.write("    outs << {};\n".format("<<".join(elements)))
     f_cpp.write("    return outs;\n")
     f_cpp.write("}\n\n")

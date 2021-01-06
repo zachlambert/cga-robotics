@@ -62,6 +62,7 @@ def make_structs(G):
 
     structs.append(Vector3)
 
+
     # VECTOR
 
     Vector = Struct(
@@ -82,6 +83,7 @@ def make_structs(G):
     Vector.set_blade_expression("e5", [(1, "eo"), (0.5, "ei")])
 
     structs.append(Vector)
+
 
     # BIVECTOR
 
@@ -117,6 +119,7 @@ def make_structs(G):
     Bivector.set_equal("eoi", "e45")
 
     structs.append(Bivector)
+
 
     # TRIVECTOR
 
@@ -154,6 +157,7 @@ def make_structs(G):
 
     structs.append(Trivector)
 
+
     # QUADVECTOR
 
     Quadvector = Struct(
@@ -174,10 +178,7 @@ def make_structs(G):
     Quadvector.set_opposite("e31oi", "e1345")
     Quadvector.set_equal("e12oi", "e1245")
 
-    Quadvector.set_equal("eoi", "e45")
-
     structs.append(Quadvector)
-
 
     # PSEUDOSCALAR
 
@@ -190,6 +191,19 @@ def make_structs(G):
     Pseudoscalar.set_equal("p", "e12345")
 
     structs.append(Pseudoscalar)
+
+
+    # PSEUDOSCALAR3
+
+    Pseudoscalar3 = Struct(
+        "Pseudoscalar3",
+        ["e123"],
+        ["p"],
+        ["double p"]
+    )
+    Pseudoscalar3.set_equal("p", "e123")
+
+    structs.append(Pseudoscalar3)
 
 
     # BIVECTOR3
@@ -290,6 +304,7 @@ def make_structs(G):
 
     structs.append(Multivector)
 
+
     # Before returning structs, put them in order of least to most general
     # Quantify specificity by the number of variables
 
@@ -329,22 +344,34 @@ def main():
     h_base = "include/"
     cpp_base = "src/"
 
-    with open(h_base+"cga_gen.h", "w") as f_h:
-        with open(cpp_base+"cga_gen.cpp", "w") as f_cpp:
+    with open(h_base+"cga.h", "w") as f_h:
+        with open(cpp_base+"cga.cpp", "w") as f_cpp:
+
+            f_h.write("#ifndef CGA_H\n")
+            f_h.write("#define CGA_H\n")
+            f_h.write("\n")
             write_includes(f_h, f_cpp)
+
+            f_h.write("namespace cga {\n\n")
+            f_cpp.write("namespace cga {\n\n")
+
             for struct in structs:
                 write_struct(G, struct, f_h, f_cpp)
             for i in range(len(structs)):
                 for j in range(i, len(structs)):
                     # Skip binary operations with multivector operands
-                    if structs[i].name=="Multivector" or structs[j].name=="Multivector":
-                        continue
+                    # if structs[i].name=="Multivector" or structs[j].name=="Multivector":
+                    #     continue
                     write_binary_operations(G, structs[i], structs[j], [Scalar]+structs, f_h, f_cpp)
 
             # norm and norm2 need the inner product, so put after binary operations
             for struct in structs:
                 write_unary_operations(G, struct, f_h, f_cpp)
                 write_printing(struct, f_h, f_cpp)
+
+            f_h.write("} // namespace cga\n\n")
+            f_cpp.write("} // namespace cga\n")
+            f_h.write("#endif\n")
 
 if __name__ == "__main__":
     main()
