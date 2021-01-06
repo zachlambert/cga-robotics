@@ -1,7 +1,7 @@
 # First, generate blades
 
 from algebra import Algebra
-from write import write_includes, write_struct, write_unary_operations, write_binary_operations
+from write import write_includes, write_struct, write_unary_operations, write_binary_operations, write_printing
 
 class Struct:
     def __init__(self, name, blades, variables, members):
@@ -11,6 +11,7 @@ class Struct:
         self.members = members # double e1, double e2, Bivector b, etc
         self.var_expressions = {}
         self.blade_expressions = {}
+        self.print_newlines = []
         # var_expressions defines expressions for each variable in terms of basis blades
         # blade_expressions defines expressions for each basis blade in terms of variables
         # Each has the form:
@@ -40,6 +41,9 @@ class Struct:
         for blade, expression in struct.blade_expressions.items():
             self.blade_expressions[blade] = [(term[0], prefix+term[1]) for term in expression]
 
+    def set_print_newlines(self, *var_list):
+        self.print_newlines = var_list
+
 def make_grades(G):
 
     # VECTOR
@@ -50,6 +54,7 @@ def make_grades(G):
         ["e1", "e2", "e3", "eo", "ei"],
         ["double e1", "double e2", "double e3", "double eo", "double ei"]
     )
+    Vector.set_print_newlines("e3")
 
     Vector.set_equal("e1", "e1")
     Vector.set_equal("e2", "e2")
@@ -71,6 +76,7 @@ def make_grades(G):
          "double e1i", "double e2i", "double e3i",
          "double eoi"]
     )
+    Bivector.set_print_newlines("e12", "e3o", "e3i");
 
     Bivector.set_equal("e23", "e23")
     Bivector.set_opposite("e31", "e13")
@@ -103,6 +109,7 @@ def make_grades(G):
          "double e23i", "double e31i", "double e12i",
          "double e1oi", "double e2oi", "double e3oi"],
     )
+    Trivector.set_print_newlines("e123", "e12o", "e12i")
 
     Trivector.set_equal("e123", "e123")
 
@@ -133,6 +140,7 @@ def make_grades(G):
         ["e123o", "e123i", "e23oi", "e31oi", "e12oi"],
         ["double e123o", "double e123i", "double e23oi", "double e31oi", "double e12oi"],
     )
+    Quadvector.set_print_newlines("e123i")
 
     Quadvector.set_var_expression("e123o", [(0.5, "e1234"), (0.5, "e1235")])
     Quadvector.set_var_expression("e123i", [(-1, "e1234"), (1, "e1235")])
@@ -171,6 +179,7 @@ def make_compounds(G, grades_dict):
     )
     Rotor.set_equal("s", "1");
     Rotor.copy("b.", grades_dict["Bivector"])
+    Rotor.set_print_newlines("s", "b.e12", "b.e3o", "b.e3i")
 
     Versor = Struct(
         "Versor",
@@ -186,6 +195,7 @@ def make_compounds(G, grades_dict):
     Versor.set_equal("s", "1");
     Versor.copy("b.", grades_dict["Bivector"])
     Versor.copy("q.", grades_dict["Quadvector"])
+    Versor.set_print_newlines("s", "b.e12", "b.e3o", "b.e3i", "b.eoi", "q.e123i")
 
     Multivector = Struct(
         "Multivector",
@@ -208,6 +218,9 @@ def make_compounds(G, grades_dict):
     Multivector.copy("t.", grades_dict["Trivector"])
     Multivector.copy("q.", grades_dict["Quadvector"])
     Multivector.set_equal("p", "e12345")
+    Multivector.set_print_newlines(
+        "s", "v.e3", "b.e12", "b.e3o", "b.e3i", "b.eoi",
+        "t.e123", "t.12o", "t.e12i", "t.e3oi", "q.e123i", "q.e12oi")
 
     return [Rotor, Versor, Multivector]
 
@@ -241,19 +254,17 @@ def main():
             write_includes(f_h, f_cpp)
             for struct in structs:
                 write_struct(G, struct, f_h, f_cpp)
-                write_unary_operations(G, struct, f_h, f_cpp)
             for i in range(len(structs)):
                 for j in range(i, len(structs)):
                     # Skip binary operations with multivector operands
                     if structs[i].name=="Multivector" or structs[j].name=="Multivector":
                         continue
-                    write_binary_operations(G, structs[i], structs[j], structs, f_h, f_cpp)
-            # norm and norm2 need the inner product, so put after binary operations
-            # for struct in structs:
-            #     write_unary_operations(G, struct, f_h, f_cpp)
+                    write_binary_operations(G, structs[i], structs[j], [Scalar]+structs, f_h, f_cpp)
 
-            # # Also write unary operations for the multivector
-            # write_unary_operations(G, Multivector. f_h, f_cpp)
+            # norm and norm2 need the inner product, so put after binary operations
+            for struct in structs:
+                write_unary_operations(G, struct, f_h, f_cpp)
+                write_printing(struct, f_h, f_cpp)
 
 if __name__ == "__main__":
     main()

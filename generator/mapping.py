@@ -16,7 +16,7 @@ def get_mapping(func, G, lhs, rhs, structs):
             if coef == 0:
                 continue
             blade = G.vectors_to_blade(vectors)
-            # print(lhs_blade, "*", rhs_blade, " = ", coef, "*",blade)
+
             if not blade in results:
                 results[blade] = []
             results[blade].append((coef, lhs_blade, rhs_blade))

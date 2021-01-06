@@ -3,6 +3,7 @@ from operations import geometric_product, outer_product, inner_product
 
 def write_includes(f_h, f_cpp):
     f_h.write("#include <cmath>\n")
+    f_h.write("#include <iostream>\n")
     f_h.write("\n")
     f_cpp.write("#include \"cga_gen.h\"\n")
     f_cpp.write("\n")
@@ -87,10 +88,17 @@ def write_unary_operations(G, struct, f_h, f_cpp):
 
     # Reverse
 
-    """
-    if type(struct.grade) != list:
-        # Homogeneous
-        num_reverses = sum([i for i in range(1, struct.grade)])
+    grades = [G.blade_grade(blade) for blade in struct.blades]
+
+    homogeneous = True
+    for i in range(1, len(grades)):
+        if grades[i] != grades[0]:
+            homogeneous = False
+            break
+
+    if homogeneous: 
+        grade = grades[0]
+        num_reverses = sum([i for i in range(1, grade)])
         if num_reverses%2 == 0:
             # Sign doesn't change, can return const ref
             return_type = "const {}&".format(struct.name)
@@ -101,7 +109,7 @@ def write_unary_operations(G, struct, f_h, f_cpp):
             return_expression = "-x"
     else:
         num_reverses = [
-            sum([i for i in range(1, grade)]) for grade in struct.grade]
+            sum([i for i in range(1, grade)]) for grade in grades]
         negations = [
             num%2==1 for num in num_reverses]
         if all([negate==False for negate in negations]):
@@ -139,7 +147,6 @@ def write_unary_operations(G, struct, f_h, f_cpp):
     f_h.write("    return std::sqrt(inner(x, x));\n")
     f_h.write("}\n")
 
-    """
 
 def _write_product_body(lhs_struct, rhs_struct, return_struct, results, f_cpp):
     # First, convert expressions to be in terms of argument variables
@@ -289,3 +296,15 @@ def write_binary_operations(G, struct1, struct2, structs, f_h, f_cpp):
     _write_geometric_product(G, struct1, struct2, structs, f_h, f_cpp)
     _write_outer_product(G, struct1, struct2, structs, f_h, f_cpp)
     _write_inner_product(G, struct1, struct2, structs, f_h, f_cpp)
+
+def write_printing(struct, f_h, f_cpp):
+    f_h.write("std::ostream& operator<<(std::ostream& outs, const {name} &x);".format(name=struct.name))
+    f_cpp.write("std::ostream& operator<<(std::ostream& outs, const {name} &x) ".format(name=struct.name)+"{\n")
+    elements = []
+    for var in struct.variables:
+        elements.append("x."+var)
+        if var in struct.print_newlines:
+            elements.append("std::endl")
+    f_cpp.write("    outs << {};\n".format(" << ".join(elements)))
+    f_cpp.write("    return outs;\n")
+    f_cpp.write("}\n")

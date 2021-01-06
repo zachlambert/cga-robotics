@@ -1,4 +1,5 @@
 #include <cmath>
+#include <iostream>
 
 struct Vector {
     double e1;
@@ -750,7 +751,7 @@ Rotor operator*(const Vector &lhs, const Vector &rhs);
 
 Bivector outer(const Vector &lhs, const Vector &rhs);
 
-Rotor inner(const Vector &lhs, const Vector &rhs);
+double inner(const Vector &lhs, const Vector &rhs);
 
 Multivector operator*(const Vector &lhs, const Bivector &rhs);
 
@@ -822,6 +823,13 @@ Quadvector operator*(const Pseudoscalar &lhs, const Vector &rhs)
     return rhs*lhs;
 }
 
+Quadvector outer(const Vector &lhs, const Pseudoscalar &rhs);
+
+Quadvector outer(const Pseudoscalar &lhs, const Vector &rhs)
+{
+    return outer(rhs, lhs);
+}
+
 Quadvector inner(const Vector &lhs, const Pseudoscalar &rhs);
 
 Quadvector inner(const Pseudoscalar &lhs, const Vector &rhs)
@@ -875,7 +883,7 @@ Versor operator*(const Bivector &lhs, const Bivector &rhs);
 
 Quadvector outer(const Bivector &lhs, const Bivector &rhs);
 
-Rotor inner(const Bivector &lhs, const Bivector &rhs);
+double inner(const Bivector &lhs, const Bivector &rhs);
 
 Multivector operator*(const Bivector &lhs, const Trivector &rhs);
 
@@ -905,6 +913,13 @@ Versor operator*(const Quadvector &lhs, const Bivector &rhs)
     return rhs*lhs;
 }
 
+Quadvector outer(const Bivector &lhs, const Quadvector &rhs);
+
+Quadvector outer(const Quadvector &lhs, const Bivector &rhs)
+{
+    return outer(rhs, lhs);
+}
+
 Bivector inner(const Bivector &lhs, const Quadvector &rhs);
 
 Bivector inner(const Quadvector &lhs, const Bivector &rhs)
@@ -917,6 +932,13 @@ Trivector operator*(const Bivector &lhs, const Pseudoscalar &rhs);
 Trivector operator*(const Pseudoscalar &lhs, const Bivector &rhs)
 {
     return rhs*lhs;
+}
+
+Trivector outer(const Bivector &lhs, const Pseudoscalar &rhs);
+
+Trivector outer(const Pseudoscalar &lhs, const Bivector &rhs)
+{
+    return outer(rhs, lhs);
 }
 
 Trivector inner(const Bivector &lhs, const Pseudoscalar &rhs);
@@ -970,13 +992,22 @@ Rotor inner(const Versor &lhs, const Bivector &rhs)
 
 Versor operator*(const Trivector &lhs, const Trivector &rhs);
 
-Rotor inner(const Trivector &lhs, const Trivector &rhs);
+Quadvector outer(const Trivector &lhs, const Trivector &rhs);
+
+double inner(const Trivector &lhs, const Trivector &rhs);
 
 Multivector operator*(const Trivector &lhs, const Quadvector &rhs);
 
 Multivector operator*(const Quadvector &lhs, const Trivector &rhs)
 {
     return rhs*lhs;
+}
+
+Trivector outer(const Trivector &lhs, const Quadvector &rhs);
+
+Trivector outer(const Quadvector &lhs, const Trivector &rhs)
+{
+    return outer(rhs, lhs);
 }
 
 Vector inner(const Trivector &lhs, const Quadvector &rhs);
@@ -991,6 +1022,13 @@ Bivector operator*(const Trivector &lhs, const Pseudoscalar &rhs);
 Bivector operator*(const Pseudoscalar &lhs, const Trivector &rhs)
 {
     return rhs*lhs;
+}
+
+Bivector outer(const Trivector &lhs, const Pseudoscalar &rhs);
+
+Bivector outer(const Pseudoscalar &lhs, const Trivector &rhs)
+{
+    return outer(rhs, lhs);
 }
 
 Bivector inner(const Trivector &lhs, const Pseudoscalar &rhs);
@@ -1044,13 +1082,22 @@ Multivector inner(const Versor &lhs, const Trivector &rhs)
 
 Rotor operator*(const Quadvector &lhs, const Quadvector &rhs);
 
-Rotor inner(const Quadvector &lhs, const Quadvector &rhs);
+Bivector outer(const Quadvector &lhs, const Quadvector &rhs);
+
+double inner(const Quadvector &lhs, const Quadvector &rhs);
 
 Vector operator*(const Quadvector &lhs, const Pseudoscalar &rhs);
 
 Vector operator*(const Pseudoscalar &lhs, const Quadvector &rhs)
 {
     return rhs*lhs;
+}
+
+Vector outer(const Quadvector &lhs, const Pseudoscalar &rhs);
+
+Vector outer(const Pseudoscalar &lhs, const Quadvector &rhs)
+{
+    return outer(rhs, lhs);
 }
 
 Vector inner(const Quadvector &lhs, const Pseudoscalar &rhs);
@@ -1088,9 +1135,9 @@ Versor operator*(const Versor &lhs, const Quadvector &rhs)
     return rhs*lhs;
 }
 
-Quadvector outer(const Quadvector &lhs, const Versor &rhs);
+Versor outer(const Quadvector &lhs, const Versor &rhs);
 
-Quadvector outer(const Versor &lhs, const Quadvector &rhs)
+Versor outer(const Versor &lhs, const Quadvector &rhs)
 {
     return outer(rhs, lhs);
 }
@@ -1102,9 +1149,11 @@ Versor inner(const Versor &lhs, const Quadvector &rhs)
     return inner(rhs, lhs);
 }
 
-Rotor operator*(const Pseudoscalar &lhs, const Pseudoscalar &rhs);
+double operator*(const Pseudoscalar &lhs, const Pseudoscalar &rhs);
 
-Rotor inner(const Pseudoscalar &lhs, const Pseudoscalar &rhs);
+double outer(const Pseudoscalar &lhs, const Pseudoscalar &rhs);
+
+double inner(const Pseudoscalar &lhs, const Pseudoscalar &rhs);
 
 Multivector operator*(const Pseudoscalar &lhs, const Rotor &rhs);
 
@@ -1113,9 +1162,9 @@ Multivector operator*(const Rotor &lhs, const Pseudoscalar &rhs)
     return rhs*lhs;
 }
 
-Pseudoscalar outer(const Pseudoscalar &lhs, const Rotor &rhs);
+Multivector outer(const Pseudoscalar &lhs, const Rotor &rhs);
 
-Pseudoscalar outer(const Rotor &lhs, const Pseudoscalar &rhs)
+Multivector outer(const Rotor &lhs, const Pseudoscalar &rhs)
 {
     return outer(rhs, lhs);
 }
@@ -1134,9 +1183,9 @@ Multivector operator*(const Versor &lhs, const Pseudoscalar &rhs)
     return rhs*lhs;
 }
 
-Pseudoscalar outer(const Pseudoscalar &lhs, const Versor &rhs);
+Multivector outer(const Pseudoscalar &lhs, const Versor &rhs);
 
-Pseudoscalar outer(const Versor &lhs, const Pseudoscalar &rhs)
+Multivector outer(const Versor &lhs, const Pseudoscalar &rhs)
 {
     return outer(rhs, lhs);
 }
@@ -1181,3 +1230,76 @@ Versor outer(const Versor &lhs, const Versor &rhs);
 
 Versor inner(const Versor &lhs, const Versor &rhs);
 
+const Vector& reverse(const Vector &x) {
+    return x;
+}
+double norm2(const Vector &x) {
+    return inner(x, x);
+}
+double norm(const Vector &x) {
+    return std::sqrt(inner(x, x));
+}
+std::ostream& operator<<(std::ostream& outs, const Vector &x);Bivector reverse(const Bivector &x) {
+    return -x;
+}
+double norm2(const Bivector &x) {
+    return inner(x, x);
+}
+double norm(const Bivector &x) {
+    return std::sqrt(inner(x, x));
+}
+std::ostream& operator<<(std::ostream& outs, const Bivector &x);Trivector reverse(const Trivector &x) {
+    return -x;
+}
+double norm2(const Trivector &x) {
+    return inner(x, x);
+}
+double norm(const Trivector &x) {
+    return std::sqrt(inner(x, x));
+}
+std::ostream& operator<<(std::ostream& outs, const Trivector &x);const Quadvector& reverse(const Quadvector &x) {
+    return x;
+}
+double norm2(const Quadvector &x) {
+    return inner(x, x);
+}
+double norm(const Quadvector &x) {
+    return std::sqrt(inner(x, x));
+}
+std::ostream& operator<<(std::ostream& outs, const Quadvector &x);const Pseudoscalar& reverse(const Pseudoscalar &x) {
+    return x;
+}
+double norm2(const Pseudoscalar &x) {
+    return inner(x, x);
+}
+double norm(const Pseudoscalar &x) {
+    return std::sqrt(inner(x, x));
+}
+std::ostream& operator<<(std::ostream& outs, const Pseudoscalar &x);Rotor reverse(const Rotor &x) {
+    return {x.s, -x.b.e23, -x.b.e31, -x.b.e12, -x.b.e1o, -x.b.e2o, -x.b.e3o, -x.b.e1i, -x.b.e2i, -x.b.e3i, -x.b.eoi};
+}
+double norm2(const Rotor &x) {
+    return inner(x, x);
+}
+double norm(const Rotor &x) {
+    return std::sqrt(inner(x, x));
+}
+std::ostream& operator<<(std::ostream& outs, const Rotor &x);Versor reverse(const Versor &x) {
+    return {x.s, -x.b.e23, -x.b.e31, -x.b.e12, -x.b.e1o, -x.b.e2o, -x.b.e3o, -x.b.e1i, -x.b.e2i, -x.b.e3i, -x.b.eoi, x.q.e123o, x.q.e123i, x.q.e23oi, x.q.e31oi, x.q.e12oi};
+}
+double norm2(const Versor &x) {
+    return inner(x, x);
+}
+double norm(const Versor &x) {
+    return std::sqrt(inner(x, x));
+}
+std::ostream& operator<<(std::ostream& outs, const Versor &x);Multivector reverse(const Multivector &x) {
+    return {x.s, x.v.e1, x.v.e2, x.v.e3, x.v.eo, x.v.ei, -x.b.e23, -x.b.e31, -x.b.e12, -x.b.e1o, -x.b.e2o, -x.b.e3o, -x.b.e1i, -x.b.e2i, -x.b.e3i, -x.b.eoi, -x.t.e123, -x.t.e23o, -x.t.e31o, -x.t.e12o, -x.t.e23i, -x.t.e31i, -x.t.e12i, -x.t.e1oi, -x.t.e2oi, -x.t.e3oi, x.q.e123o, x.q.e123i, x.q.e23oi, x.q.e31oi, x.q.e12oi, x.p};
+}
+double norm2(const Multivector &x) {
+    return inner(x, x);
+}
+double norm(const Multivector &x) {
+    return std::sqrt(inner(x, x));
+}
+std::ostream& operator<<(std::ostream& outs, const Multivector &x);

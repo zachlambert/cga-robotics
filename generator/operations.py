@@ -39,9 +39,15 @@ def _product(G, A, B, product="geometric"):
         vectors.insert(i+1, b[0])
         b.pop(0)
 
-    if product=="outer" and (len(vectors) != G.blade_grade(A) + G.blade_grade(B)):
+    max_grade = G.blade_grade(A) + G.blade_grade(B)
+    if max_grade > G.n:
+        max_grade = 2*G.n - max_grade
+
+    min_grade = abs(G.blade_grade(A) - G.blade_grade(B))
+
+    if product=="outer" and (G.vectors_grade(vectors) != max_grade):
         return 0, vectors
-    if product=="inner" and (len(vectors) != abs(G.blade_grade(A) - G.blade_grade(B))):
+    if product=="inner" and (G.vectors_grade(vectors) != min_grade):
         return 0, vectors
 
     return coef, vectors
