@@ -12,10 +12,16 @@ class Mapping:
         self.result = result
         self.indices = indices
 
-def get_mapping(func, G, obj1, obj2, available):
-    # results has the form:
-    # result basis: [ (sign, operand 1 basis, operand 2 basis) ]
-    results = {}
+def get_mapping(func, G, lhs, rhs, structs):
+    # Result has the form of a dictionary, with
+    # { "e1": [(1, "e3", "e31"), (...), ...],
+    #   "e2": [...]
+    #   ...
+    # }
+    # Gives an expression for each component of the result
+    # where the expression is a list of terms, of the form
+    # (coefficient, lhs basis, rhs basis)
+    result = {}
 
     for A_i, A in enumerate(obj1.blades):
         for B_i, B in enumerate(obj2.blades):

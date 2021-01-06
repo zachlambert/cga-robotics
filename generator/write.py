@@ -1,14 +1,140 @@
 from mapping import get_mapping
 from operations import geometric_product, outer_product, inner_product
 
+def write_includes(f_h):
+    f_h.write("#include <cmath>\n")
+    f_h.write("\n")
+
 def write_struct(G, struct, f_h, f_cpp):
-    f_h.write("struct {} ".format(struct.name)+"{\n")
-    for blade in struct.blades:
-        if blade.basis() == "1":
-            f_h.write("    double scalar;\n")
+    f_h.write("struct {name} ".format(name=struct.name)+"{\n")
+
+    # Write public members
+    for i in range(len(struct.variables)):
+        f_h.write("    {} {};\n".format(struct.types[i], struct.variables[i]))
+
+    # operator+=
+    f_h.write("    {name}& operator+=(const {name} &other) ".format(name=struct.name)+"{\n")
+    for var in struct.basis_to_var.keys():
+        f_h.write("        {var} += other.{var};\n".format(var=var))
+    f_h.write("        return *this;\n")
+    f_h.write("    }\n");
+
+    # operator-=
+    f_h.write("    {name}& operator-=(const {name} &other) ".format(name=struct.name)+"{\n")
+    for var in struct.basis_to_var.keys():
+        f_h.write("        {var} -= other.{var};\n".format(var=var))
+    f_h.write("        return *this;\n")
+    f_h.write("    }\n");
+
+    # operator*=(scalar)
+    f_h.write("    {name}& operator*=(double s) ".format(name=struct.name)+"{\n")
+    for var in struct.basis_to_var.keys():
+        f_h.write("        {var} *= s;\n".format(var=var))
+    f_h.write("        return *this;\n")
+    f_h.write("    }\n");
+
+    # operator/=(scalar)
+    f_h.write("    {name}& operator/=(double s) ".format(name=struct.name)+"{\n")
+    for var in struct.basis_to_var.keys():
+        f_h.write("        {var} /= s;\n".format(var=var))
+    f_h.write("        return *this;\n")
+    f_h.write("    }\n");
+
+    # operator- (negation)
+    f_h.write("    {name} operator-()const ".format(name=struct.name)+"{\n")
+    f_h.write("        return {"+", ".join(["-"+var for var in struct.basis_to_var.keys()])+"};\n")
+    f_h.write("    };\n")
+
+    # End of struct body
+    f_h.write("};\n\n");
+
+    # operator+
+    f_h.write("inline {name} operator+(const {name} &lhs, const {name} &rhs)".format(name=struct.name)+"{\n")
+    f_h.write("    {name} result(lhs);\n".format(name=struct.name))
+    f_h.write("    result += rhs;\n")
+    f_h.write("    return result;\n")
+    f_h.write("}\n")
+
+    # operator-
+    f_h.write("inline {name} operator-(const {name} &lhs, const {name} &rhs)".format(name=struct.name)+"{\n")
+    f_h.write("    {name} result(lhs);\n".format(name=struct.name))
+    f_h.write("    result -= rhs;\n")
+    f_h.write("    return result;\n")
+    f_h.write("}\n")
+
+    # operator*(scalar)
+    f_h.write("inline {name} operator*(const {name} &lhs, double rhs)".format(name=struct.name)+"{\n")
+    f_h.write("    {name} result(lhs);\n".format(name=struct.name))
+    f_h.write("    result *= rhs;\n")
+    f_h.write("    return result;\n")
+    f_h.write("}\n")
+    f_h.write("inline {name} operator*(double lhs, const {name} &rhs)".format(name=struct.name)+"{\n")
+    f_h.write("    return rhs*lhs;\n")
+    f_h.write("}\n")
+
+    # operator/(scalar)
+    f_h.write("inline {name} operator/(const {name} &lhs, double rhs)".format(name=struct.name)+"{\n")
+    f_h.write("    {name} result(lhs);\n".format(name=struct.name))
+    f_h.write("    result /= rhs;\n")
+    f_h.write("    return result;\n")
+    f_h.write("}\n")
+
+    f_h.write("\n\n")
+
+def write_unary_operations(G, struct, f_h, f_cpp):
+
+    # Reverse
+
+    if type(struct.grade) != list:
+        # Homogeneous
+        num_reverses = sum([i for i in range(1, struct.grade)])
+        if num_reverses%2 == 0:
+            # Sign doesn't change, can return const ref
+            return_type = "const {}&".format(struct.name)
+            return_expression = "x"
         else:
-            f_h.write("    double {};\n".format(blade.basis()))
-    f_h.write("};\n");
+            # Need to negate
+            return_type = struct.name
+            return_expression = "-x"
+    else:
+        num_reverses = [
+            sum([i for i in range(1, grade)]) for grade in struct.grade]
+        negations = [
+            num%2==1 for num in num_reverses]
+        if all([negate==False for negate in negations]):
+            return_type = "const {}&".format(struct.name)
+            return_expression = "x"
+        elif all([negate==True for negate in negations]):
+            return_type = struct.name
+            return_expression = "-x"
+        else:
+            return_type = struct.name
+            return_expressions = []
+            for i, var in enumerate(struct.variables):
+                if negations[i]:
+                    return_expressions.append("-x.{}".format(var))
+                else:
+                    return_expressions.append("x.{}".format(var))
+            return_expression = "{" + ", ".join(return_expressions) + "}"
+
+    f_h.write("{} reverse(const {} &x) ".format(return_type, struct.name)+"{\n")
+    f_h.write("    return {};\n".format(return_expression))
+    f_h.write("}\n")
+
+    # Inverse
+    # For an orthonormal basis, equal to reverse / norm, with sign dependent on
+    # grade and signature
+    # But inverse doesn't distribute
+    # inverse(a + b) ~= inverse(a) + inverse(b)
+    # So this doesn't extend to a non-orthonormal basis
+    # Will leave for now, until I need to add in a generic inverse
+
+    f_h.write("double norm2(const {name} &x) ".format(name=struct.name)+"{\n")
+    f_h.write("    return inner(x, x);\n")
+    f_h.write("}\n")
+    f_h.write("double norm(const {name} &x) ".format(name=struct.name)+"{\n")
+    f_h.write("    return std::sqrt(inner(x, x));\n")
+    f_h.write("}\n")
 
 def _write_product_body(mapping, f_h, f_cpp):
     for ind, elements in mapping.indices.items():
@@ -52,7 +178,7 @@ def _write_geometric_product(G, obj1, obj2, available, f_h, f_cpp):
     mapping = get_mapping(geometric_product, G, obj1, obj2, available)
     if len(mapping.indices) == 0: return
 
-    prototype = "{} operator*(const {} &lhs, const {} &rhs)".format(
+    prototype = "{result} operator*(const {name} &lhs, const {name} &rhs)".format(
         mapping.result.name, mapping.op1.handle, mapping.op2.handle
     )
     f_h.write(prototype + ";\n")
@@ -104,11 +230,11 @@ def _write_inner_product(G, obj1, obj2, available, f_h, f_cpp):
     _write_product_body(mapping, f_h, f_cpp)
     f_cpp.write("\n")
 
-def write_products(G, obj1, obj2, available, f_h, f_cpp):
-    _write_geometric_product(G, obj1, obj2, available, f_h, f_cpp)
-    _write_outer_product(G, obj1, obj2, available, f_h, f_cpp)
-    _write_inner_product(G, obj1, obj2, available, f_h, f_cpp)
-    if obj1!=obj2:
-        _write_geometric_product(G, obj2, obj1, available, f_h, f_cpp)
-        _write_outer_product(G, obj2, obj1, available, f_h, f_cpp)
-        _write_inner_product(G, obj2, obj1, available, f_h, f_cpp)
+def write_binary_operations(G, struct1, struct2, structs, f_h, f_cpp):
+    _write_geometric_product(G, struct1, struct2, structs, f_h, f_cpp)
+    _write_outer_product(G, struct1, struct2, structs, f_h, f_cpp)
+    _write_inner_product(G, struct1, struct2, structs, f_h, f_cpp)
+    # if obj1!=obj2:
+    #     _write_geometric_product(G, obj2, obj1, available, f_h, f_cpp)
+    #     _write_outer_product(G, obj2, obj1, available, f_h, f_cpp)
+    #     _write_inner_product(G, obj2, obj1, available, f_h, f_cpp)
