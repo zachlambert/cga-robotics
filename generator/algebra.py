@@ -28,9 +28,7 @@ def combination(n, level, start=1, add=True):
     else:
         items = []
         for i in range(start, n):
-            asdf = [[i]+comb for comb in combination(n, level-1, i+1, False)]
-            items += asdf
-
+            items += [[i]+comb for comb in combination(n, level-1, i+1, False)]
         if(add):
             return combination(n, level-1) + items
         else:
@@ -44,3 +42,10 @@ class Algebra:
         self.indices = {self.blades[i].basis(): i for i in range(len(self.blades))}
     def grade(self, r):
         return [b for b in self.blades if b.grade()==r]
+
+#TODO: Specify a transformation from the canonical basis, to the actual basis
+# used in code. The canonical basis is easier to generate the operations for,
+# but its more compact to use a basis with null vectors
+# The choice of basis shouldn't matter, so not bothering with this for now.
+class Transformation:
+    pass

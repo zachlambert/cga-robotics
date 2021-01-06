@@ -1,12 +1,11 @@
 # First, generate blades
 
 from algebra import Algebra, Blade
-from write import write_products
+from write import write_struct, write_products
 
-class Object:
-    def __init__(self, name, handle, blades):
+class Struct:
+    def __init__(self, name, blades):
         self.name = name
-        self.handle = handle
         self.blades = blades
 
 def main():
@@ -14,37 +13,28 @@ def main():
     sig = [1, 1, 1, 1, -1]
 
     G = Algebra(n, sig)
+    # TODO: Include a dimension transformation, to use the null
+    # vectors eo and ei instead of e+ and e-.
 
+    structs = []
+    structs.append(Struct("Vector", G.grade(1)))
+    structs.append(Struct("Bivector", G.grade(2)))
+    structs.append(Struct("Trivector", G.grade(3)))
+    structs.append(Struct("Quadvector", G.grade(4)))
+    structs.append(Struct("Pseudoscalar", G.grade(5)))
+    # structs.append(Struct("Rotor", G.grade(0) + G.grade(2)))
+    # structs.append(Struct("Versor", G.grade(0) + G.grade(2) + G.grade(4)))
 
-    grades = []
-    grades.append(Object("Vector", "VectorHandle", G.grade(1)))
-    grades.append(Object("Bivector", "BivectorHandle", G.grade(2)))
-    grades.append(Object("Trivector", "TrivectorHandle", G.grade(3)))
-    grades.append(Object("Quadvector", "QuadvectorHandle", G.grade(4)))
-    grades.append(Object("Pseudoscalar", "Pseudoscalar", G.grade(5)))
+    h_base = "include/"
+    cpp_base = "src/"
 
-    scalar = Object("double", "double", G.grade(0))
-    multivector = Object("Multivector", "Multivector", G.blades)
-    versor = Object("Versor", "Versor", G.grade(0) + G.grade(2))
+    with open(h_base+"cga_gen.h", "w") as f_h:
+        with open(cpp_base+"cga_gen.cpp", "w") as f_cpp:
+            for struct in structs:
+                write_struct(G, struct, f_h, f_cpp)
+            # for i in range(len(structs)):
+            #     for j in range(i, len(structs)):
+            #         write_products(G, structs[i], structs[j], structs, f_h, f_cpp)
 
-    # More specific objects earlier
-    available = [scalar] + grades + [versor, multivector]
-
-    h_base = "include"
-    cpp_base = "src"
-
-    with open(h_base+"multivector.h", "w") as f_h:
-        with open(cpp_base+"multivector.cpp", "w") as f_cpp:
-            for obj in [multivector] + grades:
-                write_products(G, multivector, obj, available, f_h, f_cpp)
-
-    with open(h_base+"versor.h", "w") as f_h:
-        with open(cpp_base+"versor.cpp", "w") as f_cpp:
-            for obj in [versor] + grades:
-                write_products(G, versor, obj, available, f_h, f_cpp)
-
-    with open(h_base+"grades.h", "w") as f_h:
-        with open(cpp_base+"grades.cpp", "w") as f_cpp:
-            for i in range(len(grades)):
-                for j in range(i, len(grades)):
-                    write_products(G, grades[i], grades[j], available, f_h, f_cpp)
+if __name__ == "__main__":
+    main()

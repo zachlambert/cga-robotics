@@ -1,6 +1,15 @@
 from mapping import get_mapping
 from operations import geometric_product, outer_product, inner_product
 
+def write_struct(G, struct, f_h, f_cpp):
+    f_h.write("struct {} ".format(struct.name)+"{\n")
+    for blade in struct.blades:
+        if blade.basis() == "1":
+            f_h.write("    double scalar;\n")
+        else:
+            f_h.write("    double {};\n".format(blade.basis()))
+    f_h.write("};\n");
+
 def _write_product_body(mapping, f_h, f_cpp):
     for ind, elements in mapping.indices.items():
         s = ""

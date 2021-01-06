@@ -1,5 +1,4 @@
 
-
 class MappingElement:
     def __init__(self, sign, op1_index, op2_index):
         self.sign = sign
