@@ -21,13 +21,35 @@ def blade_grade(vectors):
     return len(vectors)
 
 class Algebra:
+
     def __init__(self, sig):
         self.n = len(sig)
         self.sig = sig
         combinations = combination(n, n)
-        self.blades = { "1": [] }
+        self.blades = ["1"]
         for comb in combination(n, n):
-            self.blades[blade_name(comb)] = comb
+            self.blades.append(self.vectors_to_blade(comb))
+
+    def blade_to_vectors(self, blade):
+        if blade=="1":
+            return []
+        else:
+            return [int(blade[i]) for i in range(1, len(blade))]
+
+    def vectors_to_blade(self, vectors):
+        if len(vectors) == 0:
+            return "1"
+        else:
+            blade = "e" + "".join([str(vector) for vector in vectors])
+
+    def blade_grade(self, blade):
+        if blade=="1":
+            return 0
+        else:
+            return len(blade)-1
+
+    def vectors_grade(self, vectors):
+        return len(vectors)
 
     def grade(self, r):
-        return [ blade for blade, vectors in blades.items() if blade_grade(vectors) == r ]
+        return [ blade for blade in self.blades if self.blade_grade(blade) == r ]

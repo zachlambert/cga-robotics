@@ -136,59 +136,56 @@ def write_unary_operations(G, struct, f_h, f_cpp):
     f_h.write("    return std::sqrt(inner(x, x));\n")
     f_h.write("}\n")
 
-def _write_product_body(mapping, f_h, f_cpp):
-    for ind, elements in mapping.indices.items():
-        s = ""
-        for element in elements:
-            if element.sign==-1:
-                s+="-"
-            elif len(s)!=0:
-                s+="+"
+def _write_product_body(lhs_struct, rhs_struct, results, f_cpp):
 
-            if len(mapping.op1.blades)==1:
-                if mapping.op1.blades[0].grade()==0:
-                    op1_s = "lhs"
-                else:
-                    op1_s = "lhs.data"
-            else:
-                op1_s = "lhs.data[{}]".format(element.op1_index)
+    # First, convert expressions to be in terms of argument variables
+    temp_results = {}
+    for blade, expression in results.items():
+        new_expression = []
+        for term in expression:
+            new_expression.append(term)
+        temp_results[blade] = new_expression
 
-            if len(mapping.op2.blades)==1:
-                if mapping.op2.blades[0].grade()==0:
-                    op2_s = "rhs"
-                else:
-                    op2_s = "rhs.data"
-            else:
-                op2_s = "rhs.data[{}]".format(element.op2_index)
+    # Second, convert key of results to be in terms of result variables
+    new_results = {}
+    for blade, expression in temp_results.items():
+        pass
 
-            s+="{}*{}".format(op1_s, op2_s)
+    for var, expression in new_results.items():
+        f_cpp.write(
+            "    result.{var} = {expression}".format(
+                var=var,
+                expression = "+".join([
+                    str(term[0]) # Coefficient
+                    +"*lhs."+term[1] # lhs member
+                    +"*rhs."+term[2] # rhs member
+                    for term in expression])
+            )
+        )
 
-        if len(mapping.result.blades)==1:
-            if mapping.result.blades[0].grade()==0:
-                f_cpp.write("    result = {};\n".format(s))
-            else:
-                f_cpp.write("    result.data = {};\n".format(s))
-        else:
-            f_cpp.write("    result.data[{}] = {};\n".format(ind, s))
+def _write_geometric_product(G, struct1, struct2, structs, f_h, f_cpp):
+    results, return_struct = get_mapping(geometric_product, G, struct1, struct2, structs)
+    if return_struct is None: return
 
-    f_cpp.write("    return result;\n")
-    f_cpp.write("}\n")
-
-def _write_geometric_product(G, obj1, obj2, available, f_h, f_cpp):
-    mapping = get_mapping(geometric_product, G, obj1, obj2, available)
-    if len(mapping.indices) == 0: return
-
-    prototype = "{result} operator*(const {name} &lhs, const {name} &rhs)".format(
-        mapping.result.name, mapping.op1.handle, mapping.op2.handle
-    )
+    prototype = "{ret} operator*(const {lhs} &lhs, const {rhs} &rhs)".format(
+        ret=return_struct.name, lhs=struct1.name, rhs=struct2.name)
     f_h.write(prototype + ";\n")
     f_h.write("\n")
 
+    if struct1.name != struct2.name:
+        f_h.write("{ret} operator*(const {lhs} &lhs, const {rhs} &rhs)\n".format(
+            ret=return_struct.name, lhs=struct2.name, rhs=struct1.name))
+        f_h.write("{\n")
+        f_h.write("    return rhs*lhs;\n")
+        f_h.write("}\n")
+        f_h.write("\n")
+
     f_cpp.write(prototype + "\n")
     f_cpp.write("{\n")
-    f_cpp.write("    {} result;\n".format(mapping.result.name))
-
-    _write_product_body(mapping, f_h, f_cpp)
+    f_cpp.write("    {} result;\n".format(return_struct.name))
+    _write_product_body(struct1, struct2, results, f_cpp)
+    f_cpp.write("    return result;\n")
+    f_cpp.write("}\n")
     f_cpp.write("\n")
 
 def _write_outer_product(G, obj1, obj2, available, f_h, f_cpp):
@@ -232,8 +229,8 @@ def _write_inner_product(G, obj1, obj2, available, f_h, f_cpp):
 
 def write_binary_operations(G, struct1, struct2, structs, f_h, f_cpp):
     _write_geometric_product(G, struct1, struct2, structs, f_h, f_cpp)
-    _write_outer_product(G, struct1, struct2, structs, f_h, f_cpp)
-    _write_inner_product(G, struct1, struct2, structs, f_h, f_cpp)
+    # _write_outer_product(G, struct1, struct2, structs, f_h, f_cpp)
+    # _write_inner_product(G, struct1, struct2, structs, f_h, f_cpp)
     # if obj1!=obj2:
     #     _write_geometric_product(G, obj2, obj1, available, f_h, f_cpp)
     #     _write_outer_product(G, obj2, obj1, available, f_h, f_cpp)

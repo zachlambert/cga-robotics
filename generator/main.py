@@ -128,30 +128,50 @@ def make_grades(G):
         ["double" for i in range(5)]
     )
 
+    Quadvector.set_var_expression("e123o", [(0.5, "e1234"), (0.5, "e1235")])
+    Quadvector.set_var_expression("e123i", [(-1, "e1234"), (1, "e1235")])
+
+    Quadvector.set_blade_expression("e1234", [(1, "e123o"), (-0.5, "e123i")])
+    Quadvector.set_blade_expression("e1235", [(1, "e123o"), (0.5, "e123i")])
+
+    Quadvector.set_equal("e23oi", "e2345")
+    Quadvector.set_opposite("e31oi", "e1345")
+    Quadvector.set_equal("e12oi", "e1245")
+
     Bivector.set_equal("eoi", "e45")
 
-    return [Vector, Bivector]
+    # PSEUDOSCALAR
+
+    Pseudoscalar = Struct(
+        "Pseudoscalar",
+        G.grade(5),
+        ["I5"],
+        ["double"]
+    )
+    Pseudoscalar.set_equal("I5", "e12345")
+
+    return [Vector, Bivector, Trivector, Quadvector, Pseudoscalar]
 
 def make_compounds(grades_dict):
     Rotor = Struct("Rotor", ["s", "b"], ["double", "Bivector"], [0, 2])
     Rotor.set_equal("s", "1");
     Rotor.copy("b.", grades_dict["Bivector"])
 
-    # Versor = Struct("Versor", ["double s", "Bivector b", "Quadvector q"])
-    # Rotor.set_equal("s", "1");
-    # Versor.copy("b.", grades_dict["Bivector"])
-    # Versor.copy("q.", grades_dict["Quadvector"])
+    Versor = Struct("Versor", ["double s", "Bivector b", "Quadvector q"])
+    Rotor.set_equal("s", "1");
+    Versor.copy("b.", grades_dict["Bivector"])
+    Versor.copy("q.", grades_dict["Quadvector"])
 
-    # Multivector = Struct("Multivector",
-    #     ["double s", "Vector v", "Bivector b", "Trivector t", "Quadvector q", "Pseudoscalar p"])
-    # Rotor.set_equal("s", "1");
-    # Versor.copy("v.", grades_dict["Vector"])
-    # Versor.copy("b.", grades_dict["Bivector"])
-    # Versor.copy("t.", grades_dict["Trivector"])
-    # Versor.copy("q.", grades_dict["Quadvector"])
-    # Versor.copy("p.", grades_dict["Pseudoscalar"])
+    Multivector = Struct("Multivector",
+        ["double s", "Vector v", "Bivector b", "Trivector t", "Quadvector q", "Pseudoscalar p"])
+    Rotor.set_equal("s", "1");
+    Versor.copy("v.", grades_dict["Vector"])
+    Versor.copy("b.", grades_dict["Bivector"])
+    Versor.copy("t.", grades_dict["Trivector"])
+    Versor.copy("q.", grades_dict["Quadvector"])
+    Versor.copy("p.", grades_dict["Pseudoscalar"])
 
-    return [Rotor]#, Versor, Multivector]
+    return [Rotor, Versor, Multivector]
 
 def main():
     sig = [1, 1, 1, 1, -1]
