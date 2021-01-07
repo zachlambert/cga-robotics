@@ -1,7 +1,18 @@
 #include <iostream>
+#include <vector>
 
 #include "cga.h"
 #include "geometry.h"
+
+struct P {
+    double x;
+    double y;
+    double z;
+};
+
+struct Q {
+    double x[3];
+};
 
 int main()
 {

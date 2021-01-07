@@ -320,6 +320,47 @@ def make_structs(G):
 
     return ordered_structs
 
+def create_conversion(struct1, struct2, prefix1, prefix2, variables):
+    return (
+        struct1, struct2,
+        [prefix1+variable for variable in variables],
+        [prefix2+variable for variable in variables]
+    )
+
+def make_conversions():
+    # Use explicit casting for casting to a more specific type
+    # Allow implicit casting for casting to a more general type
+    # Conversions have the form:
+    # (Struct1, Struct2, vars1, vars2)
+    # If you can cast in one way, allow casting the other way
+
+    conversions = []
+
+    conversions.append(create_conversion(
+        "Vector3", "Vector", "", "",
+        ["e1", "e2", "e3"]
+    ))
+
+    conversions.append(create_conversion(
+        "Bivector3", "Bivector", "", "",
+        ["e23", "e31", "e12"]
+    ))
+
+    conversions.append(create_conversion(
+        "Rotor3", "Rotor", "", "",
+        ["s", "e23", "e31", "e12"]
+    ))
+
+    conversions.append(create_conversion(
+        "Bivector3", "Rotor3", "", "b.",
+        ["e23", "e31", "e12"]
+    ))
+
+    # TODO: Maybe see if I can programmatically determine the conversion
+    # between types.
+    # Probably still worth explicitly stating which conversions to make though.
+
+
 def main():
     sig = [1, 1, 1, 1, -1]
 
