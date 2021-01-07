@@ -4,22 +4,16 @@ from algebra import Algebra
 from write import write_includes, write_struct, write_unary_operations, write_binary_operations, write_printing
 
 class Struct:
-    def __init__(self, name, blades, variables, members):
+    def __init__(self, name, blades, variables, members, types):
         self.name = name
         self.blades = blades
         self.variables = variables # e1, e2, e12, b.e12, etc
         self.members = members # double e1, double e2, Bivector b, etc
+        self.types = types
         self.var_expressions = {}
         self.blade_expressions = {}
         self.print_newlines = []
         self.constructors = []
-        # var_expressions defines expressions for each variable in terms of basis blades
-        # blade_expressions defines expressions for each basis blade in terms of variables
-        # Each has the form:
-        # y: [(a1, "x1"), (a2, "x2"), ...]
-        # Which means:
-        # y = a1*x1 + a2*x2
-        # Wherea a1, a2 are coefficients, x1, x2 are variable names
 
     def set_var_expression(self, var, expression):
         self.var_expressions[var] = expression
@@ -58,7 +52,8 @@ def make_structs(G):
         "Vector3",
         ["e1", "e2", "e3"],
         ["e1", "e2", "e3"],
-        ["double e1", "double e2", "double e3"],
+        ["e1", "e2", "e3"],
+        ["double" for i in range(3)]
     )
     Vector3.set_equal("e1", "e1")
     Vector3.set_equal("e2", "e2")
@@ -73,7 +68,8 @@ def make_structs(G):
         "Vector",
         G.grade(1),
         ["e1", "e2", "e3", "eo", "ei"],
-        ["double e1", "double e2", "double e3", "double eo", "double ei"]
+        ["e1", "e2", "e3", "eo", "ei"],
+        ["double" for i in range(5)]
     )
     Vector.set_print_newlines("e3")
 
@@ -100,10 +96,8 @@ def make_structs(G):
         "Bivector",
         G.grade(2),
         ["e23", "e31", "e12", "e1o", "e2o", "e3o", "e1i", "e2i", "e3i", "eoi"],
-        ["double e23", "double e31", "double e12",
-         "double e1o", "double e2o", "double e3o",
-         "double e1i", "double e2i", "double e3i",
-         "double eoi"]
+        ["e23", "e31", "e12", "e1o", "e2o", "e3o", "e1i", "e2i", "e3i", "eoi"],
+        ["double" for i in range(10)]
     )
     Bivector.set_print_newlines("e12", "e3o", "e3i");
 
@@ -136,10 +130,8 @@ def make_structs(G):
         "Trivector",
         G.grade(3),
         ["e123", "e23o", "e31o", "e12o", "e23i", "e31i", "e12i", "e1oi", "e2oi", "e3oi"],
-        ["double e123",
-         "double e23o", "double e31o", "double e12o",
-         "double e23i", "double e31i", "double e12i",
-         "double e1oi", "double e2oi", "double e3oi"],
+        ["e123", "e23o", "e31o", "e12o", "e23i", "e31i", "e12i", "e1oi", "e2oi", "e3oi"],
+        ["double" for i in range(10)]
     )
     Trivector.set_print_newlines("e123", "e12o", "e12i")
 
@@ -173,7 +165,8 @@ def make_structs(G):
         "Quadvector",
         G.grade(4),
         ["e123o", "e123i", "e23oi", "e31oi", "e12oi"],
-        ["double e123o", "double e123i", "double e23oi", "double e31oi", "double e12oi"],
+        ["e123o", "e123i", "e23oi", "e31oi", "e12oi"],
+        ["double" for i in range(5)]
     )
     Quadvector.set_print_newlines("e123i")
 
@@ -195,7 +188,8 @@ def make_structs(G):
         "Pseudoscalar",
         G.grade(5),
         ["p"],
-        ["double p"]
+        ["p"],
+        ["double"]
     )
     Pseudoscalar.set_equal("p", "e12345")
 
@@ -208,7 +202,8 @@ def make_structs(G):
         "Pseudoscalar3",
         ["e123"],
         ["p"],
-        ["double p"]
+        ["p"],
+        ["double"]
     )
     Pseudoscalar3.set_equal("p", "e123")
 
@@ -221,7 +216,8 @@ def make_structs(G):
         "Bivector3",
         ["e12", "e13", "e23"],
         ["e23", "e31", "e12"],
-        ["double e23", "double e31", "double e12"]
+        ["e23", "e31", "e12"],
+        ["double" for i in range(3)]
     )
     Bivector3.set_equal("e23", "e23")
     Bivector3.set_opposite("e31", "e13")
@@ -236,7 +232,8 @@ def make_structs(G):
         "Rotor3",
         ["1", "e12", "e13", "e23"],
         ["s", "b.e23", "b.e31", "b.e12"],
-        ["double s", "Bivector3 b"]
+        ["s", "b"],
+        ["double", "Bivector3"]
     )
     Rotor3.set_equal("s", "1")
     Rotor3.copy("b.", Bivector3)
@@ -254,7 +251,8 @@ def make_structs(G):
          "b.e1o", "b.e2o", "b.e3o",
          "b.e1i", "b.e2i", "b.e3i",
          "b.eoi"],
-        ["double s", "Bivector b"]
+        ["s", "b"],
+        ["double", "Bivector"]
     )
     Rotor.set_equal("s", "1");
     Rotor.copy("b.", Bivector)
@@ -274,7 +272,8 @@ def make_structs(G):
          "b.e1i", "b.e2i", "b.e3i",
          "b.eoi",
          "q.e123o", "q.e123i", "q.e23oi", "q.e31oi", "q.e12oi"],
-        ["double s", "Bivector b", "Quadvector q"]
+        ["s", "b", "q"],
+        ["double", "Bivector", "Quadvector"]
     )
     Versor.set_equal("s", "1");
     Versor.copy("b.", Bivector)
@@ -299,7 +298,8 @@ def make_structs(G):
          "t.e1oi", "t.e2oi", "t.e3oi",
          "q.e123o", "q.e123i", "q.e23oi", "q.e31oi", "q.e12oi",
          "p"],
-        ["double s", "Vector v", "Bivector b", "Trivector t", "Quadvector q", "double p"]
+        ["s", "v", "b", "t", "q", "p"],
+        ["double", "Vector", "Bivector", "Trivector", "Quadvector", "double"]
     )
     Multivector.set_equal("s", "1");
     Multivector.copy("v.", Vector)
@@ -387,6 +387,7 @@ def main():
         "double",
         G.grade(0),
         [""],
+        None,
         None
     )
     Scalar.set_equal("", "1")

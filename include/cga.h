@@ -241,34 +241,26 @@ struct Rotor3 {
 
     Rotor3& operator+=(const Rotor3 &other) {
         s += other.s;
-        b.e23 += other.b.e23;
-        b.e31 += other.b.e31;
-        b.e12 += other.b.e12;
+        b += other.b;
         return *this;
     }
     Rotor3& operator-=(const Rotor3 &other) {
         s -= other.s;
-        b.e23 -= other.b.e23;
-        b.e31 -= other.b.e31;
-        b.e12 -= other.b.e12;
+        b -= other.b;
         return *this;
     }
     Rotor3& operator*=(double s) {
         s *= s;
-        b.e23 *= s;
-        b.e31 *= s;
-        b.e12 *= s;
+        b *= s;
         return *this;
     }
     Rotor3& operator/=(double s) {
         s /= s;
-        b.e23 /= s;
-        b.e31 /= s;
-        b.e12 /= s;
+        b /= s;
         return *this;
     }
     Rotor3 operator-()const {
-        return {-s, -b.e23, -b.e31, -b.e12};
+        return {-s, -b};
     };
 };
 
@@ -634,62 +626,26 @@ struct Rotor {
 
     Rotor& operator+=(const Rotor &other) {
         s += other.s;
-        b.e23 += other.b.e23;
-        b.e31 += other.b.e31;
-        b.e12 += other.b.e12;
-        b.e1o += other.b.e1o;
-        b.e2o += other.b.e2o;
-        b.e3o += other.b.e3o;
-        b.e1i += other.b.e1i;
-        b.e2i += other.b.e2i;
-        b.e3i += other.b.e3i;
-        b.eoi += other.b.eoi;
+        b += other.b;
         return *this;
     }
     Rotor& operator-=(const Rotor &other) {
         s -= other.s;
-        b.e23 -= other.b.e23;
-        b.e31 -= other.b.e31;
-        b.e12 -= other.b.e12;
-        b.e1o -= other.b.e1o;
-        b.e2o -= other.b.e2o;
-        b.e3o -= other.b.e3o;
-        b.e1i -= other.b.e1i;
-        b.e2i -= other.b.e2i;
-        b.e3i -= other.b.e3i;
-        b.eoi -= other.b.eoi;
+        b -= other.b;
         return *this;
     }
     Rotor& operator*=(double s) {
         s *= s;
-        b.e23 *= s;
-        b.e31 *= s;
-        b.e12 *= s;
-        b.e1o *= s;
-        b.e2o *= s;
-        b.e3o *= s;
-        b.e1i *= s;
-        b.e2i *= s;
-        b.e3i *= s;
-        b.eoi *= s;
+        b *= s;
         return *this;
     }
     Rotor& operator/=(double s) {
         s /= s;
-        b.e23 /= s;
-        b.e31 /= s;
-        b.e12 /= s;
-        b.e1o /= s;
-        b.e2o /= s;
-        b.e3o /= s;
-        b.e1i /= s;
-        b.e2i /= s;
-        b.e3i /= s;
-        b.eoi /= s;
+        b /= s;
         return *this;
     }
     Rotor operator-()const {
-        return {-s, -b.e23, -b.e31, -b.e12, -b.e1o, -b.e2o, -b.e3o, -b.e1i, -b.e2i, -b.e3i, -b.eoi};
+        return {-s, -b};
     };
 };
 
@@ -725,82 +681,30 @@ struct Versor {
 
     Versor& operator+=(const Versor &other) {
         s += other.s;
-        b.e23 += other.b.e23;
-        b.e31 += other.b.e31;
-        b.e12 += other.b.e12;
-        b.e1o += other.b.e1o;
-        b.e2o += other.b.e2o;
-        b.e3o += other.b.e3o;
-        b.e1i += other.b.e1i;
-        b.e2i += other.b.e2i;
-        b.e3i += other.b.e3i;
-        b.eoi += other.b.eoi;
-        q.e123o += other.q.e123o;
-        q.e123i += other.q.e123i;
-        q.e23oi += other.q.e23oi;
-        q.e31oi += other.q.e31oi;
-        q.e12oi += other.q.e12oi;
+        b += other.b;
+        q += other.q;
         return *this;
     }
     Versor& operator-=(const Versor &other) {
         s -= other.s;
-        b.e23 -= other.b.e23;
-        b.e31 -= other.b.e31;
-        b.e12 -= other.b.e12;
-        b.e1o -= other.b.e1o;
-        b.e2o -= other.b.e2o;
-        b.e3o -= other.b.e3o;
-        b.e1i -= other.b.e1i;
-        b.e2i -= other.b.e2i;
-        b.e3i -= other.b.e3i;
-        b.eoi -= other.b.eoi;
-        q.e123o -= other.q.e123o;
-        q.e123i -= other.q.e123i;
-        q.e23oi -= other.q.e23oi;
-        q.e31oi -= other.q.e31oi;
-        q.e12oi -= other.q.e12oi;
+        b -= other.b;
+        q -= other.q;
         return *this;
     }
     Versor& operator*=(double s) {
         s *= s;
-        b.e23 *= s;
-        b.e31 *= s;
-        b.e12 *= s;
-        b.e1o *= s;
-        b.e2o *= s;
-        b.e3o *= s;
-        b.e1i *= s;
-        b.e2i *= s;
-        b.e3i *= s;
-        b.eoi *= s;
-        q.e123o *= s;
-        q.e123i *= s;
-        q.e23oi *= s;
-        q.e31oi *= s;
-        q.e12oi *= s;
+        b *= s;
+        q *= s;
         return *this;
     }
     Versor& operator/=(double s) {
         s /= s;
-        b.e23 /= s;
-        b.e31 /= s;
-        b.e12 /= s;
-        b.e1o /= s;
-        b.e2o /= s;
-        b.e3o /= s;
-        b.e1i /= s;
-        b.e2i /= s;
-        b.e3i /= s;
-        b.eoi /= s;
-        q.e123o /= s;
-        q.e123i /= s;
-        q.e23oi /= s;
-        q.e31oi /= s;
-        q.e12oi /= s;
+        b /= s;
+        q /= s;
         return *this;
     }
     Versor operator-()const {
-        return {-s, -b.e23, -b.e31, -b.e12, -b.e1o, -b.e2o, -b.e3o, -b.e1i, -b.e2i, -b.e3i, -b.eoi, -q.e123o, -q.e123i, -q.e23oi, -q.e31oi, -q.e12oi};
+        return {-s, -b, -q};
     };
 };
 
@@ -839,146 +743,42 @@ struct Multivector {
 
     Multivector& operator+=(const Multivector &other) {
         s += other.s;
-        v.e1 += other.v.e1;
-        v.e2 += other.v.e2;
-        v.e3 += other.v.e3;
-        v.eo += other.v.eo;
-        v.ei += other.v.ei;
-        b.e23 += other.b.e23;
-        b.e31 += other.b.e31;
-        b.e12 += other.b.e12;
-        b.e1o += other.b.e1o;
-        b.e2o += other.b.e2o;
-        b.e3o += other.b.e3o;
-        b.e1i += other.b.e1i;
-        b.e2i += other.b.e2i;
-        b.e3i += other.b.e3i;
-        b.eoi += other.b.eoi;
-        t.e123 += other.t.e123;
-        t.e23o += other.t.e23o;
-        t.e31o += other.t.e31o;
-        t.e12o += other.t.e12o;
-        t.e23i += other.t.e23i;
-        t.e31i += other.t.e31i;
-        t.e12i += other.t.e12i;
-        t.e1oi += other.t.e1oi;
-        t.e2oi += other.t.e2oi;
-        t.e3oi += other.t.e3oi;
-        q.e123o += other.q.e123o;
-        q.e123i += other.q.e123i;
-        q.e23oi += other.q.e23oi;
-        q.e31oi += other.q.e31oi;
-        q.e12oi += other.q.e12oi;
+        v += other.v;
+        b += other.b;
+        t += other.t;
+        q += other.q;
         p += other.p;
         return *this;
     }
     Multivector& operator-=(const Multivector &other) {
         s -= other.s;
-        v.e1 -= other.v.e1;
-        v.e2 -= other.v.e2;
-        v.e3 -= other.v.e3;
-        v.eo -= other.v.eo;
-        v.ei -= other.v.ei;
-        b.e23 -= other.b.e23;
-        b.e31 -= other.b.e31;
-        b.e12 -= other.b.e12;
-        b.e1o -= other.b.e1o;
-        b.e2o -= other.b.e2o;
-        b.e3o -= other.b.e3o;
-        b.e1i -= other.b.e1i;
-        b.e2i -= other.b.e2i;
-        b.e3i -= other.b.e3i;
-        b.eoi -= other.b.eoi;
-        t.e123 -= other.t.e123;
-        t.e23o -= other.t.e23o;
-        t.e31o -= other.t.e31o;
-        t.e12o -= other.t.e12o;
-        t.e23i -= other.t.e23i;
-        t.e31i -= other.t.e31i;
-        t.e12i -= other.t.e12i;
-        t.e1oi -= other.t.e1oi;
-        t.e2oi -= other.t.e2oi;
-        t.e3oi -= other.t.e3oi;
-        q.e123o -= other.q.e123o;
-        q.e123i -= other.q.e123i;
-        q.e23oi -= other.q.e23oi;
-        q.e31oi -= other.q.e31oi;
-        q.e12oi -= other.q.e12oi;
+        v -= other.v;
+        b -= other.b;
+        t -= other.t;
+        q -= other.q;
         p -= other.p;
         return *this;
     }
     Multivector& operator*=(double s) {
         s *= s;
-        v.e1 *= s;
-        v.e2 *= s;
-        v.e3 *= s;
-        v.eo *= s;
-        v.ei *= s;
-        b.e23 *= s;
-        b.e31 *= s;
-        b.e12 *= s;
-        b.e1o *= s;
-        b.e2o *= s;
-        b.e3o *= s;
-        b.e1i *= s;
-        b.e2i *= s;
-        b.e3i *= s;
-        b.eoi *= s;
-        t.e123 *= s;
-        t.e23o *= s;
-        t.e31o *= s;
-        t.e12o *= s;
-        t.e23i *= s;
-        t.e31i *= s;
-        t.e12i *= s;
-        t.e1oi *= s;
-        t.e2oi *= s;
-        t.e3oi *= s;
-        q.e123o *= s;
-        q.e123i *= s;
-        q.e23oi *= s;
-        q.e31oi *= s;
-        q.e12oi *= s;
+        v *= s;
+        b *= s;
+        t *= s;
+        q *= s;
         p *= s;
         return *this;
     }
     Multivector& operator/=(double s) {
         s /= s;
-        v.e1 /= s;
-        v.e2 /= s;
-        v.e3 /= s;
-        v.eo /= s;
-        v.ei /= s;
-        b.e23 /= s;
-        b.e31 /= s;
-        b.e12 /= s;
-        b.e1o /= s;
-        b.e2o /= s;
-        b.e3o /= s;
-        b.e1i /= s;
-        b.e2i /= s;
-        b.e3i /= s;
-        b.eoi /= s;
-        t.e123 /= s;
-        t.e23o /= s;
-        t.e31o /= s;
-        t.e12o /= s;
-        t.e23i /= s;
-        t.e31i /= s;
-        t.e12i /= s;
-        t.e1oi /= s;
-        t.e2oi /= s;
-        t.e3oi /= s;
-        q.e123o /= s;
-        q.e123i /= s;
-        q.e23oi /= s;
-        q.e31oi /= s;
-        q.e12oi /= s;
+        v /= s;
+        b /= s;
+        t /= s;
+        q /= s;
         p /= s;
         return *this;
     }
     Multivector operator-()const {
-        return {-s, -v.e1, -v.e2, -v.e3, -v.eo, -v.ei, -b.e23, -b.e31, -b.e12, -b.e1o, -b.e2o, -b.e3o, -b.e1i, -b.e2i, -b.e3i, -b.eoi, -t.e123, -t.e23o, -t.e31o, -t.e12o, -t.e23i, -t.e31i, -t.e12i, -t.e1oi, -t.e2oi, -t.e3oi, -q.e123o, -q.e123i, -q.e23oi, -q.e31oi, -q.e12oi, -p};
+        return {-s, -v, -b, -t, -q, -p};
     };
 };
 
@@ -2541,7 +2341,7 @@ inline double norm(const Trivector &x) {
 std::ostream& operator<<(std::ostream& outs, const Trivector &x);
 
 inline Rotor reverse(const Rotor &x) {
-    return {x.s, -x.b.e23, -x.b.e31, -x.b.e12, -x.b.e1o, -x.b.e2o, -x.b.e3o, -x.b.e1i, -x.b.e2i, -x.b.e3i, -x.b.eoi};
+    return {x.s, -x.b};
 }
 std::ostream& operator<<(std::ostream& outs, const Rotor &x);
 

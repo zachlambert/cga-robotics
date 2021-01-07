@@ -12,8 +12,8 @@ def write_struct(G, struct, f_h, f_cpp):
     f_h.write("struct {name} ".format(name=struct.name)+"{\n")
 
     # Write public members
-    for member in struct.members:
-        f_h.write("    {};\n".format(member))
+    for i in range(len(struct.members)):
+        f_h.write("    {} {};\n".format(struct.types[i], struct.members[i]))
     f_h.write("\n")
 
     # Constructors
@@ -33,35 +33,35 @@ def write_struct(G, struct, f_h, f_cpp):
 
     # operator+=
     f_h.write("    {name}& operator+=(const {name} &other) ".format(name=struct.name)+"{\n")
-    for var in struct.variables:
-        f_h.write("        {var} += other.{var};\n".format(var=var))
+    for member in struct.members:
+        f_h.write("        {member} += other.{member};\n".format(member=member))
     f_h.write("        return *this;\n")
     f_h.write("    }\n");
 
     # operator-=
     f_h.write("    {name}& operator-=(const {name} &other) ".format(name=struct.name)+"{\n")
-    for var in struct.variables:
-        f_h.write("        {var} -= other.{var};\n".format(var=var))
+    for member in struct.members:
+        f_h.write("        {member} -= other.{member};\n".format(member=member))
     f_h.write("        return *this;\n")
     f_h.write("    }\n");
 
     # operator*=(scalar)
     f_h.write("    {name}& operator*=(double s) ".format(name=struct.name)+"{\n")
-    for var in struct.variables:
-        f_h.write("        {var} *= s;\n".format(var=var))
+    for member in struct.members:
+        f_h.write("        {member} *= s;\n".format(member=member))
     f_h.write("        return *this;\n")
     f_h.write("    }\n");
 
     # operator/=(scalar)
     f_h.write("    {name}& operator/=(double s) ".format(name=struct.name)+"{\n")
-    for var in struct.variables:
-        f_h.write("        {var} /= s;\n".format(var=var))
+    for member in struct.members:
+        f_h.write("        {member} /= s;\n".format(member=member))
     f_h.write("        return *this;\n")
     f_h.write("    }\n");
 
     # operator- (negation)
     f_h.write("    {name} operator-()const ".format(name=struct.name)+"{\n")
-    f_h.write("        return {"+", ".join(["-"+var for var in struct.variables])+"};\n")
+    f_h.write("        return {"+", ".join(["-"+member for member in struct.members])+"};\n")
     f_h.write("    };\n")
 
     # End of struct body
