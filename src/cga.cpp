@@ -2,6 +2,11 @@
 
 namespace cga {
 
+Vector::Vector(): e1(0), e2(0), e3(0), eo(0), ei(0) {}
+Vector::Vector(double e1, double e2, double e3, double eo, double ei): e1(e1), e2(e2), e3(e3), eo(eo), ei(ei) {}
+Vector::Vector(const Vector3 &v): e1(v.e1), e2(v.e2), e3(v.e3), eo(0), ei(0) {}
+Vector::Vector(const Multivector &mv): e1(mv.v.e1), e2(mv.v.e2), e3(mv.v.e3), eo(mv.v.eo), ei(mv.v.ei) {}
+
 double operator*(const Pseudoscalar &lhs, const Pseudoscalar &rhs)
 {
     double result;

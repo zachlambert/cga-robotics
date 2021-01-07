@@ -14,6 +14,22 @@ def write_struct(G, struct, f_h, f_cpp):
     # Write public members
     for member in struct.members:
         f_h.write("    {};\n".format(member))
+    f_h.write("\n")
+
+    # Constructors
+    # Use default copy constructor and assignment operator
+    # Use this to set the default constructor, construction by elements,
+    # and construction from various conversions
+
+    for params, init_list, explicit in struct.constructors:
+        is_explicit = "explicit " if explicit else ""
+        f_h.write("    {is_explicit}{name}({params});".format(
+            is_explicit=is_explicit, name=struct.name, params=params) + "\n")
+        f_cpp.write("{name}::{name}({params}): {init_list} ".format(
+            name=struct.name, params=params, init_list=init_list) + "{}\n")
+    if(len(struct.constructors) != 0):
+        f_h.write("\n")
+        f_cpp.write("\n")
 
     # operator+=
     f_h.write("    {name}& operator+=(const {name} &other) ".format(name=struct.name)+"{\n")

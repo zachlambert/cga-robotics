@@ -12,6 +12,7 @@ class Struct:
         self.var_expressions = {}
         self.blade_expressions = {}
         self.print_newlines = []
+        self.constructors = []
         # var_expressions defines expressions for each variable in terms of basis blades
         # blade_expressions defines expressions for each basis blade in terms of variables
         # Each has the form:
@@ -43,6 +44,9 @@ class Struct:
 
     def set_print_newlines(self, *var_list):
         self.print_newlines = var_list
+
+    def add_constructor(self, params, init_list, explicit=False):
+        self.constructors.append((params, init_list, explicit))
 
 def make_structs(G):
 
@@ -81,6 +85,11 @@ def make_structs(G):
     Vector.set_var_expression("ei", [(-1, "e4"), (1, "e5")])
     Vector.set_blade_expression("e4", [(1, "eo"), (-0.5, "ei")])
     Vector.set_blade_expression("e5", [(1, "eo"), (0.5, "ei")])
+
+    Vector.add_constructor("", "e1(0), e2(0), e3(0), eo(0), ei(0)")
+    Vector.add_constructor("double e1, double e2, double e3, double eo, double ei", "e1(e1), e2(e2), e3(e3), eo(eo), ei(ei)")
+    Vector.add_constructor("const Vector3 &v", "e1(v.e1), e2(v.e2), e3(v.e3), eo(0), ei(0)")
+    Vector.add_constructor("const Multivector &mv", "e1(mv.v.e1), e2(mv.v.e2), e3(mv.v.e3), eo(mv.v.eo), ei(mv.v.ei)", True)
 
     structs.append(Vector)
 
@@ -395,6 +404,12 @@ def main():
 
             f_h.write("namespace cga {\n\n")
             f_cpp.write("namespace cga {\n\n")
+
+            # Forward declarations for structs, for conversion function
+            # prototypes
+            for struct in structs:
+                f_h.write("struct {};\n".format(struct.name))
+            f_h.write("\n")
 
             for struct in structs:
                 write_struct(G, struct, f_h, f_cpp)

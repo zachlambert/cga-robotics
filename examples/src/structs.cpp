@@ -12,4 +12,11 @@ int main()
 
     auto c = a*b;
     std::cout << c << std::endl;
+
+    cga::Vector a2 = a;
+    std::cout << a2 << std::endl;
+
+    cga::Multivector d = outer(a, b) * a2;
+    std::cout << d << std::endl;
+    std::cout << cga::Vector(d) << std::endl;
 }

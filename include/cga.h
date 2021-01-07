@@ -6,8 +6,22 @@
 
 namespace cga {
 
+struct Pseudoscalar;
+struct Pseudoscalar3;
+struct Vector3;
+struct Bivector3;
+struct Rotor3;
+struct Vector;
+struct Quadvector;
+struct Bivector;
+struct Trivector;
+struct Rotor;
+struct Versor;
+struct Multivector;
+
 struct Pseudoscalar {
     double p;
+
     Pseudoscalar& operator+=(const Pseudoscalar &other) {
         p += other.p;
         return *this;
@@ -56,6 +70,7 @@ inline Pseudoscalar operator/(const Pseudoscalar &lhs, double rhs){
 
 struct Pseudoscalar3 {
     double p;
+
     Pseudoscalar3& operator+=(const Pseudoscalar3 &other) {
         p += other.p;
         return *this;
@@ -106,6 +121,7 @@ struct Vector3 {
     double e1;
     double e2;
     double e3;
+
     Vector3& operator+=(const Vector3 &other) {
         e1 += other.e1;
         e2 += other.e2;
@@ -164,6 +180,7 @@ struct Bivector3 {
     double e23;
     double e31;
     double e12;
+
     Bivector3& operator+=(const Bivector3 &other) {
         e23 += other.e23;
         e31 += other.e31;
@@ -221,6 +238,7 @@ inline Bivector3 operator/(const Bivector3 &lhs, double rhs){
 struct Rotor3 {
     double s;
     Bivector3 b;
+
     Rotor3& operator+=(const Rotor3 &other) {
         s += other.s;
         b.e23 += other.b.e23;
@@ -285,6 +303,12 @@ struct Vector {
     double e3;
     double eo;
     double ei;
+
+    Vector();
+    Vector(double e1, double e2, double e3, double eo, double ei);
+    Vector(const Vector3 &v);
+    explicit Vector(const Multivector &mv);
+
     Vector& operator+=(const Vector &other) {
         e1 += other.e1;
         e2 += other.e2;
@@ -353,6 +377,7 @@ struct Quadvector {
     double e23oi;
     double e31oi;
     double e12oi;
+
     Quadvector& operator+=(const Quadvector &other) {
         e123o += other.e123o;
         e123i += other.e123i;
@@ -426,6 +451,7 @@ struct Bivector {
     double e2i;
     double e3i;
     double eoi;
+
     Bivector& operator+=(const Bivector &other) {
         e23 += other.e23;
         e31 += other.e31;
@@ -519,6 +545,7 @@ struct Trivector {
     double e1oi;
     double e2oi;
     double e3oi;
+
     Trivector& operator+=(const Trivector &other) {
         e123 += other.e123;
         e23o += other.e23o;
@@ -604,6 +631,7 @@ inline Trivector operator/(const Trivector &lhs, double rhs){
 struct Rotor {
     double s;
     Bivector b;
+
     Rotor& operator+=(const Rotor &other) {
         s += other.s;
         b.e23 += other.b.e23;
@@ -694,6 +722,7 @@ struct Versor {
     double s;
     Bivector b;
     Quadvector q;
+
     Versor& operator+=(const Versor &other) {
         s += other.s;
         b.e23 += other.b.e23;
@@ -807,6 +836,7 @@ struct Multivector {
     Trivector t;
     Quadvector q;
     double p;
+
     Multivector& operator+=(const Multivector &other) {
         s += other.s;
         v.e1 += other.v.e1;
