@@ -51,7 +51,7 @@ def main():
 
             # norm and norm2 need the inner product, so put after binary operations
             for struct in structs:
-                # write_unary_operations(G, struct, f_h, f_cpp)
+                write_unary_operations(G, struct, f_h, f_cpp)
                 write_printing(struct, f_h, f_cpp)
 
             f_h.write("} // namespace cga\n\n")

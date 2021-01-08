@@ -100,9 +100,31 @@ def write_struct(G, struct, f_h, f_cpp):
 
     f_h.write("\n\n")
 
+def get_reverse_expression(G, struct):
+    member_reverses = []
+    equal = True
+    negated = True
+    for member in struct.members:
+        if member.struct is None:
+
+        else:
+            member_expression, member_equal, member_negated = get_reverse_expression(member.struct)
+            if not member_equal:
+                equal = False
+            if not member_negated:
+                negated = False
+            member_reverses.append(member_expression)
+    return "{"+",".join(member_reverses)+"}", equal, negated
+
 def write_unary_operations(G, struct, f_h, f_cpp):
 
     # Reverse
+
+    return_expression, equal, _ = get_reverse_experssion(G, struct.name)
+    if equal:
+        return_type = "const {}&".format(struct.name)
+    else:
+        return_type = struct.name
 
     grades = [G.blade_grade(blade) for blade in struct.blades()]
 
