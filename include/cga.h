@@ -296,11 +296,6 @@ struct Vector {
     double eo;
     double ei;
 
-    Vector();
-    Vector(double e1, double e2, double e3, double eo, double ei);
-    Vector(const Vector3 &v);
-    explicit Vector(const Multivector &mv);
-
     Vector& operator+=(const Vector &other) {
         e1 += other.e1;
         e2 += other.e2;
@@ -2247,112 +2242,28 @@ Multivector outer(const Multivector &lhs, const Multivector &rhs);
 
 Multivector inner(const Multivector &lhs, const Multivector &rhs);
 
-inline const Pseudoscalar& reverse(const Pseudoscalar &x) {
-    return x;
-}
-inline double norm2(const Pseudoscalar &x) {
-    return inner(x, x);
-}
-inline double norm(const Pseudoscalar &x) {
-    return std::sqrt(inner(x, x));
-}
 std::ostream& operator<<(std::ostream& outs, const Pseudoscalar &x);
 
-inline Pseudoscalar3 reverse(const Pseudoscalar3 &x) {
-    return -x;
-}
-inline double norm2(const Pseudoscalar3 &x) {
-    return inner(x, x);
-}
-inline double norm(const Pseudoscalar3 &x) {
-    return std::sqrt(inner(x, x));
-}
 std::ostream& operator<<(std::ostream& outs, const Pseudoscalar3 &x);
 
-inline const Vector3& reverse(const Vector3 &x) {
-    return x;
-}
-inline double norm2(const Vector3 &x) {
-    return inner(x, x);
-}
-inline double norm(const Vector3 &x) {
-    return std::sqrt(inner(x, x));
-}
 std::ostream& operator<<(std::ostream& outs, const Vector3 &x);
 
-inline Bivector3 reverse(const Bivector3 &x) {
-    return -x;
-}
-inline double norm2(const Bivector3 &x) {
-    return inner(x, x);
-}
-inline double norm(const Bivector3 &x) {
-    return std::sqrt(inner(x, x));
-}
 std::ostream& operator<<(std::ostream& outs, const Bivector3 &x);
 
-inline Rotor3 reverse(const Rotor3 &x) {
-    return {x.s, -x.b.e23, -x.b.e31, -x.b.e12};
-}
 std::ostream& operator<<(std::ostream& outs, const Rotor3 &x);
 
-inline const Vector& reverse(const Vector &x) {
-    return x;
-}
-inline double norm2(const Vector &x) {
-    return inner(x, x);
-}
-inline double norm(const Vector &x) {
-    return std::sqrt(inner(x, x));
-}
 std::ostream& operator<<(std::ostream& outs, const Vector &x);
 
-inline const Quadvector& reverse(const Quadvector &x) {
-    return x;
-}
-inline double norm2(const Quadvector &x) {
-    return inner(x, x);
-}
-inline double norm(const Quadvector &x) {
-    return std::sqrt(inner(x, x));
-}
 std::ostream& operator<<(std::ostream& outs, const Quadvector &x);
 
-inline Bivector reverse(const Bivector &x) {
-    return -x;
-}
-inline double norm2(const Bivector &x) {
-    return inner(x, x);
-}
-inline double norm(const Bivector &x) {
-    return std::sqrt(inner(x, x));
-}
 std::ostream& operator<<(std::ostream& outs, const Bivector &x);
 
-inline Trivector reverse(const Trivector &x) {
-    return -x;
-}
-inline double norm2(const Trivector &x) {
-    return inner(x, x);
-}
-inline double norm(const Trivector &x) {
-    return std::sqrt(inner(x, x));
-}
 std::ostream& operator<<(std::ostream& outs, const Trivector &x);
 
-inline Rotor reverse(const Rotor &x) {
-    return {x.s, -x.b};
-}
 std::ostream& operator<<(std::ostream& outs, const Rotor &x);
 
-inline Versor reverse(const Versor &x) {
-    return {x.s, -x.b.e23, -x.b.e31, -x.b.e12, -x.b.e1o, -x.b.e2o, -x.b.e3o, -x.b.e1i, -x.b.e2i, -x.b.e3i, -x.b.eoi, x.q.e123o, x.q.e123i, x.q.e23oi, x.q.e31oi, x.q.e12oi};
-}
 std::ostream& operator<<(std::ostream& outs, const Versor &x);
 
-inline Multivector reverse(const Multivector &x) {
-    return {x.s, x.v.e1, x.v.e2, x.v.e3, x.v.eo, x.v.ei, -x.b.e23, -x.b.e31, -x.b.e12, -x.b.e1o, -x.b.e2o, -x.b.e3o, -x.b.e1i, -x.b.e2i, -x.b.e3i, -x.b.eoi, -x.t.e123, -x.t.e23o, -x.t.e31o, -x.t.e12o, -x.t.e23i, -x.t.e31i, -x.t.e12i, -x.t.e1oi, -x.t.e2oi, -x.t.e3oi, x.q.e123o, x.q.e123i, x.q.e23oi, x.q.e31oi, x.q.e12oi, x.p};
-}
 std::ostream& operator<<(std::ostream& outs, const Multivector &x);
 
 } // namespace cga

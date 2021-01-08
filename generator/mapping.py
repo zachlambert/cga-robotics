@@ -10,8 +10,8 @@ def get_mapping(func, G, lhs, rhs, structs):
     # (coefficient, lhs basis, rhs basis)
     results = {}
 
-    for lhs_blade in lhs.blades:
-        for rhs_blade in rhs.blades:
+    for lhs_blade in lhs.blades():
+        for rhs_blade in rhs.blades():
             coef, vectors = func(G, lhs_blade, rhs_blade)
             if coef == 0:
                 continue
@@ -31,7 +31,7 @@ def get_mapping(func, G, lhs, rhs, structs):
         valid = True
         for blade in results.keys():
             # Invalidate if the return struct is missing this blade
-            if not blade in struct.blades:
+            if not blade in struct.blades():
                 valid = False
                 break
         if valid:

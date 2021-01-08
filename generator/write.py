@@ -12,8 +12,8 @@ def write_struct(G, struct, f_h, f_cpp):
     f_h.write("struct {name} ".format(name=struct.name)+"{\n")
 
     # Write public members
-    for i in range(len(struct.members)):
-        f_h.write("    {} {};\n".format(struct.types[i], struct.members[i]))
+    for member in struct.members:
+        f_h.write("    {} {};\n".format(member.type, member.name))
     f_h.write("\n")
 
     # Constructors
@@ -21,47 +21,47 @@ def write_struct(G, struct, f_h, f_cpp):
     # Use this to set the default constructor, construction by elements,
     # and construction from various conversions
 
-    for params, init_list, explicit in struct.constructors:
-        is_explicit = "explicit " if explicit else ""
-        f_h.write("    {is_explicit}{name}({params});".format(
-            is_explicit=is_explicit, name=struct.name, params=params) + "\n")
-        f_cpp.write("{name}::{name}({params}): {init_list} ".format(
-            name=struct.name, params=params, init_list=init_list) + "{}\n")
-    if(len(struct.constructors) != 0):
-        f_h.write("\n")
-        f_cpp.write("\n")
+    # for params, init_list, explicit in struct.constructors:
+    #     is_explicit = "explicit " if explicit else ""
+    #     f_h.write("    {is_explicit}{name}({params});".format(
+    #         is_explicit=is_explicit, name=struct.name, params=params) + "\n")
+    #     f_cpp.write("{name}::{name}({params}): {init_list} ".format(
+    #         name=struct.name, params=params, init_list=init_list) + "{}\n")
+    # if(len(struct.constructors) != 0):
+    #     f_h.write("\n")
+    #     f_cpp.write("\n")
 
     # operator+=
     f_h.write("    {name}& operator+=(const {name} &other) ".format(name=struct.name)+"{\n")
     for member in struct.members:
-        f_h.write("        {member} += other.{member};\n".format(member=member))
+        f_h.write("        {member} += other.{member};\n".format(member=member.name))
     f_h.write("        return *this;\n")
     f_h.write("    }\n");
 
     # operator-=
     f_h.write("    {name}& operator-=(const {name} &other) ".format(name=struct.name)+"{\n")
     for member in struct.members:
-        f_h.write("        {member} -= other.{member};\n".format(member=member))
+        f_h.write("        {member} -= other.{member};\n".format(member=member.name))
     f_h.write("        return *this;\n")
     f_h.write("    }\n");
 
     # operator*=(scalar)
     f_h.write("    {name}& operator*=(double s) ".format(name=struct.name)+"{\n")
     for member in struct.members:
-        f_h.write("        {member} *= s;\n".format(member=member))
+        f_h.write("        {member} *= s;\n".format(member=member.name))
     f_h.write("        return *this;\n")
     f_h.write("    }\n");
 
     # operator/=(scalar)
     f_h.write("    {name}& operator/=(double s) ".format(name=struct.name)+"{\n")
     for member in struct.members:
-        f_h.write("        {member} /= s;\n".format(member=member))
+        f_h.write("        {member} /= s;\n".format(member=member.name))
     f_h.write("        return *this;\n")
     f_h.write("    }\n");
 
     # operator- (negation)
     f_h.write("    {name} operator-()const ".format(name=struct.name)+"{\n")
-    f_h.write("        return {"+", ".join(["-"+member for member in struct.members])+"};\n")
+    f_h.write("        return {"+", ".join(["-"+member.name for member in struct.members])+"};\n")
     f_h.write("    };\n")
 
     # End of struct body
@@ -104,7 +104,7 @@ def write_unary_operations(G, struct, f_h, f_cpp):
 
     # Reverse
 
-    grades = [G.blade_grade(blade) for blade in struct.blades]
+    grades = [G.blade_grade(blade) for blade in struct.blades()]
 
     homogeneous = True
     for i in range(1, len(grades)):
@@ -190,7 +190,7 @@ def _write_product_body(lhs_struct, rhs_struct, return_struct, results, f_cpp):
 
     # Second, convert key of results to be in terms of result variables
     new_results = {}
-    for var in return_struct.variables:
+    for var in return_struct.variables():
         var_expression = return_struct.var_expressions[var]
         # var_expression is a list with elements of the form:
         # (coef, blade)
@@ -321,10 +321,10 @@ def write_printing(struct, f_h, f_cpp):
     f_h.write("std::ostream& operator<<(std::ostream& outs, const {name} &x);\n\n".format(name=struct.name))
     f_cpp.write("std::ostream& operator<<(std::ostream& outs, const {name} &x) ".format(name=struct.name)+"{\n")
     elements = []
-    for var in struct.variables:
-        elements.append("\"{}=\"<<x.{}<<\" \"".format(var, var))
-        if var in struct.print_newlines:
+    for i, member in enumerate(struct.members):
+        elements.append("\"{}: \"<<x.".format(member.name)+member.name)
+        if member.struct is not None and i != len(struct.members)-1:
             elements.append("std::endl")
-    f_cpp.write("    outs << {};\n".format("<<".join(elements)))
+    f_cpp.write("    outs<<{};\n".format("<<".join(elements)))
     f_cpp.write("    return outs;\n")
     f_cpp.write("}\n\n")
