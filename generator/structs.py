@@ -44,13 +44,14 @@ class Struct:
         self.members = []
         self.variables = []
 
-    def add_variable(self, name, expression, extractor):
+    def add_variable(self, name, expression, extractor, add_member=True):
         self.variables.append(Variable(name, expression, extractor))
-        self.members.append(Member(name))
+        if add_member:
+            self.members.append(Member(name))
 
     def add_struct(self, name, struct):
         for var in struct.variables:
-            self.add_variable(name+"."+var.name, var.expression, var.extractor)
+            self.add_variable(name+"."+var.name, var.expression, var.extractor, False)
         self.members.append(Member(name, struct))
 
     def expression(self):
@@ -236,7 +237,15 @@ def make_structs():
                 i+=1
         ordered_structs.insert(i, struct)
 
-    return ordered_structs
+    # Also create a scalar struct to append to the "available" list
+    # of structs. Has an empty variable name that it is the variable
+    # itself.
+
+    Scalar = Struct("double")
+    Scalar.add_variable("", s, s)
+    available = [Scalar] + ordered_structs
+
+    return ordered_structs, available
 
 if __name__ == "__main__":
     make_structs()
