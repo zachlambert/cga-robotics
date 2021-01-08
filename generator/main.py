@@ -4,6 +4,9 @@ from algebra import Algebra
 from write import write_includes, write_struct, write_unary_operations, write_binary_operations, write_printing
 from structs import Struct, make_structs
 
+import sympy
+import galgebra.ga as ga
+
 def main():
     sig = [1, 1, 1, 1, -1]
 
@@ -50,9 +53,9 @@ def main():
                     write_binary_operations(G, structs[i], structs[j], [Scalar]+structs, f_h, f_cpp)
 
             # norm and norm2 need the inner product, so put after binary operations
-            for struct in structs:
-                write_unary_operations(G, struct, f_h, f_cpp)
-                write_printing(struct, f_h, f_cpp)
+            # for struct in structs:
+            #     write_unary_operations(G, struct, f_h, f_cpp)
+            #     write_printing(struct, f_h, f_cpp)
 
             f_h.write("} // namespace cga\n\n")
             f_cpp.write("} // namespace cga\n")

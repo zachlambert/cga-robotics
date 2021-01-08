@@ -100,26 +100,11 @@ def write_struct(G, struct, f_h, f_cpp):
 
     f_h.write("\n\n")
 
-def get_reverse_expression(G, struct):
-    member_reverses = []
-    equal = True
-    negated = True
-    for member in struct.members:
-        if member.struct is None:
-
-        else:
-            member_expression, member_equal, member_negated = get_reverse_expression(member.struct)
-            if not member_equal:
-                equal = False
-            if not member_negated:
-                negated = False
-            member_reverses.append(member_expression)
-    return "{"+",".join(member_reverses)+"}", equal, negated
-
 def write_unary_operations(G, struct, f_h, f_cpp):
 
     # Reverse
 
+    """
     return_expression, equal, _ = get_reverse_experssion(G, struct.name)
     if equal:
         return_type = "const {}&".format(struct.name)
@@ -170,6 +155,8 @@ def write_unary_operations(G, struct, f_h, f_cpp):
     f_h.write("    return {};\n".format(return_expression))
     f_h.write("}\n")
 
+    """
+
     # Inverse
     # For an orthonormal basis, equal to reverse / norm, with sign dependent on
     # grade and signature
@@ -181,6 +168,7 @@ def write_unary_operations(G, struct, f_h, f_cpp):
     # Norm and norm2
     # Only do this for homogeneous multivectors, where dot(x, x) is a scalar
 
+    """
     if homogeneous:
         f_h.write("inline double norm2(const {name} &x) ".format(name=struct.name)+"{\n")
         f_h.write("    return inner(x, x);\n")
@@ -188,6 +176,7 @@ def write_unary_operations(G, struct, f_h, f_cpp):
         f_h.write("inline double norm(const {name} &x) ".format(name=struct.name)+"{\n")
         f_h.write("    return std::sqrt(inner(x, x));\n")
         f_h.write("}\n")
+    """
 
 
 def _write_product_body(lhs_struct, rhs_struct, return_struct, results, f_cpp):
