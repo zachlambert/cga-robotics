@@ -40,8 +40,7 @@ def main():
 
             # Functions for printing with output streams
             for struct in structs:
-                pass
-                # write_printing(struct, f_h, f_cpp)
+                write_printing(struct, f_h, f_cpp)
 
             f_h.write("} // namespace cga\n\n")
             f_cpp.write("} // namespace cga\n")

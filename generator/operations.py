@@ -176,14 +176,12 @@ class Norm:
         f_cpp.write(prototype+" {\n")
         f_cpp.write("    return {};\n".format(expression_str(expression)))
         f_cpp.write("}\n")
+        f_cpp.write("\n")
 
         f_h.write("double norm(const {op} &x)\n".format(op=op.name))
         f_h.write("{\n")
         f_h.write("    return std::sqrt(norm2(x));\n")
         f_h.write("}\n")
-        
-        f_h.write("\n")
-        f_cpp.write("\n")
 
     def write(self, structs, available, f_h, f_cpp):
         print("WRITING NORM")

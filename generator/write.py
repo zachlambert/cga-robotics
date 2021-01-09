@@ -212,13 +212,19 @@ def write_struct(struct, f_h, f_cpp):
     f_h.write("\n\n")
 
 def write_printing(struct, f_h, f_cpp):
-    f_h.write("std::ostream& operator<<(std::ostream& outs, const {name} &x);\n\n".format(name=struct.name))
+    f_h.write("std::ostream& operator<<(std::ostream& outs, const {name} &x);\n".format(name=struct.name))
     f_cpp.write("std::ostream& operator<<(std::ostream& outs, const {name} &x) ".format(name=struct.name)+"{\n")
     elements = []
+    line_start = True
     for i, member in enumerate(struct.members):
-        elements.append("\"{}: \"<<x.".format(member.name)+member.name)
-        if member.struct is not None and i != len(struct.members)-1:
+        if i!=0 and member.struct is not None:
             elements.append("std::endl")
+            line_start = True
+        if line_start:
+            elements.append("\"{}: \"<<x.".format(member.name)+member.name)
+            line_start = False
+        else:
+            elements.append("\", {}: \"<<x.".format(member.name)+member.name)
     f_cpp.write("    outs<<{};\n".format("<<".join(elements)))
     f_cpp.write("    return outs;\n")
     f_cpp.write("}\n\n")

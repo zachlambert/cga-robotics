@@ -3801,4 +3801,64 @@ Multivector reverse(const Multivector &x) {
     return result;
 }
 
+std::ostream& operator<<(std::ostream& outs, const Pseudoscalar3 &x) {
+    outs<<"I3: "<<x.I3;
+    return outs;
+}
+
+std::ostream& operator<<(std::ostream& outs, const Pseudoscalar &x) {
+    outs<<"I5: "<<x.I5;
+    return outs;
+}
+
+std::ostream& operator<<(std::ostream& outs, const Vector3 &x) {
+    outs<<"e1: "<<x.e1<<", e2: "<<x.e2<<", e3: "<<x.e3;
+    return outs;
+}
+
+std::ostream& operator<<(std::ostream& outs, const Bivector3 &x) {
+    outs<<"e23: "<<x.e23<<", e31: "<<x.e31<<", e12: "<<x.e12;
+    return outs;
+}
+
+std::ostream& operator<<(std::ostream& outs, const Rotor3 &x) {
+    outs<<"s: "<<x.s<<std::endl<<"b: "<<x.b;
+    return outs;
+}
+
+std::ostream& operator<<(std::ostream& outs, const Vector &x) {
+    outs<<"e1: "<<x.e1<<", e2: "<<x.e2<<", e3: "<<x.e3<<", eo: "<<x.eo<<", ei: "<<x.ei;
+    return outs;
+}
+
+std::ostream& operator<<(std::ostream& outs, const Quadvector &x) {
+    outs<<"e123o: "<<x.e123o<<", e123i: "<<x.e123i<<", e23oi: "<<x.e23oi<<", e31oi: "<<x.e31oi<<", e12oi: "<<x.e12oi;
+    return outs;
+}
+
+std::ostream& operator<<(std::ostream& outs, const Bivector &x) {
+    outs<<"e23: "<<x.e23<<", e31: "<<x.e31<<", e12: "<<x.e12<<", e1o: "<<x.e1o<<", e2o: "<<x.e2o<<", e3o: "<<x.e3o<<", e1i: "<<x.e1i<<", e2i: "<<x.e2i<<", e3i: "<<x.e3i<<", eoi: "<<x.eoi;
+    return outs;
+}
+
+std::ostream& operator<<(std::ostream& outs, const Trivector &x) {
+    outs<<"e123: "<<x.e123<<", e23o: "<<x.e23o<<", e31o: "<<x.e31o<<", e12o: "<<x.e12o<<", e23i: "<<x.e23i<<", e31i: "<<x.e31i<<", e12i: "<<x.e12i<<", e1oi: "<<x.e1oi<<", e2oi: "<<x.e2oi<<", e3oi: "<<x.e3oi;
+    return outs;
+}
+
+std::ostream& operator<<(std::ostream& outs, const Rotor &x) {
+    outs<<"s: "<<x.s<<std::endl<<"b: "<<x.b;
+    return outs;
+}
+
+std::ostream& operator<<(std::ostream& outs, const Versor &x) {
+    outs<<"s: "<<x.s<<std::endl<<"b: "<<x.b<<std::endl<<"q: "<<x.q;
+    return outs;
+}
+
+std::ostream& operator<<(std::ostream& outs, const Multivector &x) {
+    outs<<"s: "<<x.s<<std::endl<<"v: "<<x.v<<std::endl<<"b: "<<x.b<<std::endl<<"t: "<<x.t<<std::endl<<"q: "<<x.q<<", I5: "<<x.I5;
+    return outs;
+}
+
 } // namespace cga

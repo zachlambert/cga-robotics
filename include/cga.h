@@ -850,43 +850,36 @@ double norm(const Pseudoscalar3 &x)
 {
     return std::sqrt(norm2(x));
 }
-
 double norm2(const Pseudoscalar &x);
 double norm(const Pseudoscalar &x)
 {
     return std::sqrt(norm2(x));
 }
-
 double norm2(const Vector3 &x);
 double norm(const Vector3 &x)
 {
     return std::sqrt(norm2(x));
 }
-
 double norm2(const Bivector3 &x);
 double norm(const Bivector3 &x)
 {
     return std::sqrt(norm2(x));
 }
-
 double norm2(const Rotor3 &x);
 double norm(const Rotor3 &x)
 {
     return std::sqrt(norm2(x));
 }
-
 double norm2(const Vector &x);
 double norm(const Vector &x)
 {
     return std::sqrt(norm2(x));
 }
-
 double norm2(const Quadvector &x);
 double norm(const Quadvector &x)
 {
     return std::sqrt(norm2(x));
 }
-
 double operator*(const Pseudoscalar3 &lhs, const Pseudoscalar3 &rhs);
 
 Bivector operator*(const Pseudoscalar3 &lhs, const Pseudoscalar &rhs);
@@ -1965,6 +1958,18 @@ Versor reverse(const Versor &x);
 
 Multivector reverse(const Multivector &x);
 
+std::ostream& operator<<(std::ostream& outs, const Pseudoscalar3 &x);
+std::ostream& operator<<(std::ostream& outs, const Pseudoscalar &x);
+std::ostream& operator<<(std::ostream& outs, const Vector3 &x);
+std::ostream& operator<<(std::ostream& outs, const Bivector3 &x);
+std::ostream& operator<<(std::ostream& outs, const Rotor3 &x);
+std::ostream& operator<<(std::ostream& outs, const Vector &x);
+std::ostream& operator<<(std::ostream& outs, const Quadvector &x);
+std::ostream& operator<<(std::ostream& outs, const Bivector &x);
+std::ostream& operator<<(std::ostream& outs, const Trivector &x);
+std::ostream& operator<<(std::ostream& outs, const Rotor &x);
+std::ostream& operator<<(std::ostream& outs, const Versor &x);
+std::ostream& operator<<(std::ostream& outs, const Multivector &x);
 } // namespace cga
 
 #endif
