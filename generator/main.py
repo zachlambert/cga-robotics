@@ -4,7 +4,7 @@ from operations import get_operations
 from write import write_includes, write_struct, write_printing
 
 def main():
-    G, structs, available = make_structs()
+    structs, available = make_structs()
     operations = get_operations()
 
     h_base = "include/"
@@ -34,7 +34,7 @@ def main():
             # Also room to add more specialised operations if necessary,
             # such as rotor transformation R*x*R.rev()
             for operation in operations:
-                operation.write(G, structs, available, f_h, f_cpp)
+                operation.write(structs, available, f_h, f_cpp)
 
             # Functions for printing with output streams
             for struct in structs:

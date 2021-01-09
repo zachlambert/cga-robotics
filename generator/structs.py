@@ -36,7 +36,7 @@ def extract_from_product(product, blades):
     if not has_blade:
         blades.append(sympy.core.numbers.Integer(1))
 
-def extract_blades(G, expression):
+def extract_blades(expression):
     blades = []
     expression = expression.obj.expand()
     if type(expression) == sympy.core.mul.Mul:
@@ -92,12 +92,12 @@ class Struct:
     def extract(self, expression, var):
         return (var.extractor * expression).grade(0).obj.simplify()
 
-    def validate(self, G):
+    def validate(self):
         expression = self.expression()
         for var in self.variables:
             assert(sympy.Symbol(var.name).equals(self.extract(expression, var)))
         print(self.name, "is valid")
-        self.blades = extract_blades(G, expression)
+        self.blades = extract_blades(expression)
 
     def can_fit(self, blades):
         for blade in blades:
@@ -122,7 +122,7 @@ def make_structs():
     Vector3.add_variable("e2", e2, e2)
     Vector3.add_variable("e3", e3, e3)
 
-    Vector3.validate(G)
+    Vector3.validate()
     structs.append(Vector3)
 
 
@@ -135,7 +135,7 @@ def make_structs():
     Vector.add_variable("eo", eo, -ei)
     Vector.add_variable("ei", ei, -eo)
 
-    Vector.validate(G)
+    Vector.validate()
     structs.append(Vector)
 
 
@@ -146,7 +146,7 @@ def make_structs():
     Bivector3.add_variable("e31", e3^e1, -e3^e1)
     Bivector3.add_variable("e12", e1^e2, -e1^e2)
 
-    Bivector3.validate(G)
+    Bivector3.validate()
     structs.append(Bivector3)
 
 
@@ -164,7 +164,7 @@ def make_structs():
     Bivector.add_variable("e3i", e3^ei, e3^eo)
     Bivector.add_variable("eoi", eo^ei, eo^ei)
 
-    Bivector.validate(G)
+    Bivector.validate()
     structs.append(Bivector)
 
 
@@ -182,7 +182,7 @@ def make_structs():
     Trivector.add_variable("e2oi", e2^eo^ei, e2^eo^ei)
     Trivector.add_variable("e3oi", e3^eo^ei, e3^eo^ei)
 
-    Trivector.validate(G)
+    Trivector.validate()
     structs.append(Trivector)
 
     # QUADVECTOR
@@ -194,7 +194,7 @@ def make_structs():
     Quadvector.add_variable("e31oi", e3^e1^eo^ei, -e3^e1^eo^ei)
     Quadvector.add_variable("e12oi", e1^e2^eo^ei, -e1^e2^eo^ei)
 
-    Quadvector.validate(G)
+    Quadvector.validate()
     structs.append(Quadvector)
 
 
@@ -202,14 +202,14 @@ def make_structs():
 
     Pseudoscalar3 = Struct("Pseudoscalar3")
     Pseudoscalar3.add_variable("I3", e1^e2^e3, -e1^e2^e3)
-    Pseudoscalar3.validate(G)
+    Pseudoscalar3.validate()
     structs.append(Pseudoscalar3)
 
     # PSEUDOSCALAR
 
     Pseudoscalar = Struct("Pseudoscalar")
     Pseudoscalar.add_variable("I5", e1^e2^e3^eo^ei, -e1^e2^e3^eo^ei)
-    Pseudoscalar.validate(G)
+    Pseudoscalar.validate()
     structs.append(Pseudoscalar)
 
 
@@ -219,7 +219,7 @@ def make_structs():
     Rotor3.add_variable("s", s, s)
     Rotor3.add_struct("b", Bivector3)
 
-    Rotor3.validate(G)
+    Rotor3.validate()
     structs.append(Rotor3)
 
 
@@ -229,7 +229,7 @@ def make_structs():
     Rotor.add_variable("s", s, s);
     Rotor.add_struct("b", Bivector)
 
-    Rotor.validate(G)
+    Rotor.validate()
     structs.append(Rotor)
 
 
@@ -240,7 +240,7 @@ def make_structs():
     Versor.add_struct("b", Bivector)
     Versor.add_struct("q", Quadvector)
 
-    Versor.validate(G)
+    Versor.validate()
     structs.append(Versor)
 
 
@@ -254,7 +254,7 @@ def make_structs():
     Multivector.add_struct("q", Quadvector)
     Multivector.add_variable("I5", e1^e2^e3^eo^ei, -e1^e2^e3^eo^ei)
 
-    Multivector.validate(G)
+    Multivector.validate()
     structs.append(Multivector)
 
 
@@ -277,13 +277,13 @@ def make_structs():
 
     Scalar = Struct("double")
     Scalar.add_variable("", s, s)
-    Scalar.validate(G)
+    Scalar.validate()
     available = [Scalar] + ordered_structs
 
     for s in ordered_structs:
         print(s.name, ":", s.blades)
 
-    return G, ordered_structs, available
+    return ordered_structs, available
 
 if __name__ == "__main__":
     make_structs()

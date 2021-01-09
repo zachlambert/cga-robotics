@@ -802,282 +802,265 @@ inline Multivector operator/(const Multivector &lhs, double rhs){
 }
 
 
-double operator*(const Pseudoscalar3 &lhs, const Pseudoscalar3 &rhs);
-Bivector operator*(const Pseudoscalar3 &lhs, const Pseudoscalar &rhs);
-Bivector operator*(const Pseudoscalar &lhs, const Pseudoscalar3 &rhs) {
-    return rhs*lhs;
-}
-Bivector3 operator*(const Pseudoscalar3 &lhs, const Vector3 &rhs);
-Bivector3 operator*(const Vector3 &lhs, const Pseudoscalar3 &rhs) {
-    return rhs*lhs;
-}
-Vector3 operator*(const Pseudoscalar3 &lhs, const Bivector3 &rhs);
-Vector3 operator*(const Bivector3 &lhs, const Pseudoscalar3 &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Pseudoscalar3 &lhs, const Rotor3 &rhs);
-Multivector operator*(const Rotor3 &lhs, const Pseudoscalar3 &rhs) {
-    return rhs*lhs;
-}
-Versor operator*(const Pseudoscalar3 &lhs, const Vector &rhs);
-Versor operator*(const Vector &lhs, const Pseudoscalar3 &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Pseudoscalar3 &lhs, const Quadvector &rhs);
-Multivector operator*(const Quadvector &lhs, const Pseudoscalar3 &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Pseudoscalar3 &lhs, const Bivector &rhs);
-Multivector operator*(const Bivector &lhs, const Pseudoscalar3 &rhs) {
-    return rhs*lhs;
-}
-Versor operator*(const Pseudoscalar3 &lhs, const Trivector &rhs);
-Versor operator*(const Trivector &lhs, const Pseudoscalar3 &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Pseudoscalar3 &lhs, const Rotor &rhs);
-Multivector operator*(const Rotor &lhs, const Pseudoscalar3 &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Pseudoscalar3 &lhs, const Versor &rhs);
-Multivector operator*(const Versor &lhs, const Pseudoscalar3 &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Pseudoscalar3 &lhs, const Multivector &rhs);
-Multivector operator*(const Multivector &lhs, const Pseudoscalar3 &rhs) {
-    return rhs*lhs;
-}
-double operator*(const Pseudoscalar &lhs, const Pseudoscalar &rhs);
-Quadvector operator*(const Pseudoscalar &lhs, const Vector3 &rhs);
-Quadvector operator*(const Vector3 &lhs, const Pseudoscalar &rhs) {
-    return rhs*lhs;
-}
-Trivector operator*(const Pseudoscalar &lhs, const Bivector3 &rhs);
-Trivector operator*(const Bivector3 &lhs, const Pseudoscalar &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Pseudoscalar &lhs, const Rotor3 &rhs);
-Multivector operator*(const Rotor3 &lhs, const Pseudoscalar &rhs) {
-    return rhs*lhs;
-}
-Quadvector operator*(const Pseudoscalar &lhs, const Vector &rhs);
-Quadvector operator*(const Vector &lhs, const Pseudoscalar &rhs) {
-    return rhs*lhs;
-}
-Vector operator*(const Pseudoscalar &lhs, const Quadvector &rhs);
-Vector operator*(const Quadvector &lhs, const Pseudoscalar &rhs) {
-    return rhs*lhs;
-}
-Trivector operator*(const Pseudoscalar &lhs, const Bivector &rhs);
-Trivector operator*(const Bivector &lhs, const Pseudoscalar &rhs) {
-    return rhs*lhs;
-}
-Bivector operator*(const Pseudoscalar &lhs, const Trivector &rhs);
-Bivector operator*(const Trivector &lhs, const Pseudoscalar &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Pseudoscalar &lhs, const Rotor &rhs);
-Multivector operator*(const Rotor &lhs, const Pseudoscalar &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Pseudoscalar &lhs, const Versor &rhs);
-Multivector operator*(const Versor &lhs, const Pseudoscalar &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Pseudoscalar &lhs, const Multivector &rhs);
-Multivector operator*(const Multivector &lhs, const Pseudoscalar &rhs) {
-    return rhs*lhs;
-}
-Rotor3 operator*(const Vector3 &lhs, const Vector3 &rhs);
-Multivector operator*(const Vector3 &lhs, const Bivector3 &rhs);
-Multivector operator*(const Bivector3 &lhs, const Vector3 &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Vector3 &lhs, const Rotor3 &rhs);
-Multivector operator*(const Rotor3 &lhs, const Vector3 &rhs) {
-    return rhs*lhs;
-}
-Rotor operator*(const Vector3 &lhs, const Vector &rhs);
-Rotor operator*(const Vector &lhs, const Vector3 &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Vector3 &lhs, const Quadvector &rhs);
-Multivector operator*(const Quadvector &lhs, const Vector3 &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Vector3 &lhs, const Bivector &rhs);
-Multivector operator*(const Bivector &lhs, const Vector3 &rhs) {
-    return rhs*lhs;
-}
-Versor operator*(const Vector3 &lhs, const Trivector &rhs);
-Versor operator*(const Trivector &lhs, const Vector3 &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Vector3 &lhs, const Rotor &rhs);
-Multivector operator*(const Rotor &lhs, const Vector3 &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Vector3 &lhs, const Versor &rhs);
-Multivector operator*(const Versor &lhs, const Vector3 &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Vector3 &lhs, const Multivector &rhs);
-Multivector operator*(const Multivector &lhs, const Vector3 &rhs) {
-    return rhs*lhs;
-}
-Rotor3 operator*(const Bivector3 &lhs, const Bivector3 &rhs);
-Rotor3 operator*(const Bivector3 &lhs, const Rotor3 &rhs);
-Rotor3 operator*(const Rotor3 &lhs, const Bivector3 &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Bivector3 &lhs, const Vector &rhs);
-Multivector operator*(const Vector &lhs, const Bivector3 &rhs) {
-    return rhs*lhs;
-}
-Versor operator*(const Bivector3 &lhs, const Quadvector &rhs);
-Versor operator*(const Quadvector &lhs, const Bivector3 &rhs) {
-    return rhs*lhs;
-}
-Versor operator*(const Bivector3 &lhs, const Bivector &rhs);
-Versor operator*(const Bivector &lhs, const Bivector3 &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Bivector3 &lhs, const Trivector &rhs);
-Multivector operator*(const Trivector &lhs, const Bivector3 &rhs) {
-    return rhs*lhs;
-}
-Versor operator*(const Bivector3 &lhs, const Rotor &rhs);
-Versor operator*(const Rotor &lhs, const Bivector3 &rhs) {
-    return rhs*lhs;
-}
-Versor operator*(const Bivector3 &lhs, const Versor &rhs);
-Versor operator*(const Versor &lhs, const Bivector3 &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Bivector3 &lhs, const Multivector &rhs);
-Multivector operator*(const Multivector &lhs, const Bivector3 &rhs) {
-    return rhs*lhs;
-}
-Rotor3 operator*(const Rotor3 &lhs, const Rotor3 &rhs);
-Multivector operator*(const Rotor3 &lhs, const Vector &rhs);
-Multivector operator*(const Vector &lhs, const Rotor3 &rhs) {
-    return rhs*lhs;
-}
-Versor operator*(const Rotor3 &lhs, const Quadvector &rhs);
-Versor operator*(const Quadvector &lhs, const Rotor3 &rhs) {
-    return rhs*lhs;
-}
-Versor operator*(const Rotor3 &lhs, const Bivector &rhs);
-Versor operator*(const Bivector &lhs, const Rotor3 &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Rotor3 &lhs, const Trivector &rhs);
-Multivector operator*(const Trivector &lhs, const Rotor3 &rhs) {
-    return rhs*lhs;
-}
-Versor operator*(const Rotor3 &lhs, const Rotor &rhs);
-Versor operator*(const Rotor &lhs, const Rotor3 &rhs) {
-    return rhs*lhs;
-}
-Versor operator*(const Rotor3 &lhs, const Versor &rhs);
-Versor operator*(const Versor &lhs, const Rotor3 &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Rotor3 &lhs, const Multivector &rhs);
-Multivector operator*(const Multivector &lhs, const Rotor3 &rhs) {
-    return rhs*lhs;
-}
-Rotor operator*(const Vector &lhs, const Vector &rhs);
-Multivector operator*(const Vector &lhs, const Quadvector &rhs);
-Multivector operator*(const Quadvector &lhs, const Vector &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Vector &lhs, const Bivector &rhs);
-Multivector operator*(const Bivector &lhs, const Vector &rhs) {
-    return rhs*lhs;
-}
-Versor operator*(const Vector &lhs, const Trivector &rhs);
-Versor operator*(const Trivector &lhs, const Vector &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Vector &lhs, const Rotor &rhs);
-Multivector operator*(const Rotor &lhs, const Vector &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Vector &lhs, const Versor &rhs);
-Multivector operator*(const Versor &lhs, const Vector &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Vector &lhs, const Multivector &rhs);
-Multivector operator*(const Multivector &lhs, const Vector &rhs) {
-    return rhs*lhs;
-}
-Rotor operator*(const Quadvector &lhs, const Quadvector &rhs);
-Versor operator*(const Quadvector &lhs, const Bivector &rhs);
-Versor operator*(const Bivector &lhs, const Quadvector &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Quadvector &lhs, const Trivector &rhs);
-Multivector operator*(const Trivector &lhs, const Quadvector &rhs) {
-    return rhs*lhs;
-}
-Versor operator*(const Quadvector &lhs, const Rotor &rhs);
-Versor operator*(const Rotor &lhs, const Quadvector &rhs) {
-    return rhs*lhs;
-}
-Versor operator*(const Quadvector &lhs, const Versor &rhs);
-Versor operator*(const Versor &lhs, const Quadvector &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Quadvector &lhs, const Multivector &rhs);
-Multivector operator*(const Multivector &lhs, const Quadvector &rhs) {
-    return rhs*lhs;
-}
-Versor operator*(const Bivector &lhs, const Bivector &rhs);
-Multivector operator*(const Bivector &lhs, const Trivector &rhs);
-Multivector operator*(const Trivector &lhs, const Bivector &rhs) {
-    return rhs*lhs;
-}
-Versor operator*(const Bivector &lhs, const Rotor &rhs);
-Versor operator*(const Rotor &lhs, const Bivector &rhs) {
-    return rhs*lhs;
-}
-Versor operator*(const Bivector &lhs, const Versor &rhs);
-Versor operator*(const Versor &lhs, const Bivector &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Bivector &lhs, const Multivector &rhs);
-Multivector operator*(const Multivector &lhs, const Bivector &rhs) {
-    return rhs*lhs;
-}
-Versor operator*(const Trivector &lhs, const Trivector &rhs);
-Multivector operator*(const Trivector &lhs, const Rotor &rhs);
-Multivector operator*(const Rotor &lhs, const Trivector &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Trivector &lhs, const Versor &rhs);
-Multivector operator*(const Versor &lhs, const Trivector &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Trivector &lhs, const Multivector &rhs);
-Multivector operator*(const Multivector &lhs, const Trivector &rhs) {
-    return rhs*lhs;
-}
-Versor operator*(const Rotor &lhs, const Rotor &rhs);
-Versor operator*(const Rotor &lhs, const Versor &rhs);
-Versor operator*(const Versor &lhs, const Rotor &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Rotor &lhs, const Multivector &rhs);
-Multivector operator*(const Multivector &lhs, const Rotor &rhs) {
-    return rhs*lhs;
-}
-Versor operator*(const Versor &lhs, const Versor &rhs);
-Multivector operator*(const Versor &lhs, const Multivector &rhs);
-Multivector operator*(const Multivector &lhs, const Versor &rhs) {
-    return rhs*lhs;
-}
-Multivector operator*(const Multivector &lhs, const Multivector &rhs);
-} // namespace cga
-
-#endif
+double outer(const Pseudoscalar3 &lhs, const Pseudoscalar3 &rhs);
+double outer(const Pseudoscalar3 &lhs, const Pseudoscalar &rhs);
+double outer(const Pseudoscalar &lhs, const Pseudoscalar3 &rhs) {
+    return outer(rhs, lhs);
+}
+double outer(const Pseudoscalar3 &lhs, const Vector3 &rhs);
+double outer(const Vector3 &lhs, const Pseudoscalar3 &rhs) {
+    return outer(rhs, lhs);
+}
+double outer(const Pseudoscalar3 &lhs, const Bivector3 &rhs);
+double outer(const Bivector3 &lhs, const Pseudoscalar3 &rhs) {
+    return outer(rhs, lhs);
+}
+Pseudoscalar3 outer(const Pseudoscalar3 &lhs, const Rotor3 &rhs);
+Pseudoscalar3 outer(const Rotor3 &lhs, const Pseudoscalar3 &rhs) {
+    return outer(rhs, lhs);
+}
+Quadvector outer(const Pseudoscalar3 &lhs, const Vector &rhs);
+Quadvector outer(const Vector &lhs, const Pseudoscalar3 &rhs) {
+    return outer(rhs, lhs);
+}
+double outer(const Pseudoscalar3 &lhs, const Quadvector &rhs);
+double outer(const Quadvector &lhs, const Pseudoscalar3 &rhs) {
+    return outer(rhs, lhs);
+}
+Pseudoscalar outer(const Pseudoscalar3 &lhs, const Bivector &rhs);
+Pseudoscalar outer(const Bivector &lhs, const Pseudoscalar3 &rhs) {
+    return outer(rhs, lhs);
+}
+double outer(const Pseudoscalar3 &lhs, const Trivector &rhs);
+double outer(const Trivector &lhs, const Pseudoscalar3 &rhs) {
+    return outer(rhs, lhs);
+}
+Multivector outer(const Pseudoscalar3 &lhs, const Rotor &rhs);
+Multivector outer(const Rotor &lhs, const Pseudoscalar3 &rhs) {
+    return outer(rhs, lhs);
+}
+Multivector outer(const Pseudoscalar3 &lhs, const Versor &rhs);
+Multivector outer(const Versor &lhs, const Pseudoscalar3 &rhs) {
+    return outer(rhs, lhs);
+}
+Multivector outer(const Pseudoscalar3 &lhs, const Multivector &rhs);
+Multivector outer(const Multivector &lhs, const Pseudoscalar3 &rhs) {
+    return outer(rhs, lhs);
+}
+double outer(const Pseudoscalar &lhs, const Pseudoscalar &rhs);
+double outer(const Pseudoscalar &lhs, const Vector3 &rhs);
+double outer(const Vector3 &lhs, const Pseudoscalar &rhs) {
+    return outer(rhs, lhs);
+}
+double outer(const Pseudoscalar &lhs, const Bivector3 &rhs);
+double outer(const Bivector3 &lhs, const Pseudoscalar &rhs) {
+    return outer(rhs, lhs);
+}
+Pseudoscalar outer(const Pseudoscalar &lhs, const Rotor3 &rhs);
+Pseudoscalar outer(const Rotor3 &lhs, const Pseudoscalar &rhs) {
+    return outer(rhs, lhs);
+}
+double outer(const Pseudoscalar &lhs, const Vector &rhs);
+double outer(const Vector &lhs, const Pseudoscalar &rhs) {
+    return outer(rhs, lhs);
+}
+double outer(const Pseudoscalar &lhs, const Quadvector &rhs);
+double outer(const Quadvector &lhs, const Pseudoscalar &rhs) {
+    return outer(rhs, lhs);
+}
+double outer(const Pseudoscalar &lhs, const Bivector &rhs);
+double outer(const Bivector &lhs, const Pseudoscalar &rhs) {
+    return outer(rhs, lhs);
+}
+double outer(const Pseudoscalar &lhs, const Trivector &rhs);
+double outer(const Trivector &lhs, const Pseudoscalar &rhs) {
+    return outer(rhs, lhs);
+}
+Pseudoscalar outer(const Pseudoscalar &lhs, const Rotor &rhs);
+Pseudoscalar outer(const Rotor &lhs, const Pseudoscalar &rhs) {
+    return outer(rhs, lhs);
+}
+Pseudoscalar outer(const Pseudoscalar &lhs, const Versor &rhs);
+Pseudoscalar outer(const Versor &lhs, const Pseudoscalar &rhs) {
+    return outer(rhs, lhs);
+}
+Pseudoscalar outer(const Pseudoscalar &lhs, const Multivector &rhs);
+Pseudoscalar outer(const Multivector &lhs, const Pseudoscalar &rhs) {
+    return outer(rhs, lhs);
+}
+Bivector3 outer(const Vector3 &lhs, const Vector3 &rhs);
+Pseudoscalar3 outer(const Vector3 &lhs, const Bivector3 &rhs);
+Pseudoscalar3 outer(const Bivector3 &lhs, const Vector3 &rhs) {
+    return outer(rhs, lhs);
+}
+Multivector outer(const Vector3 &lhs, const Rotor3 &rhs);
+Multivector outer(const Rotor3 &lhs, const Vector3 &rhs) {
+    return outer(rhs, lhs);
+}
+Bivector outer(const Vector3 &lhs, const Vector &rhs);
+Bivector outer(const Vector &lhs, const Vector3 &rhs) {
+    return outer(rhs, lhs);
+}
+Pseudoscalar outer(const Vector3 &lhs, const Quadvector &rhs);
+Pseudoscalar outer(const Quadvector &lhs, const Vector3 &rhs) {
+    return outer(rhs, lhs);
+}
+Trivector outer(const Vector3 &lhs, const Bivector &rhs);
+Trivector outer(const Bivector &lhs, const Vector3 &rhs) {
+    return outer(rhs, lhs);
+}
+Quadvector outer(const Vector3 &lhs, const Trivector &rhs);
+Quadvector outer(const Trivector &lhs, const Vector3 &rhs) {
+    return outer(rhs, lhs);
+}
+Multivector outer(const Vector3 &lhs, const Rotor &rhs);
+Multivector outer(const Rotor &lhs, const Vector3 &rhs) {
+    return outer(rhs, lhs);
+}
+Multivector outer(const Vector3 &lhs, const Versor &rhs);
+Multivector outer(const Versor &lhs, const Vector3 &rhs) {
+    return outer(rhs, lhs);
+}
+Multivector outer(const Vector3 &lhs, const Multivector &rhs);
+Multivector outer(const Multivector &lhs, const Vector3 &rhs) {
+    return outer(rhs, lhs);
+}
+double outer(const Bivector3 &lhs, const Bivector3 &rhs);
+Bivector3 outer(const Bivector3 &lhs, const Rotor3 &rhs);
+Bivector3 outer(const Rotor3 &lhs, const Bivector3 &rhs) {
+    return outer(rhs, lhs);
+}
+Trivector outer(const Bivector3 &lhs, const Vector &rhs);
+Trivector outer(const Vector &lhs, const Bivector3 &rhs) {
+    return outer(rhs, lhs);
+}
+double outer(const Bivector3 &lhs, const Quadvector &rhs);
+double outer(const Quadvector &lhs, const Bivector3 &rhs) {
+    return outer(rhs, lhs);
+}
+Quadvector outer(const Bivector3 &lhs, const Bivector &rhs);
+Quadvector outer(const Bivector &lhs, const Bivector3 &rhs) {
+    return outer(rhs, lhs);
+}
+Pseudoscalar outer(const Bivector3 &lhs, const Trivector &rhs);
+Pseudoscalar outer(const Trivector &lhs, const Bivector3 &rhs) {
+    return outer(rhs, lhs);
+}
+Versor outer(const Bivector3 &lhs, const Rotor &rhs);
+Versor outer(const Rotor &lhs, const Bivector3 &rhs) {
+    return outer(rhs, lhs);
+}
+Versor outer(const Bivector3 &lhs, const Versor &rhs);
+Versor outer(const Versor &lhs, const Bivector3 &rhs) {
+    return outer(rhs, lhs);
+}
+Multivector outer(const Bivector3 &lhs, const Multivector &rhs);
+Multivector outer(const Multivector &lhs, const Bivector3 &rhs) {
+    return outer(rhs, lhs);
+}
+Rotor3 outer(const Rotor3 &lhs, const Rotor3 &rhs);
+Multivector outer(const Rotor3 &lhs, const Vector &rhs);
+Multivector outer(const Vector &lhs, const Rotor3 &rhs) {
+    return outer(rhs, lhs);
+}
+Quadvector outer(const Rotor3 &lhs, const Quadvector &rhs);
+Quadvector outer(const Quadvector &lhs, const Rotor3 &rhs) {
+    return outer(rhs, lhs);
+}
+Versor outer(const Rotor3 &lhs, const Bivector &rhs);
+Versor outer(const Bivector &lhs, const Rotor3 &rhs) {
+    return outer(rhs, lhs);
+}
+Multivector outer(const Rotor3 &lhs, const Trivector &rhs);
+Multivector outer(const Trivector &lhs, const Rotor3 &rhs) {
+    return outer(rhs, lhs);
+}
+Versor outer(const Rotor3 &lhs, const Rotor &rhs);
+Versor outer(const Rotor &lhs, const Rotor3 &rhs) {
+    return outer(rhs, lhs);
+}
+Versor outer(const Rotor3 &lhs, const Versor &rhs);
+Versor outer(const Versor &lhs, const Rotor3 &rhs) {
+    return outer(rhs, lhs);
+}
+Multivector outer(const Rotor3 &lhs, const Multivector &rhs);
+Multivector outer(const Multivector &lhs, const Rotor3 &rhs) {
+    return outer(rhs, lhs);
+}
+Bivector outer(const Vector &lhs, const Vector &rhs);
+Pseudoscalar outer(const Vector &lhs, const Quadvector &rhs);
+Pseudoscalar outer(const Quadvector &lhs, const Vector &rhs) {
+    return outer(rhs, lhs);
+}
+Trivector outer(const Vector &lhs, const Bivector &rhs);
+Trivector outer(const Bivector &lhs, const Vector &rhs) {
+    return outer(rhs, lhs);
+}
+Quadvector outer(const Vector &lhs, const Trivector &rhs);
+Quadvector outer(const Trivector &lhs, const Vector &rhs) {
+    return outer(rhs, lhs);
+}
+Multivector outer(const Vector &lhs, const Rotor &rhs);
+Multivector outer(const Rotor &lhs, const Vector &rhs) {
+    return outer(rhs, lhs);
+}
+Multivector outer(const Vector &lhs, const Versor &rhs);
+Multivector outer(const Versor &lhs, const Vector &rhs) {
+    return outer(rhs, lhs);
+}
+Multivector outer(const Vector &lhs, const Multivector &rhs);
+Multivector outer(const Multivector &lhs, const Vector &rhs) {
+    return outer(rhs, lhs);
+}
+double outer(const Quadvector &lhs, const Quadvector &rhs);
+double outer(const Quadvector &lhs, const Bivector &rhs);
+double outer(const Bivector &lhs, const Quadvector &rhs) {
+    return outer(rhs, lhs);
+}
+double outer(const Quadvector &lhs, const Trivector &rhs);
+double outer(const Trivector &lhs, const Quadvector &rhs) {
+    return outer(rhs, lhs);
+}
+Quadvector outer(const Quadvector &lhs, const Rotor &rhs);
+Quadvector outer(const Rotor &lhs, const Quadvector &rhs) {
+    return outer(rhs, lhs);
+}
+Quadvector outer(const Quadvector &lhs, const Versor &rhs);
+Quadvector outer(const Versor &lhs, const Quadvector &rhs) {
+    return outer(rhs, lhs);
+}
+Multivector outer(const Quadvector &lhs, const Multivector &rhs);
+Multivector outer(const Multivector &lhs, const Quadvector &rhs) {
+    return outer(rhs, lhs);
+}
+Quadvector outer(const Bivector &lhs, const Bivector &rhs);
+Pseudoscalar outer(const Bivector &lhs, const Trivector &rhs);
+Pseudoscalar outer(const Trivector &lhs, const Bivector &rhs) {
+    return outer(rhs, lhs);
+}
+Versor outer(const Bivector &lhs, const Rotor &rhs);
+Versor outer(const Rotor &lhs, const Bivector &rhs) {
+    return outer(rhs, lhs);
+}
+Versor outer(const Bivector &lhs, const Versor &rhs);
+Versor outer(const Versor &lhs, const Bivector &rhs) {
+    return outer(rhs, lhs);
+}
+Multivector outer(const Bivector &lhs, const Multivector &rhs);
+Multivector outer(const Multivector &lhs, const Bivector &rhs) {
+    return outer(rhs, lhs);
+}
+double outer(const Trivector &lhs, const Trivector &rhs);
+Multivector outer(const Trivector &lhs, const Rotor &rhs);
+Multivector outer(const Rotor &lhs, const Trivector &rhs) {
+    return outer(rhs, lhs);
+}
+Multivector outer(const Trivector &lhs, const Versor &rhs);
+Multivector outer(const Versor &lhs, const Trivector &rhs) {
+    return outer(rhs, lhs);
+}
+Multivector outer(const Trivector &lhs, const Multivector &rhs);
+Multivector outer(const Multivector &lhs, const Trivector &rhs) {
+    return outer(rhs, lhs);
+}
+Versor outer(const Rotor &lhs, const Rotor &rhs);
