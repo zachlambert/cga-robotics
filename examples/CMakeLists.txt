@@ -6,5 +6,5 @@ function(add_example name)
 endfunction()
 
 add_example(structs)
-add_example(geometry_3d)
+add_example(geometry)
 # add_example(chain)

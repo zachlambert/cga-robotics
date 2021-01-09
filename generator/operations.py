@@ -44,11 +44,11 @@ class GeometricProduct:
         f_cpp.write("}\n")
 
         if op1.name != op2.name:
-            f_h.write("{ret} operator*(const {op2} &lhs, const {op1} &rhs)".format(
+            f_h.write("inline {ret} operator*(const {op2} &lhs, const {op1} &rhs)".format(
                 ret=ret.name, op1=op1.name, op2=op2.name) + " {\n")
             f_h.write("    return rhs*lhs;\n")
             f_h.write("}\n")
-        
+
         f_h.write("\n")
         f_cpp.write("\n")
 
@@ -79,11 +79,11 @@ class OuterProduct:
         f_cpp.write("}\n")
 
         if op1.name != op2.name:
-            f_h.write("{ret} outer(const {op2} &lhs, const {op1} &rhs)".format(
+            f_h.write("inline {ret} outer(const {op2} &lhs, const {op1} &rhs)".format(
                 ret=ret.name, op1=op1.name, op2=op2.name) + " {\n")
             f_h.write("    return outer(rhs, lhs);\n")
             f_h.write("}\n")
-        
+
         f_h.write("\n")
         f_cpp.write("\n")
 
@@ -114,11 +114,11 @@ class InnerProduct:
         f_cpp.write("}\n")
 
         if op1.name != op2.name:
-            f_h.write("{ret} inner(const {op2} &lhs, const {op1} &rhs)".format(
+            f_h.write("inline {ret} inner(const {op2} &lhs, const {op1} &rhs)".format(
                 ret=ret.name, op1=op1.name, op2=op2.name) + " {\n")
             f_h.write("    return inner(rhs, lhs);\n")
             f_h.write("}\n")
-        
+
         f_h.write("\n")
         f_cpp.write("\n")
 
@@ -152,7 +152,7 @@ class Reverse:
         write_expression(op, "result", expression, f_cpp)
         f_cpp.write("    return result;\n")
         f_cpp.write("}\n")
-        
+
         f_h.write("\n")
         f_cpp.write("\n")
 
@@ -178,7 +178,7 @@ class Norm:
         f_cpp.write("}\n")
         f_cpp.write("\n")
 
-        f_h.write("double norm(const {op} &x)\n".format(op=op.name))
+        f_h.write("inline double norm(const {op} &x)\n".format(op=op.name))
         f_h.write("{\n")
         f_h.write("    return std::sqrt(norm2(x));\n")
         f_h.write("}\n")

@@ -6,14 +6,15 @@
 #include <vector>
 
 #include "cga.h"
-#include "transformations.h"
+#include "geometry.h"
+#include "transform.h"
 
 namespace cga {
 
 struct Inertia {
     double ixx, iyy, izz, ixy, ixz, iyz;
-    Point origin;
-    Orientation orientation;
+    Vector3 origin;
+    Bivector3 orientation;
 };
 
 struct Link {
@@ -25,9 +26,9 @@ struct Link {
 struct Joint {
     std::string parent;
     std::string child;
-    Translation translation; // Transformation to next frame origin
-    Rotation rotation;
-    Bivector axis; // Axis of rotation for joint
+    Rotor translation; // Transformation to next frame origin
+    Rotor rotation;
+    Bivector3 axis; // Axis of rotation for joint
 };
 
 class Chain {

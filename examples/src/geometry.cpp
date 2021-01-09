@@ -3,16 +3,7 @@
 
 #include "cga.h"
 #include "geometry.h"
-
-struct P {
-    double x;
-    double y;
-    double z;
-};
-
-struct Q {
-    double x[3];
-};
+#include "transform.h"
 
 int main()
 {
@@ -23,6 +14,6 @@ int main()
     auto R2 = cga::make_rotation(M_PI/2, {1/std::sqrt(2), -1/std::sqrt(2), 0});
     cga::Rotor3 R = R2*R1;
 
-    auto b = rotate(a, R);
+    auto b = cga::Vector3(rotate_vector(a, R));
     std::cout << b << std::endl;
 }

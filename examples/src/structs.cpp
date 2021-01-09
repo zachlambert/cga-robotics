@@ -18,5 +18,5 @@ int main()
 
     cga::Multivector d = outer(a, b) * a2;
     std::cout << d << std::endl;
-    std::cout << cga::Vector(d) << std::endl;
+    std::cout << d.v << std::endl;
 }

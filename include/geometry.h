@@ -5,37 +5,38 @@
 
 namespace cga {
 
-inline Bivector3 make_axis(double x, double y, double z)
+inline Vector make_point(const Vector3 &x)
 {
-    Bivector3 result;
-    result.e23 = x;
-    result.e31 = y;
-    result.e12 = z;
+    Vector result = x;
+    result.eo = 1;
+    result.ei = 0.5*norm2(x);
     return result;
 }
 
-inline Rotor3 make_rotation(double theta, Bivector3 axis)
+inline Vector make_plane(const Vector3 &normal, double dist)
 {
-    Rotor3 result;
-    result.s = std::cos(theta/2);
-    result.b = std::sin(theta/2) * axis;
+    Vector result = normal / norm(normal); // Ensure normalised
+    result.ei = dist;
     return result;
 }
 
-inline Rotor make_translation(double x, double y, double z)
+inline Vector make_sphere(const Vector3& origin, double radius)
 {
-    Rotor result;
-    result.s = 1;
-    result.b.e1i = -0.5*x;
-    result.b.e2i = -0.5*y;
-    result.b.e3i = -0.5*z;
+    Vector result = origin;
+    result.ei = -0.5*radius*radius;
     return result;
 }
 
-inline Vector3 rotate(const Vector3& x, const Rotor3 &R)
+inline Vector make_imaginary_sphere(const Vector3& origin, double radius)
 {
-    auto result = R*x*reverse(R);
-    return {result.v.e1, result.v.e2, result.v.e3};
+    Vector result = origin;
+    result.ei = 0.5*radius*radius;
+    return result;
+}
+
+inline Vector3 extract_point(const Vector &x)
+{
+    return Vector3(x) / x.eo;
 }
 
 } // namespace cga
