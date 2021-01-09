@@ -54,23 +54,34 @@ class Struct:
             self.add_variable(name+"."+var.name, var.expression, var.extractor, False)
         self.members.append(Member(name, struct))
 
-    def expression(self):
+    def expression(self, struct_name = None):
         expression = 0
+        prefix = "" if struct_name is None else struct_name + "."
         for var in self.variables:
-            expression += sympy.Symbol(var.name) * var.expression
+            expression += sympy.Symbol(prefix+var.name) * var.expression
         return expression
 
-    def extract(self, expression):
-        results = {}
-        for var in self.variables:
-            results[var.name] = (var.extractor * expression).grade(0).obj
-        return results
+    def extract(self, expression, var):
+        return (var.extractor * expression).grade(0).obj.simplify()
 
     def validate(self):
-        results = self.extract(self.expression())
-        for name, expression in results.items():
-            assert(sympy.Symbol(name).equals(expression))
+        expression = self.expression()
+        for var in self.variables:
+            assert(sympy.Symbol(var.name).equals(self.extract(expression, var)))
         print(self.name, "is valid")
+
+    def can_fit(self, expression):
+        temp = expression
+        for var in self.variables:
+            # Remove component of expression in that variable
+            temp -= self.extract(expression, var) * var.expression
+
+        # If anything remains in the expression, then this struct doesn't
+        # contain those variables.
+        if temp.obj.equals(0): # For some reason, temp == 0 doesn't work
+            return True
+        else:
+            return False
 
 def make_structs():
 

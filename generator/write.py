@@ -100,9 +100,6 @@ def write_struct(struct, f_h, f_cpp):
 
     f_h.write("\n\n")
 
-def write_operation(operation, structs, available, f_h, f_cpp):
-    pass
-
 def write_printing(struct, f_h, f_cpp):
     f_h.write("std::ostream& operator<<(std::ostream& outs, const {name} &x);\n\n".format(name=struct.name))
     f_cpp.write("std::ostream& operator<<(std::ostream& outs, const {name} &x) ".format(name=struct.name)+"{\n")
