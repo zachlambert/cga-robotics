@@ -22,13 +22,15 @@ def main():
             f_cpp.write("namespace cga {\n\n")
 
             # Forward declarations, for constructors which convert from other structs
-            for struct in structs:
-                f_h.write("struct {};\n".format(struct.name))
+            for struct in available:
+                if struct.name != "double":
+                    f_h.write("struct {};\n".format(struct.name))
             f_h.write("\n")
 
-            # Write struct bodies, including member functions
-            for struct in structs:
-                write_struct(struct, f_h, f_cpp)
+            # Write struct bodies, including constructors and member functions
+            for struct in available:
+                if struct.name != "double":
+                    write_struct(struct, f_h, f_cpp)
 
             # Write geometric, outer, inner product, reverse, norm
             # Also room to add more specialised operations if necessary,

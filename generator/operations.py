@@ -55,6 +55,9 @@ class GeometricProduct:
                 ret=ret.name, op1=op1.name, op2=op2.name) + " {\n")
             f_h.write("    return rhs*lhs;\n")
             f_h.write("}\n")
+        
+        f_h.write("\n")
+        f_cpp.write("\n")
 
     def write(self, structs, available, f_h, f_cpp):
         print("WRITING GEOMETRIC PRODUCT")
@@ -96,6 +99,9 @@ class OuterProduct:
                 ret=ret.name, op1=op1.name, op2=op2.name) + " {\n")
             f_h.write("    return outer(rhs, lhs);\n")
             f_h.write("}\n")
+        
+        f_h.write("\n")
+        f_cpp.write("\n")
 
     def write(self, structs, available, f_h, f_cpp):
         print("WRITING OUTER PRODUCT")
@@ -137,6 +143,9 @@ class InnerProduct:
                 ret=ret.name, op1=op1.name, op2=op2.name) + " {\n")
             f_h.write("    return inner(rhs, lhs);\n")
             f_h.write("}\n")
+        
+        f_h.write("\n")
+        f_cpp.write("\n")
 
     def write(self, structs, available, f_h, f_cpp):
         print("WRITING INNER PRODUCT")
@@ -177,6 +186,9 @@ class Reverse:
 
         f_cpp.write("    return result;\n")
         f_cpp.write("}\n")
+        
+        f_h.write("\n")
+        f_cpp.write("\n")
 
     def write(self, structs, available, f_h, f_cpp):
         print("WRITING REVERSE")
@@ -185,17 +197,4 @@ class Reverse:
             self.write_individual(structs[i], f_h, f_cpp)
 
 def get_operations():
-    return [OuterProduct(), InnerProduct(), Reverse()]
-
-if __name__ == "__main__":
-    structs, available = make_structs()
-    struct1 = structs[5]
-    struct2 = structs[11]
-    expression = struct1.expression("lhs") * struct2.expression("rhs")
-
-    temp = expression
-    for var in struct2.variables:
-        # Remove component of expression in that variable
-        temp -= struct2.extract(expression, var) * var.expression
-    print(temp)
-    print(temp.obj.equals(0))
+    return [GeometricProduct(), OuterProduct(), InnerProduct(), Reverse()]

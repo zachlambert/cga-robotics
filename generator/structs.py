@@ -280,10 +280,7 @@ def make_structs():
     Scalar.validate()
     available = [Scalar] + ordered_structs
 
-    for s in ordered_structs:
-        print(s.name, ":", s.blades)
-
-    return ordered_structs, available
+    return ordered_structs[2:5], available
 
 if __name__ == "__main__":
     make_structs()

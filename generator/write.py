@@ -17,19 +17,36 @@ def write_struct(struct, f_h, f_cpp):
     f_h.write("\n")
 
     # Constructors
-    # Use default copy constructor and assignment operator
-    # Use this to set the default constructor, construction by elements,
-    # and construction from various conversions
 
-    # for params, init_list, explicit in struct.constructors:
-    #     is_explicit = "explicit " if explicit else ""
-    #     f_h.write("    {is_explicit}{name}({params});".format(
-    #         is_explicit=is_explicit, name=struct.name, params=params) + "\n")
-    #     f_cpp.write("{name}::{name}({params}): {init_list} ".format(
-    #         name=struct.name, params=params, init_list=init_list) + "{}\n")
-    # if(len(struct.constructors) != 0):
-    #     f_h.write("\n")
-    #     f_cpp.write("\n")
+    params = []
+    default_init_list = []
+    member_init_list = []
+    for member in struct.members:
+        if member.struct is None:
+            params.append("double "+member.name)
+            default_init_list.append("{}(0)".format(member.name))
+        else:
+            params.append("const {} &{}".format(member.struct.name, member.name))
+            default_init_list.append("{}()".format(member.name))
+        member_init_list.append("{name}({name})".format(name=member.name))
+
+    # Default constructor
+    f_h.write("    {name}(): {init_list}".format(
+        name=struct.name, params=", ".join(params), init_list=", ".join(default_init_list)))
+    f_h.write(" {}\n")
+
+    # Construct from members
+    f_h.write("    {name}({params}): {init_list}".format(
+        name=struct.name, params=", ".join(params), init_list=", ".join(member_init_list)))
+    f_h.write(" {}\n")
+
+    # Create a constructor for each non-scalar member
+    for i, member in enumerate(struct.members):
+        if member.struct is None: continue
+        init_list = [member_init_list[j] if j==i else default_init_list[j] for j in range(len(struct.members))]
+        f_h.write("    {name}({param}): {init_list}".format(
+            name=struct.name, param=params[i], init_list=", ".join(init_list)))
+        f_h.write(" {}\n")
 
     # operator+=
     f_h.write("    {name}& operator+=(const {name} &other) ".format(name=struct.name)+"{\n")
