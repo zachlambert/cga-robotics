@@ -1,4 +1,6 @@
+import sympy
 from structs import make_structs, extract_blades
+from write import write_expression, expression_str
 
 """
 An operation must define:
@@ -37,16 +39,7 @@ class GeometricProduct:
         f_h.write(prototype+";\n")
         f_cpp.write(prototype+" {\n")
         f_cpp.write("    {} result;\n".format(ret.name))
-
-        for var in ret.variables:
-            var_expression = ret.extract(expression, var)
-            if var_expression != 0:
-                var_name = "result"
-                if var.name != "":
-                    var_name += "." + var.name
-                f_cpp.write("    {name} = {expression};\n".format(
-                    name=var_name, expression=var_expression))
-
+        write_expression(ret, "result", expression, f_cpp)
         f_cpp.write("    return result;\n")
         f_cpp.write("}\n")
 
@@ -81,16 +74,7 @@ class OuterProduct:
         f_h.write(prototype+";\n")
         f_cpp.write(prototype+" {\n")
         f_cpp.write("    {} result;\n".format(ret.name))
-
-        for var in ret.variables:
-            var_expression = ret.extract(expression, var)
-            if var_expression != 0:
-                var_name = "result"
-                if var.name != "":
-                    var_name += "." + var.name
-                f_cpp.write("    {name} = {expression};\n".format(
-                    name=var_name, expression=var_expression))
-
+        write_expression(ret, "result", expression, f_cpp)
         f_cpp.write("    return result;\n")
         f_cpp.write("}\n")
 
@@ -125,16 +109,7 @@ class InnerProduct:
         f_h.write(prototype+";\n")
         f_cpp.write(prototype+" {\n")
         f_cpp.write("    {} result;\n".format(ret.name))
-
-        for var in ret.variables:
-            var_expression = ret.extract(expression, var)
-            if var_expression != 0:
-                var_name = "result"
-                if var.name != "":
-                    var_name += "." + var.name
-                f_cpp.write("    {name} = {expression};\n".format(
-                    name=var_name, expression=var_expression))
-
+        write_expression(ret, "result", expression, f_cpp)
         f_cpp.write("    return result;\n")
         f_cpp.write("}\n")
 
@@ -174,16 +149,7 @@ class Reverse:
         f_h.write(prototype+";\n")
         f_cpp.write(prototype+" {\n")
         f_cpp.write("    {op} result;\n".format(op=op.name))
-
-        for var in op.variables:
-            var_expression = op.extract(expression, var)
-            if var_expression != 0:
-                var_name = "result"
-                if var.name != "":
-                    var_name += "." + var.name
-                f_cpp.write("    {name} = {expression};\n".format(
-                    name=var_name, expression=var_expression))
-
+        write_expression(op, "result", expression, f_cpp)
         f_cpp.write("    return result;\n")
         f_cpp.write("}\n")
         
@@ -196,5 +162,34 @@ class Reverse:
             print("({}/{}) op = {}".format(i+1, len(structs), structs[i].name))
             self.write_individual(structs[i], f_h, f_cpp)
 
+class Norm:
+    def write_individual(self, op, available, f_h, f_cpp):
+        original = op.expression("x")
+        try:
+            expression = (op.expression("x").norm2()).expand()
+        except:
+            print("Cannot compute norm2 for", op.name)
+            return
+
+        prototype = "double norm2(const {op} &x)".format(op=op.name)
+        f_h.write(prototype+";\n")
+        f_cpp.write(prototype+" {\n")
+        f_cpp.write("    return {};\n".format(expression_str(expression)))
+        f_cpp.write("}\n")
+
+        f_h.write("double norm(const {op} &x)\n".format(op=op.name))
+        f_h.write("{\n")
+        f_h.write("    return std::sqrt(norm2(x));\n")
+        f_h.write("}\n")
+        
+        f_h.write("\n")
+        f_cpp.write("\n")
+
+    def write(self, structs, available, f_h, f_cpp):
+        print("WRITING NORM")
+        for i in range(len(structs)):
+            print("({}/{}) op = {}".format(i+1, len(structs), structs[i].name))
+            self.write_individual(structs[i], available, f_h, f_cpp)
+
 def get_operations():
-    return [GeometricProduct(), OuterProduct(), InnerProduct(), Reverse()]
+    return [Norm(), GeometricProduct(), OuterProduct(), InnerProduct(), Reverse()]

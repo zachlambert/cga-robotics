@@ -65,12 +65,25 @@ class Variable:
         self.name = name
         self.expression = expression
         self.extractor = extractor
+        self.grade = None
+        for r in range(0, 6):
+            if self.extractor.grade(r) == self.extractor:
+                self.grade = r
+
+    def extract(self, expression):
+        if self.grade is None:
+            return (self.extractor * expression).grade(0).obj.simplify()
+        elif self.grade != 0:
+            return (self.extractor | expression.grade(self.grade)).grade(0).obj.simplify()
+        else: # grade = 0
+            return expression.grade(0).obj.simplify()
 
 class Struct:
     def __init__(self, name):
         self.name = name
         self.members = []
         self.variables = []
+        self.extra_constructors = []
 
     def add_variable(self, name, expression, extractor, add_member=True):
         self.variables.append(Variable(name, expression, extractor))
@@ -89,13 +102,10 @@ class Struct:
             expression += sympy.Symbol(prefix+var.name) * var.expression
         return expression
 
-    def extract(self, expression, var):
-        return (var.extractor * expression).grade(0).obj.simplify()
-
     def validate(self):
         expression = self.expression()
         for var in self.variables:
-            assert(sympy.Symbol(var.name).equals(self.extract(expression, var)))
+            assert(sympy.Symbol(var.name).equals(var.extract(expression)))
         print(self.name, "is valid")
         self.blades = extract_blades(expression)
 
@@ -104,6 +114,13 @@ class Struct:
             if not blade in self.blades:
                 return False
         return True
+
+    def add_extra_constructor(self, struct):
+        # Only use this for constructors between things like Vector3 and Vector
+        # Don't use it for converting to and from member structs.
+        # eg: Rotor already has a constructor from a bivector
+        #     To get a bivector from a rotor, copy the bivector member
+        self.extra_constructors.append(struct)
 
 def make_structs():
 
@@ -257,6 +274,24 @@ def make_structs():
     Multivector.validate()
     structs.append(Multivector)
 
+    # Add some extra constructors
+    # (Modifying struct variables will affect variables in lists too)
+
+    Vector3.add_extra_constructor(Vector)
+    Vector.add_extra_constructor(Vector3)
+
+    Bivector3.add_extra_constructor(Bivector)
+    Bivector.add_extra_constructor(Bivector3)
+
+    Rotor3.add_extra_constructor(Rotor)
+    Rotor.add_extra_constructor(Rotor3)
+    Rotor.add_extra_constructor(Versor)
+    Rotor.add_extra_constructor(Multivector)
+
+    Versor.add_extra_constructor(Multivector)
+
+    Multivector.add_extra_constructor(Rotor)
+    Multivector.add_extra_constructor(Versor)
 
     # Before returning structs, put them in order of least to most general
     # Quantify specificity by the number of variables
@@ -280,7 +315,7 @@ def make_structs():
     Scalar.validate()
     available = [Scalar] + ordered_structs
 
-    return ordered_structs[2:5], available
+    return ordered_structs, available
 
 if __name__ == "__main__":
     make_structs()
