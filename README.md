@@ -16,7 +16,7 @@ code than if using a more general purpose cga library.
 
 To evaluate the benefits and drawbacks of using cga for kinematics compared to conventional methods, the cbot library does operations both with standard methods
 using linear algebra and with conformal geometric algebra. These are separated into the linalg and cga subdirectories. By swapping the included header file from
-'cbot/linalg/delta.h' to 'cbot/cga/delta.h' for example, the code is unchanged, only the implementation changes. Because both subdirectories implement objects with
+`cbot/linalg/delta.h` to `cbot/cga/delta.h` for example, the code is unchanged, only the implementation changes. Because both subdirectories implement objects with
 the same names, only one implementation can be used at a time.
 
 The planned types of robot are:
