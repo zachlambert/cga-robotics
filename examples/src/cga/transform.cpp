@@ -1,8 +1,7 @@
 #include <iostream>
 #include <vector>
 
-#include "cga.h"
-#include "transform.h"
+#include "cga/transform.h"
 
 int main()
 {

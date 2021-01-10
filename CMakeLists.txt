@@ -9,7 +9,8 @@ project(
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 set(SRC
-    src/cga.cpp
+    src/gen/cga.cpp
+    src/linalg/kinematics.cpp
 )
 add_library(cga STATIC ${SRC})
 target_include_directories(cga

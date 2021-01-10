@@ -1,7 +1,7 @@
 #ifndef CGA_TRANSFORM_H
 #define CGA_TRANSFORM_H
 
-#include "cga.h"
+#include "gen/cga.h"
 
 namespace cga {
 

@@ -1,7 +1,7 @@
 #ifndef TRANSFORMATIONS_H
 #define TRANSFORMATIONS_H
 
-#include "cga.h"
+#include "gen/cga.h"
 #include <iostream>
 
 namespace cga {

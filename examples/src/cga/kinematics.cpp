@@ -1,5 +1,5 @@
 #include <iostream>
-#include "kinematics.h"
+#include "cga/kinematics.h"
 
 int main()
 {

@@ -1,9 +1,8 @@
 #include <iostream>
 #include <vector>
 
-#include "cga.h"
-#include "geometry.h"
-#include "transform.h"
+#include "cga/geometry.h"
+#include "cga/transform.h"
 
 int main()
 {

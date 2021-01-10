@@ -87,7 +87,7 @@ def write_includes(f_h, f_cpp):
     f_h.write("#include <cmath>\n")
     f_h.write("#include <iostream>\n")
     f_h.write("\n")
-    f_cpp.write("#include \"cga.h\"\n")
+    f_cpp.write("#include \"gen/cga.h\"\n")
     f_cpp.write("\n")
 
 def write_struct(struct, f_h, f_cpp):
