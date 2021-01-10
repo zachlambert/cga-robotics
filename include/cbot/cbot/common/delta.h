@@ -1,7 +1,7 @@
 #ifndef COMMON_DELTA_H
 #define COMMON_DELTA_H
 
-#include "common/robot.h"
+#include "cbot/common/robot.h"
 
 class DeltaBase: Robot {
 public:

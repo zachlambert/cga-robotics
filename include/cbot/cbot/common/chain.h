@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <unordered_map>
-#include "common/robot.h"
+#include "cbot/common/robot.h"
 
 // Only allow revolute joints.
 // Joint i defines the transform between links (i-1) and i, with the parameters:

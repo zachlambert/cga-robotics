@@ -1,8 +1,8 @@
 #ifndef CGA_DELTA_H
 #define CGA_DELTA_H
 
-#include "common/delta.h"
-#include "gen/cga.h"
+#include "cbot/common/delta.h"
+#include "cga/cga.h"
 
 class Delta: public DeltaBase {
 public:

@@ -1,7 +1,7 @@
 #ifndef COMMON_INDUSTRIAL_H
 #define COMMON_INDUSTRIAL_H
 
-#include "common/robot.h"
+#include "cbot/common/robot.h"
 
 // A 6 DoF industrial manipulator
 // The geometry is chosen such that the three last joints share a common point,

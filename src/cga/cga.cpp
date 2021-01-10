@@ -1,4 +1,4 @@
-#include "gen/cga.h"
+#include "cga/cga.h"
 
 namespace cga {
 

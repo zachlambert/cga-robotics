@@ -1,4 +1,4 @@
-#include "cga/delta.h"
+#include "cbot/linalg/delta.h"
 
 Pose Delta::fk_pose(const std::unordered_map<std::string, JointState> &joints)
 {

@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "gen/cga.h"
+#include "cga/cga.h"
 
 int main()
 {

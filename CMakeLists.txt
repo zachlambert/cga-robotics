@@ -6,21 +6,32 @@ project(
     LANGUAGES CXX
 )
 
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
-set(SRC
-    src/gen/cga.cpp
-    src/cga/delta.cpp
-    src/linalg/delta.cpp
+# 1. Build the cga library
+
+add_library(cga STATIC
+    src/cga/cga.cpp
 )
-add_library(cga_robotics STATIC ${SRC})
-target_include_directories(cga_robotics
-    PUBLIC include
+target_include_directories(cga
+    PUBLIC include/cga
 )
-target_link_libraries(cga_robotics
-    PRIVATE Eigen3::Eigen
+
+# 2. Build the cbot library
+
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+
+add_library(cbot STATIC
+    src/cbot/linalg/delta.cpp
+    src/cbot/cga/delta.cpp
 )
+target_include_directories(cbot
+    PUBLIC include/cbot
+)
+target_link_libraries(cbot
+    PRIVATE cga Eigen3::Eigen
+)
+
+# 3. Build the examples
 
 add_subdirectory(examples)

@@ -1,7 +1,7 @@
 #ifndef LINALG_DELTA_H
 #define LINALG_DELTA_H
 
-#include "common/delta.h"
+#include "cbot/common/delta.h"
 #include <Eigen/Dense>
 
 class Delta: public DeltaBase {
