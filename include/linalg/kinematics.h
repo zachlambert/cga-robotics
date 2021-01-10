@@ -1,17 +1,14 @@
-#ifndef CGA_KINEMATICS
-#define CGA_KINEMATICS
+#ifndef LINALG_KINEMATICS
+#define LINALG_KINEMATICS
 
-#include <string>
+#include <Eigen/Dense>
 
 namespace linalg {
 
-class Joint {
-
-};
-
-class Tree {
-    void add_link(const std::string &name);
-    void add_joint(const std::string &name, const Joint &joint);
+struct Pose {
+    Eigen::Vector3d position;
+    Eigen::Quaterniond orientation;
+    Eigen::Matrix4d transform;
 };
 
 }; // namespace cga_robotics

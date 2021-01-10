@@ -2,7 +2,7 @@ function(add_example subdir name)
     add_executable(${subdir}_${name}
         src/${subdir}/${name}.cpp
     )
-    target_link_libraries(${subdir}_${name} cga)
+    target_link_libraries(${subdir}_${name} cga_robotics)
 endfunction()
 
 add_example(cga gen)
