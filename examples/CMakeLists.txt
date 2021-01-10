@@ -7,4 +7,5 @@ endfunction()
 
 add_example(structs)
 add_example(geometry)
-# add_example(chain)
+add_example(transform)
+# add_example(kinematics)
