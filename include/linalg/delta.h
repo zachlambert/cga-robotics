@@ -4,8 +4,6 @@
 #include "common/delta.h"
 #include <Eigen/Dense>
 
-namespace linalg {
-
 class Delta: public DeltaBase {
 public:
     Delta(Structure structure);
@@ -16,7 +14,5 @@ public:
     void ik_twist(const Twist &twist, std::unordered_map<std::string, JointState> &joints);
     void force_control(const Twist &twist, std::unordered_map<std::string, JointState> &joints);
 };
-
-}
 
 #endif

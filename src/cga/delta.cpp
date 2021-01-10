@@ -1,7 +1,5 @@
 #include "cga/delta.h"
 
-namespace cga {
-
 Pose Delta::fk_pose(const std::unordered_map<std::string, JointState> &joints)
 {
     Pose pose;
@@ -28,5 +26,3 @@ void Delta::force_control(const Twist &twist, std::unordered_map<std::string, Jo
 {
 
 }
-
-} // namespace cga
