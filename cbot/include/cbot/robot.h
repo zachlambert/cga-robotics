@@ -2,6 +2,7 @@
 #define COMMON_ROBOT_H
 
 #include <string>
+#include <vector>
 #include <unordered_map>
 
 // Define some simple structs for return types.
@@ -10,13 +11,6 @@
 // Chosen the same representations as those used by ros msgs
 
 namespace cbot {
-
-struct JointState {
-    double pos;
-    double vel;
-    double acc;
-    double torque;
-};
 
 struct Pose {
     struct {
@@ -60,32 +54,55 @@ struct Inertia {
 class Robot {
 public:
     // FORWARD KINEMATICS:
-    // Given the joint positions, determine the end effector pose
-    virtual Pose fk_pose(const std::unordered_map<std::string, JointState> &joints)=0;
-    // Given the joint positions and velocities, determine the end effector twist
-    virtual Twist fk_twist(const std::unordered_map<std::string, JointState> &joints)=0;
+    virtual bool fk_pose(
+        const std::vector<std::string> &joint_names,
+        std::vector<double> &joint_positions, // Allow setting dependent joints
+        Pose &pose)=0;
+    virtual bool fk_twist(
+        const std::vector<std::string> &joint_names,
+        const std::vector<double> &joint_positions,
+        const std::vector<double> &joint_velocities,
+        Twist &twist)=0;
 
     // INVERSE KINEMATICS:
-    // Given the desired pose, set the joint positions
-    virtual void ik_pose(const Pose &pose, std::unordered_map<std::string, JointState> &joints)=0;
-    // Given the desired twist and current joint positions, set the joint velocities
-    virtual void ik_twist(const Twist &twist, std::unordered_map<std::string, JointState> &joints)=0;
+    virtual bool ik_pose(
+        const Pose &pose,
+        const std::vector<std::string> &joint_names,
+        std::vector<double> &joints_positions)=0;
+    virtual bool ik_twist(
+        const Twist &twist,
+        const std::vector<std::string> &joint_names,
+        const std::vector<double> &joints_positions,
+        std::vector<double> &joints_velocities)=0;
 
     // FORCE CONTROL
-    // Given a desired end effector wrench, what are the required joint torques
-    virtual void force_control(const Twist &twist, std::unordered_map<std::string, JointState> &joints)=0;
+    virtual bool force_control(
+        const Twist &twist,
+        const std::vector<std::string> &joint_names,
+        const std::vector<double> &joint_positions,
+        std::vector<double> &joint_torques)=0;
 
     // --- Dynamics functions below are placeholders, if there is time to look at ---
 
     // FORWARD DYNAMICS:
     // Given the end effector wrench, joint positions, velocities and torques,
     // what are the resultant joint accelerations.
-    // virtual void fd(const Wrench &wrench, const std::unordered_map<std::string, JointState> &joints)=0;
+    virtual bool fd(
+        const Wrench &wrench,
+        const std::vector<std::string> &joint_names,
+        const std::vector<double> &joint_positions,
+        const std::vector<double> &joint_velocities,
+        std::vector<std::string> &joint_accelerations) { return false; }
 
     // INVERSE DYNAMICS:
     // Given the desired joint accelerations, and current joint positions, velocities and ee wrench,
     // what are the required joint torques.
-    // virtual void id(const Wrench &wrench, std::unordered_map<std::string, JointState> &joints)=0;
+    virtual bool id(
+        const Wrench &wrench,
+        const std::vector<std::string> &joint_positions,
+        const std::vector<std::string> &joint_velocities,
+        const std::vector<std::string> &joint_accelerations,
+        std::vector<std::string> &joint_torques) { return false; }
 };
 
 } // namespace cbot

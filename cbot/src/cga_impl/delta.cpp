@@ -12,36 +12,52 @@ public:
     double joint_pos[3];
 };
 
-Delta::Delta(Structure structure): DeltaBase(structure), pimpl(new Impl())
+Delta::Delta(Config config): DeltaBase(config), pimpl(new Impl())
 {
 
 }
 
-Pose Delta::fk_pose(const std::unordered_map<std::string, JointState> &joints)
+bool Delta::fk_pose(
+    const std::vector<std::string> &joint_names,
+    std::vector<double> &joint_positions,
+    Pose &pose)
 {
-    Pose pose;
-    return pose;
+    return true;
 }
 
-Twist Delta::fk_twist(const std::unordered_map<std::string, JointState> &joints)
+bool Delta::fk_twist(
+    const std::vector<std::string> &joint_names,
+    const std::vector<double> &joint_positions,
+    const std::vector<double> &joint_velocities,
+    Twist &twist)
 {
-    Twist twist;
-    return twist;
+    return true;
 }
 
-void Delta::ik_pose(const Pose &pose, std::unordered_map<std::string, JointState> &joints)
+bool Delta::ik_pose(
+    const Pose &pose,
+    const std::vector<std::string> &joint_names,
+    std::vector<double> &joints_positions)
 {
-
+    return true;
 }
 
-void Delta::ik_twist(const Twist &twist, std::unordered_map<std::string, JointState> &joints)
+bool Delta::ik_twist(
+    const Twist &twist,
+    const std::vector<std::string> &joint_names,
+    const std::vector<double> &joints_positions,
+    std::vector<double> &joints_velocities)
 {
-
+    return true;
 }
 
-void Delta::force_control(const Twist &twist, std::unordered_map<std::string, JointState> &joints)
+bool Delta::force_control(
+    const Twist &twist,
+    const std::vector<std::string> &joint_names,
+    const std::vector<double> &joint_positions,
+    std::vector<double> &joint_torques)
 {
-
+    return true;
 }
 
 } // namespace cga_impl

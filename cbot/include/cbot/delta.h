@@ -8,33 +8,56 @@ namespace cbot {
 
 class DeltaBase: public Robot {
 public:
-    struct Structure {
-        double base_radius, ee_radius;
-        double upper_length, lower_length;
-        std::string theta_names[3];
-        std::string alpha_names[3];
-        std::string beta_names[3];
-        std::string gamma_names[3];
+    struct Config {
+        struct {
+            double base_radius, ee_radius;
+            double upper_length, lower_length;
+        } dim;
+        struct {
+            std::string theta_names[3];
+            std::string alpha_names[3];
+            std::string beta_names[3];
+            std::string gamma_names[3];
+        } joints;
     };
-    DeltaBase(Structure structure): structure(structure) {}
+    DeltaBase(Config config): config(config) {}
 
 protected:
-    Structure structure;
+    Config config;
 };
 
 namespace cga_impl {
 class Delta: public DeltaBase {
 public:
-    Delta(Structure structure);
+    Delta(Config config);
     ~Delta();
     Delta(Delta&&);
     Delta& operator=(Delta&&);
 
-    Pose fk_pose(const std::unordered_map<std::string, JointState> &joints);
-    Twist fk_twist(const std::unordered_map<std::string, JointState> &joints);
-    void ik_pose(const Pose &pose, std::unordered_map<std::string, JointState> &joints);
-    void ik_twist(const Twist &twist, std::unordered_map<std::string, JointState> &joints);
-    void force_control(const Twist &twist, std::unordered_map<std::string, JointState> &joints);
+    virtual bool fk_pose(
+        const std::vector<std::string> &joint_names,
+        std::vector<double> &joint_positions,
+        Pose &pose);
+    virtual bool fk_twist(
+        const std::vector<std::string> &joint_names,
+        const std::vector<double> &joint_positions,
+        const std::vector<double> &joint_velocities,
+        Twist &twist);
+    virtual bool ik_pose(
+        const Pose &pose,
+        const std::vector<std::string> &joint_names,
+        std::vector<double> &joints_positions);
+    virtual bool ik_twist(
+        const Twist &twist,
+        const std::vector<std::string> &joint_names,
+        const std::vector<double> &joints_positions,
+        std::vector<double> &joints_velocities);
+    virtual bool force_control(
+        const Twist &twist,
+        const std::vector<std::string> &joint_names,
+        const std::vector<double> &joint_positions,
+        std::vector<double> &joint_torques);
+
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl;
@@ -45,16 +68,35 @@ private:
 namespace linalg_impl {
 class Delta: public DeltaBase {
 public:
-    Delta(Structure structure);
+    Delta(Config config);
     ~Delta();
     Delta(Delta&&);
     Delta& operator=(Delta&&);
 
-    Pose fk_pose(const std::unordered_map<std::string, JointState> &joints);
-    Twist fk_twist(const std::unordered_map<std::string, JointState> &joints);
-    void ik_pose(const Pose &pose, std::unordered_map<std::string, JointState> &joints);
-    void ik_twist(const Twist &twist, std::unordered_map<std::string, JointState> &joints);
-    void force_control(const Twist &twist, std::unordered_map<std::string, JointState> &joints);
+    virtual bool fk_pose(
+        const std::vector<std::string> &joint_names,
+        std::vector<double> &joint_positions,
+        Pose &pose);
+    virtual bool fk_twist(
+        const std::vector<std::string> &joint_names,
+        const std::vector<double> &joint_positions,
+        const std::vector<double> &joint_velocities,
+        Twist &twist);
+    virtual bool ik_pose(
+        const Pose &pose,
+        const std::vector<std::string> &joint_names,
+        std::vector<double> &joints_positions);
+    virtual bool ik_twist(
+        const Twist &twist,
+        const std::vector<std::string> &joint_names,
+        const std::vector<double> &joints_positions,
+        std::vector<double> &joints_velocities);
+    virtual bool force_control(
+        const Twist &twist,
+        const std::vector<std::string> &joint_names,
+        const std::vector<double> &joint_positions,
+        std::vector<double> &joint_torques);
+
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl;
