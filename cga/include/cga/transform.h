@@ -7,12 +7,12 @@ namespace cga {
 
 inline Bivector3 make_axis(double x, double y, double z)
 {
-    return Bivector3(x, y, z);
+    return -Bivector3(x, y, z);
 }
 
 inline Rotor3 make_rotation(double theta, Bivector3 axis)
 {
-    return Rotor3(std::cos(theta/2), std::sin(theta/2)*axis);
+    return Rotor3(std::cos(theta/2), -std::sin(theta/2)*axis);
 }
 
 inline Rotor make_translation(double x, double y, double z)

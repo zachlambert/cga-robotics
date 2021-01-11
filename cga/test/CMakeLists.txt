@@ -8,3 +8,4 @@ endfunction()
 
 add_cga_test(gen)
 add_cga_test(geometry)
+add_cga_test(transform)
