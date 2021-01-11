@@ -5,6 +5,7 @@ project(
     DESCRIPTION "CGA Robotics Library"
     LANGUAGES CXX
 )
+include(GNUInstallDirs)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
@@ -32,6 +33,12 @@ target_link_libraries(cbot
     PRIVATE cga Eigen3::Eigen
 )
 
-# 3. Build the examples
+# 3. Build the examples for testing
 
 add_subdirectory(examples)
+
+# 4. Create an install target for the cbot target only
+
+install(TARGETS cbot DESTINATION lib)
+install(DIRECTORY include/cbot/cbot DESTINATION include)
+install(FILES CbotConfig.cmake DESTINATION lib/cmake/Cbot)
