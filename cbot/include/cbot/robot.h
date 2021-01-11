@@ -9,6 +9,8 @@
 // but will return the same objects for consistency.
 // Chosen the same representations as those used by ros msgs
 
+namespace cbot {
+
 struct JointState {
     double pos;
     double vel;
@@ -85,5 +87,7 @@ public:
     // what are the required joint torques.
     // virtual void id(const Wrench &wrench, std::unordered_map<std::string, JointState> &joints)=0;
 };
+
+} // namespace cbot
 
 #endif

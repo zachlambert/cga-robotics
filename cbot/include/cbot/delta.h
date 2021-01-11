@@ -4,6 +4,8 @@
 #include <memory>
 #include "cbot/robot.h"
 
+namespace cbot {
+
 class DeltaBase: public Robot {
 public:
     struct Structure {
@@ -58,5 +60,7 @@ private:
     std::unique_ptr<Impl> pimpl;
 };
 } // namespace linalg_impl
+
+} // namespace cbot
 
 #endif

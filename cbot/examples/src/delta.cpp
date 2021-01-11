@@ -1,14 +1,14 @@
 #include "cbot/delta.h"
 #include <iostream>
 
-using namespace linalg_impl;
+namespace cbot { using namespace linalg_impl; }
 
 int main()
 {
-    Delta::Structure structure;
-    Delta delta(structure);
-    std::unordered_map<std::string, JointState> joints;
-    Pose pose = delta.fk_pose(joints);
+    cbot::Delta::Structure structure;
+    cbot::Delta delta(structure);
+    std::unordered_map<std::string, cbot::JointState> joints;
+    cbot::Pose pose = delta.fk_pose(joints);
 
     std::cout << "Pos = (";
     std::cout<<pose.position.x<<", ";

@@ -1,5 +1,6 @@
 #include "cbot/delta.h"
 
+namespace cbot {
 namespace cga_impl {
 
 Delta::~Delta() = default;
@@ -44,3 +45,4 @@ void Delta::force_control(const Twist &twist, std::unordered_map<std::string, Jo
 }
 
 } // namespace cga_impl
+} // namespace cbot
