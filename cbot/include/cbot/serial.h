@@ -2,24 +2,32 @@
 #define COMMON_CHAIN_H
 
 #include <vector>
-#include <unordered_map>
-#include "cbot/robot.h"
+#include <vector>
+#include "cbot/types.h"
 
 // Only allow revolute joints.
 // Joint i defines the transform between links (i-1) and i, with the parameters:
 // alpha_(i-1), a_(i-1), theta_(i), d_(i)
 // Where only theta_i is a variable
 
-class Serial: Robot {
+namespace cbot {
+
+class Serial {
 public:
-    struct Joint {
-        double alpha, a;
-        double theta, d;
+    struct Segment {
+        double alpha, a, d;
     };
-    Serial() {};
-    void add_joint(const Joint &joint){ joints.push_back(joint); }
+    struct Config {
+        std::vector<Segment> segments;
+    };
+    Serial(Config config): config(config) {}
+
+    // TODO
+
 private:
-    std::vector<Joint> joints;
+    Config config;
 };
+
+}
 
 #endif

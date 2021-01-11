@@ -1,21 +1,31 @@
 #ifndef COMMON_INDUSTRIAL_H
 #define COMMON_INDUSTRIAL_H
 
-#include "cbot/robot.h"
+#include "cbot/types.h"
 
 // A 6 DoF industrial manipulator
 // The geometry is chosen such that the three last joints share a common point,
 // allowing for a closed-form solution
 
-class IndustrialBase: Robot {
+namespace cbot {
+
+class IndustrialBase {
 public:
-    struct Structure {
-        double base_length, lower_length, upper_length, tool_length;
-        std::string joint_names[6];
+    struct Config {
+        // Link lengths
+        double base;
+        double lower;
+        double upper;
+        double tool;
     };
-    IndustrialBase(Structure structure): structure(structure) {}
+    IndustrialBase(Config config): config(config) {}
+
+    // TODO
+
 private:
-    Structure structure;
+    Config config;
 };
+
+} // namespace cbot
 
 #endif

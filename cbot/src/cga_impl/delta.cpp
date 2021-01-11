@@ -25,66 +25,28 @@ Delta::Delta(Config config): DeltaBase(config), pimpl(new Impl())
 }
 
 bool Delta::fk_pose(
-    const std::vector<std::string> &joint_names,
-    std::vector<double> &joint_positions,
+    const Joints &joints_pos,
+    JointsDep &joints_dep_pos,
     Pose &pose)
 {
-    // Relevant angles
-    double theta[3], alpha[3], beta[3], gamma[3];
+    // cga::Vector A_sphere[3];
+    // for (int i = 0; i < 3; i++) {
+    //     cga::Vector3 a = pimpl->n[i] * (
+    //         config.r_base + config.l_upper * std::cos(joints_pos.theta[i])
+    //     );
+    //     a.e3 = -config.l_upper*std::sin(joints_pos.theta[i]);
 
-    // Get theta positions
-    for (int i = 0; i < 3; i++) {
-        for (std::size_t j = 0; j < joint_names.size(); j++) {
-            if (config.joints.theta_names[i] == joint_names[j]) {
-                theta[i] = joint_positions[j];
-                break;
-            }
-        }
-    }
-
-    cga::Vector A_sphere[3];
-    for (int i = 0; i < 3; i++) {
-        cga::Vector3 a = pimpl->n[i] * (
-            config.dim.base_radius + config.dim.upper_length*std::cos(theta[i]));
-        a.e3 = -config.dim.upper_length*std::sin(theta[i]);
-        A_sphere[i] = cga::make_sphere(a, config.dim.lower_length);
-    }
+    //     A_sphere[i] = cga::make_sphere(a, config.l_lower);
+    // }
 
     // Put alpha, beta, gamma into joint vectors
     return true;
 }
 
 bool Delta::fk_twist(
-    const std::vector<std::string> &joint_names,
-    const std::vector<double> &joint_positions,
-    const std::vector<double> &joint_velocities,
+    const Joints &joints_pos,
+    const Joints &joints_vel,
     Twist &twist)
-{
-    return true;
-}
-
-bool Delta::ik_pose(
-    const Pose &pose,
-    const std::vector<std::string> &joint_names,
-    std::vector<double> &joints_positions)
-{
-    return true;
-}
-
-bool Delta::ik_twist(
-    const Twist &twist,
-    const std::vector<std::string> &joint_names,
-    const std::vector<double> &joints_positions,
-    std::vector<double> &joints_velocities)
-{
-    return true;
-}
-
-bool Delta::force_control(
-    const Twist &twist,
-    const std::vector<std::string> &joint_names,
-    const std::vector<double> &joint_positions,
-    std::vector<double> &joint_torques)
 {
     return true;
 }
