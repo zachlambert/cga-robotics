@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# if [ $# != 1 ]; then
+#     echo "Usage: tools/test [test name]"
+#     exit 1
+# fi
+# name=$1
+# cd build/cga/test
+# if [ ! -e $name ]; then
+#     echo "Test $name couldn't be found"
+#     exit 1
+# fi
+# 
+# ./$name
+
+cd build/cga/test
+ctest -C Debug -V

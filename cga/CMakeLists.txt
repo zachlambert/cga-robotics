@@ -4,3 +4,7 @@ add_library(cga STATIC
 target_include_directories(cga
     PUBLIC include
 )
+
+add_subdirectory(lib/googletest)
+enable_testing()
+add_subdirectory(test)
