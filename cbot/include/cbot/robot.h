@@ -55,8 +55,8 @@ class Robot {
 public:
     // FORWARD KINEMATICS:
     virtual bool fk_pose(
-        const std::vector<std::string> &joint_names,
-        std::vector<double> &joint_positions, // Allow setting dependent joints
+        std::vector<std::string> &joint_names, // Allow parallel robots to add
+        std::vector<double> &joint_positions, // elements for dependent joints
         Pose &pose)=0;
     virtual bool fk_twist(
         const std::vector<std::string> &joint_names,

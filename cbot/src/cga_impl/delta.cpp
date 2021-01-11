@@ -1,5 +1,9 @@
 #include "cbot/delta.h"
 
+#include "cga/cga.h"
+#include "cga/geometry.h"
+#include "cga/transform.h"
+
 namespace cbot {
 namespace cga_impl {
 
@@ -9,12 +13,15 @@ Delta& Delta::operator=(Delta&&) = default;
 
 class Delta::Impl {
 public:
-    double joint_pos[3];
+    cga::Vector3 n[3];
 };
 
 Delta::Delta(Config config): DeltaBase(config), pimpl(new Impl())
 {
-
+    for (int i = 0; i < 3; i++) {
+        pimpl->n[i].e1 = std::cos(i*M_PI*2/3);
+        pimpl->n[i].e2 = std::sin(i*M_PI*2/3);
+    }
 }
 
 bool Delta::fk_pose(
@@ -22,6 +29,28 @@ bool Delta::fk_pose(
     std::vector<double> &joint_positions,
     Pose &pose)
 {
+    // Relevant angles
+    double theta[3], alpha[3], beta[3], gamma[3];
+
+    // Get theta positions
+    for (int i = 0; i < 3; i++) {
+        for (std::size_t j = 0; j < joint_names.size(); j++) {
+            if (config.joints.theta_names[i] == joint_names[j]) {
+                theta[i] = joint_positions[j];
+                break;
+            }
+        }
+    }
+
+    cga::Vector A_sphere[3];
+    for (int i = 0; i < 3; i++) {
+        cga::Vector3 a = pimpl->n[i] * (
+            config.dim.base_radius + config.dim.upper_length*std::cos(theta[i]));
+        a.e3 = -config.dim.upper_length*std::sin(theta[i]);
+        A_sphere[i] = cga::make_sphere(a, config.dim.lower_length);
+    }
+
+    // Put alpha, beta, gamma into joint vectors
     return true;
 }
 

@@ -35,7 +35,7 @@ public:
     Delta& operator=(Delta&&);
 
     virtual bool fk_pose(
-        const std::vector<std::string> &joint_names,
+        std::vector<std::string> &joint_names,
         std::vector<double> &joint_positions,
         Pose &pose);
     virtual bool fk_twist(
@@ -74,7 +74,7 @@ public:
     Delta& operator=(Delta&&);
 
     virtual bool fk_pose(
-        const std::vector<std::string> &joint_names,
+        std::vector<std::string> &joint_names,
         std::vector<double> &joint_positions,
         Pose &pose);
     virtual bool fk_twist(

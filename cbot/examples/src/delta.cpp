@@ -10,15 +10,19 @@ int main()
     cbot::Delta delta(config);
     cbot::Pose pose;
     std::vector<std::string> joint_names = {
-        "theta_1", "theta_2", "theta_3", "alpha_1", "alpha_2", "alpha_3",
-        "beta_1", "beta_2", "beta_3", "gamma_1", "gamma_2", "gamma_3"
+        "theta_1", "theta_2", "theta_3"
     };
-    std::vector<double> joint_positions(joint_names.size());
-    joint_positions[0] = 0.8;
-    joint_positions[1] = 0.8;
-    joint_positions[2] = 0.8;
+    std::vector<double> joint_positions = {
+        0.8, 0.8, 0.8
+    };
 
     if (delta.fk_pose(joint_names, joint_positions, pose)) {
+        for (std::size_t i = 0; i < joint_names.size(); i++) {
+            std::cout << joint_names[i] << "=" << joint_positions[i];
+            if (i != joint_names.size() - 1) {
+                std::cout << std::endl;
+            }
+        }
         std::cout << "Pos = (";
         std::cout<<pose.position.x<<", ";
         std::cout<<pose.position.y<<", ";
