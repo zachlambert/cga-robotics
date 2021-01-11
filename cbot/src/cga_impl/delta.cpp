@@ -1,6 +1,10 @@
 #include "cbot/delta.h"
 
-namespace linalg {
+namespace cga_impl {
+
+Delta::~Delta() = default;
+Delta::Delta(Delta&&) = default;
+Delta& Delta::operator=(Delta&&) = default;
 
 class Delta::Impl {
 public:
@@ -39,4 +43,4 @@ void Delta::force_control(const Twist &twist, std::unordered_map<std::string, Jo
 
 }
 
-} // namespace linalg
+} // namespace cga_impl

@@ -57,7 +57,6 @@ struct Inertia {
 
 class Robot {
 public:
-
     // FORWARD KINEMATICS:
     // Given the joint positions, determine the end effector pose
     virtual Pose fk_pose(const std::unordered_map<std::string, JointState> &joints)=0;

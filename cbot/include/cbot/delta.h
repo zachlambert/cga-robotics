@@ -20,25 +20,14 @@ protected:
     Structure structure;
 };
 
-namespace cga {
+namespace cga_impl {
 class Delta: public DeltaBase {
 public:
     Delta(Structure structure);
-    Pose fk_pose(const std::unordered_map<std::string, JointState> &joints);
-    Twist fk_twist(const std::unordered_map<std::string, JointState> &joints);
-    void ik_pose(const Pose &pose, std::unordered_map<std::string, JointState> &joints);
-    void ik_twist(const Twist &twist, std::unordered_map<std::string, JointState> &joints);
-    void force_control(const Twist &twist, std::unordered_map<std::string, JointState> &joints);
-private:
-    class Impl;
-    std::unique_ptr<Impl> pimpl;
-};
-} // namespace cga
+    ~Delta();
+    Delta(Delta&&);
+    Delta& operator=(Delta&&);
 
-namespace linalg {
-class Delta: public DeltaBase {
-public:
-    Delta(Structure structure);
     Pose fk_pose(const std::unordered_map<std::string, JointState> &joints);
     Twist fk_twist(const std::unordered_map<std::string, JointState> &joints);
     void ik_pose(const Pose &pose, std::unordered_map<std::string, JointState> &joints);
@@ -48,6 +37,26 @@ private:
     class Impl;
     std::unique_ptr<Impl> pimpl;
 };
-} // namespace linalg
+
+} // namespace cga_impl
+
+namespace linalg_impl {
+class Delta: public DeltaBase {
+public:
+    Delta(Structure structure);
+    ~Delta();
+    Delta(Delta&&);
+    Delta& operator=(Delta&&);
+
+    Pose fk_pose(const std::unordered_map<std::string, JointState> &joints);
+    Twist fk_twist(const std::unordered_map<std::string, JointState> &joints);
+    void ik_pose(const Pose &pose, std::unordered_map<std::string, JointState> &joints);
+    void ik_twist(const Twist &twist, std::unordered_map<std::string, JointState> &joints);
+    void force_control(const Twist &twist, std::unordered_map<std::string, JointState> &joints);
+private:
+    class Impl;
+    std::unique_ptr<Impl> pimpl;
+};
+} // namespace linalg_impl
 
 #endif
