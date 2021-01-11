@@ -2,6 +2,16 @@
 
 namespace cga {
 
+bool Pseudoscalar3::operator==(const Pseudoscalar3 &other)const
+{
+    if (fabs(I3-other.I3) > 1e-12) return false;
+    return true;
+}
+bool Pseudoscalar::operator==(const Pseudoscalar &other)const
+{
+    if (fabs(I5-other.I5) > 1e-12) return false;
+    return true;
+}
 Vector3::Vector3(const Vector& other)
 {
     e1 = other.e1;
@@ -9,6 +19,13 @@ Vector3::Vector3(const Vector& other)
     e3 = other.e3;
 }
 
+bool Vector3::operator==(const Vector3 &other)const
+{
+    if (fabs(e1-other.e1) > 1e-12) return false;
+    if (fabs(e2-other.e2) > 1e-12) return false;
+    if (fabs(e3-other.e3) > 1e-12) return false;
+    return true;
+}
 Bivector3::Bivector3(const Bivector& other)
 {
     e23 = other.e23;
@@ -16,6 +33,13 @@ Bivector3::Bivector3(const Bivector& other)
     e12 = other.e12;
 }
 
+bool Bivector3::operator==(const Bivector3 &other)const
+{
+    if (fabs(e23-other.e23) > 1e-12) return false;
+    if (fabs(e31-other.e31) > 1e-12) return false;
+    if (fabs(e12-other.e12) > 1e-12) return false;
+    return true;
+}
 Rotor3::Rotor3(const Rotor& other)
 {
     s = other.s;
@@ -24,6 +48,20 @@ Rotor3::Rotor3(const Rotor& other)
     b.e12 = other.b.e12;
 }
 
+Rotor3::Rotor3(const Multivector3& other)
+{
+    s = other.s;
+    b.e23 = other.b.e23;
+    b.e31 = other.b.e31;
+    b.e12 = other.b.e12;
+}
+
+bool Rotor3::operator==(const Rotor3 &other)const
+{
+    if (fabs(s-other.s) > 1e-12) return false;
+    if (b!=other.b) return false;
+    return true;
+}
 Vector::Vector(const Vector3& other)
 {
     e1 = other.e1;
@@ -33,6 +71,44 @@ Vector::Vector(const Vector3& other)
     ei = 0;
 }
 
+bool Vector::operator==(const Vector &other)const
+{
+    if (fabs(e1-other.e1) > 1e-12) return false;
+    if (fabs(e2-other.e2) > 1e-12) return false;
+    if (fabs(e3-other.e3) > 1e-12) return false;
+    if (fabs(eo-other.eo) > 1e-12) return false;
+    if (fabs(ei-other.ei) > 1e-12) return false;
+    return true;
+}
+bool Quadvector::operator==(const Quadvector &other)const
+{
+    if (fabs(e123o-other.e123o) > 1e-12) return false;
+    if (fabs(e123i-other.e123i) > 1e-12) return false;
+    if (fabs(e23oi-other.e23oi) > 1e-12) return false;
+    if (fabs(e31oi-other.e31oi) > 1e-12) return false;
+    if (fabs(e12oi-other.e12oi) > 1e-12) return false;
+    return true;
+}
+Multivector3::Multivector3(const Rotor3& other)
+{
+    s = other.s;
+    v.e1 = 0;
+    v.e2 = 0;
+    v.e3 = 0;
+    b.e23 = other.b.e23;
+    b.e31 = other.b.e31;
+    b.e12 = other.b.e12;
+    I3 = 0;
+}
+
+bool Multivector3::operator==(const Multivector3 &other)const
+{
+    if (fabs(s-other.s) > 1e-12) return false;
+    if (v!=other.v) return false;
+    if (b!=other.b) return false;
+    if (fabs(I3-other.I3) > 1e-12) return false;
+    return true;
+}
 Bivector::Bivector(const Bivector3& other)
 {
     e23 = other.e23;
@@ -47,6 +123,34 @@ Bivector::Bivector(const Bivector3& other)
     eoi = 0;
 }
 
+bool Bivector::operator==(const Bivector &other)const
+{
+    if (fabs(e23-other.e23) > 1e-12) return false;
+    if (fabs(e31-other.e31) > 1e-12) return false;
+    if (fabs(e12-other.e12) > 1e-12) return false;
+    if (fabs(e1o-other.e1o) > 1e-12) return false;
+    if (fabs(e2o-other.e2o) > 1e-12) return false;
+    if (fabs(e3o-other.e3o) > 1e-12) return false;
+    if (fabs(e1i-other.e1i) > 1e-12) return false;
+    if (fabs(e2i-other.e2i) > 1e-12) return false;
+    if (fabs(e3i-other.e3i) > 1e-12) return false;
+    if (fabs(eoi-other.eoi) > 1e-12) return false;
+    return true;
+}
+bool Trivector::operator==(const Trivector &other)const
+{
+    if (fabs(e123-other.e123) > 1e-12) return false;
+    if (fabs(e23o-other.e23o) > 1e-12) return false;
+    if (fabs(e31o-other.e31o) > 1e-12) return false;
+    if (fabs(e12o-other.e12o) > 1e-12) return false;
+    if (fabs(e23i-other.e23i) > 1e-12) return false;
+    if (fabs(e31i-other.e31i) > 1e-12) return false;
+    if (fabs(e12i-other.e12i) > 1e-12) return false;
+    if (fabs(e1oi-other.e1oi) > 1e-12) return false;
+    if (fabs(e2oi-other.e2oi) > 1e-12) return false;
+    if (fabs(e3oi-other.e3oi) > 1e-12) return false;
+    return true;
+}
 Rotor::Rotor(const Rotor3& other)
 {
     s = other.s;
@@ -92,6 +196,12 @@ Rotor::Rotor(const Multivector& other)
     b.eoi = other.b.eoi;
 }
 
+bool Rotor::operator==(const Rotor &other)const
+{
+    if (fabs(s-other.s) > 1e-12) return false;
+    if (b!=other.b) return false;
+    return true;
+}
 Versor::Versor(const Multivector& other)
 {
     s = other.s;
@@ -112,6 +222,13 @@ Versor::Versor(const Multivector& other)
     q.e12oi = other.q.e12oi;
 }
 
+bool Versor::operator==(const Versor &other)const
+{
+    if (fabs(s-other.s) > 1e-12) return false;
+    if (b!=other.b) return false;
+    if (q!=other.q) return false;
+    return true;
+}
 Multivector::Multivector(const Rotor& other)
 {
     s = other.s;
@@ -184,6 +301,16 @@ Multivector::Multivector(const Versor& other)
     I5 = 0;
 }
 
+bool Multivector::operator==(const Multivector &other)const
+{
+    if (fabs(s-other.s) > 1e-12) return false;
+    if (v!=other.v) return false;
+    if (b!=other.b) return false;
+    if (t!=other.t) return false;
+    if (q!=other.q) return false;
+    if (fabs(I5-other.I5) > 1e-12) return false;
+    return true;
+}
 double norm2(const Pseudoscalar3 &x) {
     return x.I3*x.I3;
 }
@@ -240,12 +367,12 @@ Vector3 operator*(const Pseudoscalar3 &lhs, const Bivector3 &rhs) {
     return result;
 }
 
-Multivector operator*(const Pseudoscalar3 &lhs, const Rotor3 &rhs) {
-    Multivector result;
+Multivector3 operator*(const Pseudoscalar3 &lhs, const Rotor3 &rhs) {
+    Multivector3 result;
     result.v.e1 = -lhs.I3*rhs.b.e23;
     result.v.e2 = -lhs.I3*rhs.b.e31;
     result.v.e3 = -lhs.I3*rhs.b.e12;
-    result.t.e123 = lhs.I3*rhs.s;
+    result.I3 = lhs.I3*rhs.s;
     return result;
 }
 
@@ -266,6 +393,19 @@ Multivector operator*(const Pseudoscalar3 &lhs, const Quadvector &rhs) {
     result.t.e1oi = -lhs.I3*rhs.e23oi;
     result.t.e2oi = -lhs.I3*rhs.e31oi;
     result.t.e3oi = -lhs.I3*rhs.e12oi;
+    return result;
+}
+
+Multivector3 operator*(const Pseudoscalar3 &lhs, const Multivector3 &rhs) {
+    Multivector3 result;
+    result.s = -lhs.I3*rhs.I3;
+    result.v.e1 = -lhs.I3*rhs.b.e23;
+    result.v.e2 = -lhs.I3*rhs.b.e31;
+    result.v.e3 = -lhs.I3*rhs.b.e12;
+    result.b.e23 = lhs.I3*rhs.v.e1;
+    result.b.e31 = lhs.I3*rhs.v.e2;
+    result.b.e12 = lhs.I3*rhs.v.e3;
+    result.I3 = lhs.I3*rhs.s;
     return result;
 }
 
@@ -424,6 +564,19 @@ Vector operator*(const Pseudoscalar &lhs, const Quadvector &rhs) {
     return result;
 }
 
+Multivector operator*(const Pseudoscalar &lhs, const Multivector3 &rhs) {
+    Multivector result;
+    result.b.eoi = -lhs.I5*rhs.I3;
+    result.t.e1oi = -lhs.I5*rhs.b.e23;
+    result.t.e2oi = -lhs.I5*rhs.b.e31;
+    result.t.e3oi = -lhs.I5*rhs.b.e12;
+    result.q.e23oi = lhs.I5*rhs.v.e1;
+    result.q.e31oi = lhs.I5*rhs.v.e2;
+    result.q.e12oi = lhs.I5*rhs.v.e3;
+    result.I5 = lhs.I5*rhs.s;
+    return result;
+}
+
 Trivector operator*(const Pseudoscalar &lhs, const Bivector &rhs) {
     Trivector result;
     result.e123 = lhs.I5*rhs.eoi;
@@ -537,21 +690,21 @@ Rotor3 operator*(const Vector3 &lhs, const Vector3 &rhs) {
     return result;
 }
 
-Multivector operator*(const Vector3 &lhs, const Bivector3 &rhs) {
-    Multivector result;
+Multivector3 operator*(const Vector3 &lhs, const Bivector3 &rhs) {
+    Multivector3 result;
     result.v.e1 = lhs.e3*rhs.e31-lhs.e2*rhs.e12;
     result.v.e2 = lhs.e1*rhs.e12-lhs.e3*rhs.e23;
     result.v.e3 = lhs.e2*rhs.e23-lhs.e1*rhs.e31;
-    result.t.e123 = lhs.e1*rhs.e23+lhs.e2*rhs.e31+lhs.e3*rhs.e12;
+    result.I3 = lhs.e1*rhs.e23+lhs.e2*rhs.e31+lhs.e3*rhs.e12;
     return result;
 }
 
-Multivector operator*(const Vector3 &lhs, const Rotor3 &rhs) {
-    Multivector result;
+Multivector3 operator*(const Vector3 &lhs, const Rotor3 &rhs) {
+    Multivector3 result;
     result.v.e1 = lhs.e1*rhs.s+lhs.e3*rhs.b.e31-lhs.e2*rhs.b.e12;
     result.v.e2 = lhs.e1*rhs.b.e12+lhs.e2*rhs.s-lhs.e3*rhs.b.e23;
     result.v.e3 = lhs.e2*rhs.b.e23+lhs.e3*rhs.s-lhs.e1*rhs.b.e31;
-    result.t.e123 = lhs.e1*rhs.b.e23+lhs.e2*rhs.b.e31+lhs.e3*rhs.b.e12;
+    result.I3 = lhs.e1*rhs.b.e23+lhs.e2*rhs.b.e31+lhs.e3*rhs.b.e12;
     return result;
 }
 
@@ -582,6 +735,19 @@ Multivector operator*(const Vector3 &lhs, const Quadvector &rhs) {
     result.t.e2oi = lhs.e1*rhs.e12oi-lhs.e3*rhs.e23oi;
     result.t.e3oi = lhs.e2*rhs.e23oi-lhs.e1*rhs.e31oi;
     result.I5 = lhs.e1*rhs.e23oi+lhs.e2*rhs.e31oi+lhs.e3*rhs.e12oi;
+    return result;
+}
+
+Multivector3 operator*(const Vector3 &lhs, const Multivector3 &rhs) {
+    Multivector3 result;
+    result.s = lhs.e1*rhs.v.e1+lhs.e2*rhs.v.e2+lhs.e3*rhs.v.e3;
+    result.v.e1 = lhs.e1*rhs.s+lhs.e3*rhs.b.e31-lhs.e2*rhs.b.e12;
+    result.v.e2 = lhs.e1*rhs.b.e12+lhs.e2*rhs.s-lhs.e3*rhs.b.e23;
+    result.v.e3 = lhs.e2*rhs.b.e23+lhs.e3*rhs.s-lhs.e1*rhs.b.e31;
+    result.b.e23 = lhs.e1*rhs.I3+lhs.e2*rhs.v.e3-lhs.e3*rhs.v.e2;
+    result.b.e31 = lhs.e2*rhs.I3+lhs.e3*rhs.v.e1-lhs.e1*rhs.v.e3;
+    result.b.e12 = lhs.e1*rhs.v.e2+lhs.e3*rhs.I3-lhs.e2*rhs.v.e1;
+    result.I3 = lhs.e1*rhs.b.e23+lhs.e2*rhs.b.e31+lhs.e3*rhs.b.e12;
     return result;
 }
 
@@ -751,6 +917,19 @@ Versor operator*(const Bivector3 &lhs, const Quadvector &rhs) {
     return result;
 }
 
+Multivector3 operator*(const Bivector3 &lhs, const Multivector3 &rhs) {
+    Multivector3 result;
+    result.s = -lhs.e12*rhs.b.e12-lhs.e23*rhs.b.e23-lhs.e31*rhs.b.e31;
+    result.v.e1 = lhs.e12*rhs.v.e2-lhs.e23*rhs.I3-lhs.e31*rhs.v.e3;
+    result.v.e2 = lhs.e23*rhs.v.e3-lhs.e12*rhs.v.e1-lhs.e31*rhs.I3;
+    result.v.e3 = lhs.e31*rhs.v.e1-lhs.e12*rhs.I3-lhs.e23*rhs.v.e2;
+    result.b.e23 = lhs.e12*rhs.b.e31+lhs.e23*rhs.s-lhs.e31*rhs.b.e12;
+    result.b.e31 = lhs.e23*rhs.b.e12+lhs.e31*rhs.s-lhs.e12*rhs.b.e23;
+    result.b.e12 = lhs.e12*rhs.s+lhs.e31*rhs.b.e23-lhs.e23*rhs.b.e31;
+    result.I3 = lhs.e12*rhs.v.e3+lhs.e23*rhs.v.e1+lhs.e31*rhs.v.e2;
+    return result;
+}
+
 Versor operator*(const Bivector3 &lhs, const Bivector &rhs) {
     Versor result;
     result.s = -lhs.e12*rhs.e12-lhs.e23*rhs.e23-lhs.e31*rhs.e31;
@@ -912,6 +1091,19 @@ Versor operator*(const Rotor3 &lhs, const Quadvector &rhs) {
     return result;
 }
 
+Multivector3 operator*(const Rotor3 &lhs, const Multivector3 &rhs) {
+    Multivector3 result;
+    result.s = lhs.s*rhs.s-lhs.b.e12*rhs.b.e12-lhs.b.e23*rhs.b.e23-lhs.b.e31*rhs.b.e31;
+    result.v.e1 = lhs.b.e12*rhs.v.e2+lhs.s*rhs.v.e1-lhs.b.e23*rhs.I3-lhs.b.e31*rhs.v.e3;
+    result.v.e2 = lhs.b.e23*rhs.v.e3+lhs.s*rhs.v.e2-lhs.b.e12*rhs.v.e1-lhs.b.e31*rhs.I3;
+    result.v.e3 = lhs.b.e31*rhs.v.e1+lhs.s*rhs.v.e3-lhs.b.e12*rhs.I3-lhs.b.e23*rhs.v.e2;
+    result.b.e23 = lhs.b.e12*rhs.b.e31+lhs.b.e23*rhs.s+lhs.s*rhs.b.e23-lhs.b.e31*rhs.b.e12;
+    result.b.e31 = lhs.b.e23*rhs.b.e12+lhs.b.e31*rhs.s+lhs.s*rhs.b.e31-lhs.b.e12*rhs.b.e23;
+    result.b.e12 = lhs.b.e12*rhs.s+lhs.b.e31*rhs.b.e23+lhs.s*rhs.b.e12-lhs.b.e23*rhs.b.e31;
+    result.I3 = lhs.b.e12*rhs.v.e3+lhs.b.e23*rhs.v.e1+lhs.b.e31*rhs.v.e2+lhs.s*rhs.I3;
+    return result;
+}
+
 Versor operator*(const Rotor3 &lhs, const Bivector &rhs) {
     Versor result;
     result.s = -lhs.b.e12*rhs.e12-lhs.b.e23*rhs.e23-lhs.b.e31*rhs.e31;
@@ -1065,6 +1257,35 @@ Multivector operator*(const Vector &lhs, const Quadvector &rhs) {
     return result;
 }
 
+Multivector operator*(const Vector &lhs, const Multivector3 &rhs) {
+    Multivector result;
+    result.s = lhs.e1*rhs.v.e1+lhs.e2*rhs.v.e2+lhs.e3*rhs.v.e3;
+    result.v.e1 = lhs.e1*rhs.s+lhs.e3*rhs.b.e31-lhs.e2*rhs.b.e12;
+    result.v.e2 = lhs.e1*rhs.b.e12+lhs.e2*rhs.s-lhs.e3*rhs.b.e23;
+    result.v.e3 = lhs.e2*rhs.b.e23+lhs.e3*rhs.s-lhs.e1*rhs.b.e31;
+    result.v.eo = lhs.eo*rhs.s;
+    result.v.ei = lhs.ei*rhs.s;
+    result.b.e23 = lhs.e1*rhs.I3+lhs.e2*rhs.v.e3-lhs.e3*rhs.v.e2;
+    result.b.e31 = lhs.e2*rhs.I3+lhs.e3*rhs.v.e1-lhs.e1*rhs.v.e3;
+    result.b.e12 = lhs.e1*rhs.v.e2+lhs.e3*rhs.I3-lhs.e2*rhs.v.e1;
+    result.b.e1o = -lhs.eo*rhs.v.e1;
+    result.b.e2o = -lhs.eo*rhs.v.e2;
+    result.b.e3o = -lhs.eo*rhs.v.e3;
+    result.b.e1i = -lhs.ei*rhs.v.e1;
+    result.b.e2i = -lhs.ei*rhs.v.e2;
+    result.b.e3i = -lhs.ei*rhs.v.e3;
+    result.t.e123 = lhs.e1*rhs.b.e23+lhs.e2*rhs.b.e31+lhs.e3*rhs.b.e12;
+    result.t.e23o = lhs.eo*rhs.b.e23;
+    result.t.e31o = lhs.eo*rhs.b.e31;
+    result.t.e12o = lhs.eo*rhs.b.e12;
+    result.t.e23i = lhs.ei*rhs.b.e23;
+    result.t.e31i = lhs.ei*rhs.b.e31;
+    result.t.e12i = lhs.ei*rhs.b.e12;
+    result.q.e123o = -lhs.eo*rhs.I3;
+    result.q.e123i = -lhs.ei*rhs.I3;
+    return result;
+}
+
 Multivector operator*(const Vector &lhs, const Bivector &rhs) {
     Multivector result;
     result.v.e1 = lhs.e3*rhs.e31+lhs.ei*rhs.e1o+lhs.eo*rhs.e1i-lhs.e2*rhs.e12;
@@ -1199,6 +1420,35 @@ Rotor operator*(const Quadvector &lhs, const Quadvector &rhs) {
     return result;
 }
 
+Multivector operator*(const Quadvector &lhs, const Multivector3 &rhs) {
+    Multivector result;
+    result.v.eo = lhs.e123o*rhs.I3;
+    result.v.ei = lhs.e123i*rhs.I3;
+    result.b.e1o = -lhs.e123o*rhs.b.e23;
+    result.b.e2o = -lhs.e123o*rhs.b.e31;
+    result.b.e3o = -lhs.e123o*rhs.b.e12;
+    result.b.e1i = -lhs.e123i*rhs.b.e23;
+    result.b.e2i = -lhs.e123i*rhs.b.e31;
+    result.b.e3i = -lhs.e123i*rhs.b.e12;
+    result.b.eoi = -lhs.e12oi*rhs.b.e12-lhs.e23oi*rhs.b.e23-lhs.e31oi*rhs.b.e31;
+    result.t.e23o = -lhs.e123o*rhs.v.e1;
+    result.t.e31o = -lhs.e123o*rhs.v.e2;
+    result.t.e12o = -lhs.e123o*rhs.v.e3;
+    result.t.e23i = -lhs.e123i*rhs.v.e1;
+    result.t.e31i = -lhs.e123i*rhs.v.e2;
+    result.t.e12i = -lhs.e123i*rhs.v.e3;
+    result.t.e1oi = lhs.e12oi*rhs.v.e2-lhs.e23oi*rhs.I3-lhs.e31oi*rhs.v.e3;
+    result.t.e2oi = lhs.e23oi*rhs.v.e3-lhs.e12oi*rhs.v.e1-lhs.e31oi*rhs.I3;
+    result.t.e3oi = lhs.e31oi*rhs.v.e1-lhs.e12oi*rhs.I3-lhs.e23oi*rhs.v.e2;
+    result.q.e123o = lhs.e123o*rhs.s;
+    result.q.e123i = lhs.e123i*rhs.s;
+    result.q.e23oi = lhs.e12oi*rhs.b.e31+lhs.e23oi*rhs.s-lhs.e31oi*rhs.b.e12;
+    result.q.e31oi = lhs.e23oi*rhs.b.e12+lhs.e31oi*rhs.s-lhs.e12oi*rhs.b.e23;
+    result.q.e12oi = lhs.e12oi*rhs.s+lhs.e31oi*rhs.b.e23-lhs.e23oi*rhs.b.e31;
+    result.I5 = lhs.e12oi*rhs.v.e3+lhs.e23oi*rhs.v.e1+lhs.e31oi*rhs.v.e2;
+    return result;
+}
+
 Versor operator*(const Quadvector &lhs, const Bivector &rhs) {
     Versor result;
     result.b.e23 = lhs.e123i*rhs.e1o+lhs.e123o*rhs.e1i+lhs.e23oi*rhs.eoi;
@@ -1314,6 +1564,204 @@ Multivector operator*(const Quadvector &lhs, const Multivector &rhs) {
     result.q.e31oi = lhs.e123i*rhs.b.e2o+lhs.e23oi*rhs.b.e12+lhs.e31oi*rhs.s-lhs.e123o*rhs.b.e2i-lhs.e12oi*rhs.b.e23;
     result.q.e12oi = lhs.e123i*rhs.b.e3o+lhs.e12oi*rhs.s+lhs.e31oi*rhs.b.e23-lhs.e123o*rhs.b.e3i-lhs.e23oi*rhs.b.e31;
     result.I5 = lhs.e123o*rhs.v.ei+lhs.e12oi*rhs.v.e3+lhs.e23oi*rhs.v.e1+lhs.e31oi*rhs.v.e2-lhs.e123i*rhs.v.eo;
+    return result;
+}
+
+Multivector3 operator*(const Multivector3 &lhs, const Multivector3 &rhs) {
+    Multivector3 result;
+    result.s = lhs.s*rhs.s+lhs.v.e1*rhs.v.e1+lhs.v.e2*rhs.v.e2+lhs.v.e3*rhs.v.e3-lhs.I3*rhs.I3-lhs.b.e12*rhs.b.e12-lhs.b.e23*rhs.b.e23-lhs.b.e31*rhs.b.e31;
+    result.v.e1 = lhs.b.e12*rhs.v.e2+lhs.s*rhs.v.e1+lhs.v.e1*rhs.s+lhs.v.e3*rhs.b.e31-lhs.I3*rhs.b.e23-lhs.b.e23*rhs.I3-lhs.b.e31*rhs.v.e3-lhs.v.e2*rhs.b.e12;
+    result.v.e2 = lhs.b.e23*rhs.v.e3+lhs.s*rhs.v.e2+lhs.v.e1*rhs.b.e12+lhs.v.e2*rhs.s-lhs.I3*rhs.b.e31-lhs.b.e12*rhs.v.e1-lhs.b.e31*rhs.I3-lhs.v.e3*rhs.b.e23;
+    result.v.e3 = lhs.b.e31*rhs.v.e1+lhs.s*rhs.v.e3+lhs.v.e2*rhs.b.e23+lhs.v.e3*rhs.s-lhs.I3*rhs.b.e12-lhs.b.e12*rhs.I3-lhs.b.e23*rhs.v.e2-lhs.v.e1*rhs.b.e31;
+    result.b.e23 = lhs.I3*rhs.v.e1+lhs.b.e12*rhs.b.e31+lhs.b.e23*rhs.s+lhs.s*rhs.b.e23+lhs.v.e1*rhs.I3+lhs.v.e2*rhs.v.e3-lhs.b.e31*rhs.b.e12-lhs.v.e3*rhs.v.e2;
+    result.b.e31 = lhs.I3*rhs.v.e2+lhs.b.e23*rhs.b.e12+lhs.b.e31*rhs.s+lhs.s*rhs.b.e31+lhs.v.e2*rhs.I3+lhs.v.e3*rhs.v.e1-lhs.b.e12*rhs.b.e23-lhs.v.e1*rhs.v.e3;
+    result.b.e12 = lhs.I3*rhs.v.e3+lhs.b.e12*rhs.s+lhs.b.e31*rhs.b.e23+lhs.s*rhs.b.e12+lhs.v.e1*rhs.v.e2+lhs.v.e3*rhs.I3-lhs.b.e23*rhs.b.e31-lhs.v.e2*rhs.v.e1;
+    result.I3 = lhs.I3*rhs.s+lhs.b.e12*rhs.v.e3+lhs.b.e23*rhs.v.e1+lhs.b.e31*rhs.v.e2+lhs.s*rhs.I3+lhs.v.e1*rhs.b.e23+lhs.v.e2*rhs.b.e31+lhs.v.e3*rhs.b.e12;
+    return result;
+}
+
+Multivector operator*(const Multivector3 &lhs, const Bivector &rhs) {
+    Multivector result;
+    result.s = -lhs.b.e12*rhs.e12-lhs.b.e23*rhs.e23-lhs.b.e31*rhs.e31;
+    result.v.e1 = lhs.v.e3*rhs.e31-lhs.I3*rhs.e23-lhs.v.e2*rhs.e12;
+    result.v.e2 = lhs.v.e1*rhs.e12-lhs.I3*rhs.e31-lhs.v.e3*rhs.e23;
+    result.v.e3 = lhs.v.e2*rhs.e23-lhs.I3*rhs.e12-lhs.v.e1*rhs.e31;
+    result.v.eo = lhs.v.e1*rhs.e1o+lhs.v.e2*rhs.e2o+lhs.v.e3*rhs.e3o;
+    result.v.ei = lhs.v.e1*rhs.e1i+lhs.v.e2*rhs.e2i+lhs.v.e3*rhs.e3i;
+    result.b.e23 = lhs.b.e12*rhs.e31+lhs.s*rhs.e23-lhs.b.e31*rhs.e12;
+    result.b.e31 = lhs.b.e23*rhs.e12+lhs.s*rhs.e31-lhs.b.e12*rhs.e23;
+    result.b.e12 = lhs.b.e31*rhs.e23+lhs.s*rhs.e12-lhs.b.e23*rhs.e31;
+    result.b.e1o = lhs.b.e12*rhs.e2o+lhs.s*rhs.e1o-lhs.b.e31*rhs.e3o;
+    result.b.e2o = lhs.b.e23*rhs.e3o+lhs.s*rhs.e2o-lhs.b.e12*rhs.e1o;
+    result.b.e3o = lhs.b.e31*rhs.e1o+lhs.s*rhs.e3o-lhs.b.e23*rhs.e2o;
+    result.b.e1i = lhs.b.e12*rhs.e2i+lhs.s*rhs.e1i-lhs.b.e31*rhs.e3i;
+    result.b.e2i = lhs.b.e23*rhs.e3i+lhs.s*rhs.e2i-lhs.b.e12*rhs.e1i;
+    result.b.e3i = lhs.b.e31*rhs.e1i+lhs.s*rhs.e3i-lhs.b.e23*rhs.e2i;
+    result.b.eoi = lhs.s*rhs.eoi;
+    result.t.e123 = lhs.v.e1*rhs.e23+lhs.v.e2*rhs.e31+lhs.v.e3*rhs.e12;
+    result.t.e23o = lhs.I3*rhs.e1o+lhs.v.e2*rhs.e3o-lhs.v.e3*rhs.e2o;
+    result.t.e31o = lhs.I3*rhs.e2o+lhs.v.e3*rhs.e1o-lhs.v.e1*rhs.e3o;
+    result.t.e12o = lhs.I3*rhs.e3o+lhs.v.e1*rhs.e2o-lhs.v.e2*rhs.e1o;
+    result.t.e23i = lhs.I3*rhs.e1i+lhs.v.e2*rhs.e3i-lhs.v.e3*rhs.e2i;
+    result.t.e31i = lhs.I3*rhs.e2i+lhs.v.e3*rhs.e1i-lhs.v.e1*rhs.e3i;
+    result.t.e12i = lhs.I3*rhs.e3i+lhs.v.e1*rhs.e2i-lhs.v.e2*rhs.e1i;
+    result.t.e1oi = lhs.v.e1*rhs.eoi;
+    result.t.e2oi = lhs.v.e2*rhs.eoi;
+    result.t.e3oi = lhs.v.e3*rhs.eoi;
+    result.q.e123o = lhs.b.e12*rhs.e3o+lhs.b.e23*rhs.e1o+lhs.b.e31*rhs.e2o;
+    result.q.e123i = lhs.b.e12*rhs.e3i+lhs.b.e23*rhs.e1i+lhs.b.e31*rhs.e2i;
+    result.q.e23oi = lhs.b.e23*rhs.eoi;
+    result.q.e31oi = lhs.b.e31*rhs.eoi;
+    result.q.e12oi = lhs.b.e12*rhs.eoi;
+    result.I5 = lhs.I3*rhs.eoi;
+    return result;
+}
+
+Multivector operator*(const Multivector3 &lhs, const Trivector &rhs) {
+    Multivector result;
+    result.s = -lhs.I3*rhs.e123;
+    result.v.e1 = -lhs.b.e23*rhs.e123;
+    result.v.e2 = -lhs.b.e31*rhs.e123;
+    result.v.e3 = -lhs.b.e12*rhs.e123;
+    result.v.eo = -lhs.b.e12*rhs.e12o-lhs.b.e23*rhs.e23o-lhs.b.e31*rhs.e31o;
+    result.v.ei = -lhs.b.e12*rhs.e12i-lhs.b.e23*rhs.e23i-lhs.b.e31*rhs.e31i;
+    result.b.e23 = lhs.v.e1*rhs.e123;
+    result.b.e31 = lhs.v.e2*rhs.e123;
+    result.b.e12 = lhs.v.e3*rhs.e123;
+    result.b.e1o = lhs.v.e3*rhs.e31o-lhs.I3*rhs.e23o-lhs.v.e2*rhs.e12o;
+    result.b.e2o = lhs.v.e1*rhs.e12o-lhs.I3*rhs.e31o-lhs.v.e3*rhs.e23o;
+    result.b.e3o = lhs.v.e2*rhs.e23o-lhs.I3*rhs.e12o-lhs.v.e1*rhs.e31o;
+    result.b.e1i = lhs.v.e3*rhs.e31i-lhs.I3*rhs.e23i-lhs.v.e2*rhs.e12i;
+    result.b.e2i = lhs.v.e1*rhs.e12i-lhs.I3*rhs.e31i-lhs.v.e3*rhs.e23i;
+    result.b.e3i = lhs.v.e2*rhs.e23i-lhs.I3*rhs.e12i-lhs.v.e1*rhs.e31i;
+    result.b.eoi = lhs.v.e1*rhs.e1oi+lhs.v.e2*rhs.e2oi+lhs.v.e3*rhs.e3oi;
+    result.t.e123 = lhs.s*rhs.e123;
+    result.t.e23o = lhs.b.e12*rhs.e31o+lhs.s*rhs.e23o-lhs.b.e31*rhs.e12o;
+    result.t.e31o = lhs.b.e23*rhs.e12o+lhs.s*rhs.e31o-lhs.b.e12*rhs.e23o;
+    result.t.e12o = lhs.b.e31*rhs.e23o+lhs.s*rhs.e12o-lhs.b.e23*rhs.e31o;
+    result.t.e23i = lhs.b.e12*rhs.e31i+lhs.s*rhs.e23i-lhs.b.e31*rhs.e12i;
+    result.t.e31i = lhs.b.e23*rhs.e12i+lhs.s*rhs.e31i-lhs.b.e12*rhs.e23i;
+    result.t.e12i = lhs.b.e31*rhs.e23i+lhs.s*rhs.e12i-lhs.b.e23*rhs.e31i;
+    result.t.e1oi = lhs.b.e12*rhs.e2oi+lhs.s*rhs.e1oi-lhs.b.e31*rhs.e3oi;
+    result.t.e2oi = lhs.b.e23*rhs.e3oi+lhs.s*rhs.e2oi-lhs.b.e12*rhs.e1oi;
+    result.t.e3oi = lhs.b.e31*rhs.e1oi+lhs.s*rhs.e3oi-lhs.b.e23*rhs.e2oi;
+    result.q.e123o = lhs.v.e1*rhs.e23o+lhs.v.e2*rhs.e31o+lhs.v.e3*rhs.e12o;
+    result.q.e123i = lhs.v.e1*rhs.e23i+lhs.v.e2*rhs.e31i+lhs.v.e3*rhs.e12i;
+    result.q.e23oi = lhs.I3*rhs.e1oi+lhs.v.e2*rhs.e3oi-lhs.v.e3*rhs.e2oi;
+    result.q.e31oi = lhs.I3*rhs.e2oi+lhs.v.e3*rhs.e1oi-lhs.v.e1*rhs.e3oi;
+    result.q.e12oi = lhs.I3*rhs.e3oi+lhs.v.e1*rhs.e2oi-lhs.v.e2*rhs.e1oi;
+    result.I5 = lhs.b.e12*rhs.e3oi+lhs.b.e23*rhs.e1oi+lhs.b.e31*rhs.e2oi;
+    return result;
+}
+
+Multivector operator*(const Multivector3 &lhs, const Rotor &rhs) {
+    Multivector result;
+    result.s = lhs.s*rhs.s-lhs.b.e12*rhs.b.e12-lhs.b.e23*rhs.b.e23-lhs.b.e31*rhs.b.e31;
+    result.v.e1 = lhs.v.e1*rhs.s+lhs.v.e3*rhs.b.e31-lhs.I3*rhs.b.e23-lhs.v.e2*rhs.b.e12;
+    result.v.e2 = lhs.v.e1*rhs.b.e12+lhs.v.e2*rhs.s-lhs.I3*rhs.b.e31-lhs.v.e3*rhs.b.e23;
+    result.v.e3 = lhs.v.e2*rhs.b.e23+lhs.v.e3*rhs.s-lhs.I3*rhs.b.e12-lhs.v.e1*rhs.b.e31;
+    result.v.eo = lhs.v.e1*rhs.b.e1o+lhs.v.e2*rhs.b.e2o+lhs.v.e3*rhs.b.e3o;
+    result.v.ei = lhs.v.e1*rhs.b.e1i+lhs.v.e2*rhs.b.e2i+lhs.v.e3*rhs.b.e3i;
+    result.b.e23 = lhs.b.e12*rhs.b.e31+lhs.b.e23*rhs.s+lhs.s*rhs.b.e23-lhs.b.e31*rhs.b.e12;
+    result.b.e31 = lhs.b.e23*rhs.b.e12+lhs.b.e31*rhs.s+lhs.s*rhs.b.e31-lhs.b.e12*rhs.b.e23;
+    result.b.e12 = lhs.b.e12*rhs.s+lhs.b.e31*rhs.b.e23+lhs.s*rhs.b.e12-lhs.b.e23*rhs.b.e31;
+    result.b.e1o = lhs.b.e12*rhs.b.e2o+lhs.s*rhs.b.e1o-lhs.b.e31*rhs.b.e3o;
+    result.b.e2o = lhs.b.e23*rhs.b.e3o+lhs.s*rhs.b.e2o-lhs.b.e12*rhs.b.e1o;
+    result.b.e3o = lhs.b.e31*rhs.b.e1o+lhs.s*rhs.b.e3o-lhs.b.e23*rhs.b.e2o;
+    result.b.e1i = lhs.b.e12*rhs.b.e2i+lhs.s*rhs.b.e1i-lhs.b.e31*rhs.b.e3i;
+    result.b.e2i = lhs.b.e23*rhs.b.e3i+lhs.s*rhs.b.e2i-lhs.b.e12*rhs.b.e1i;
+    result.b.e3i = lhs.b.e31*rhs.b.e1i+lhs.s*rhs.b.e3i-lhs.b.e23*rhs.b.e2i;
+    result.b.eoi = lhs.s*rhs.b.eoi;
+    result.t.e123 = lhs.I3*rhs.s+lhs.v.e1*rhs.b.e23+lhs.v.e2*rhs.b.e31+lhs.v.e3*rhs.b.e12;
+    result.t.e23o = lhs.I3*rhs.b.e1o+lhs.v.e2*rhs.b.e3o-lhs.v.e3*rhs.b.e2o;
+    result.t.e31o = lhs.I3*rhs.b.e2o+lhs.v.e3*rhs.b.e1o-lhs.v.e1*rhs.b.e3o;
+    result.t.e12o = lhs.I3*rhs.b.e3o+lhs.v.e1*rhs.b.e2o-lhs.v.e2*rhs.b.e1o;
+    result.t.e23i = lhs.I3*rhs.b.e1i+lhs.v.e2*rhs.b.e3i-lhs.v.e3*rhs.b.e2i;
+    result.t.e31i = lhs.I3*rhs.b.e2i+lhs.v.e3*rhs.b.e1i-lhs.v.e1*rhs.b.e3i;
+    result.t.e12i = lhs.I3*rhs.b.e3i+lhs.v.e1*rhs.b.e2i-lhs.v.e2*rhs.b.e1i;
+    result.t.e1oi = lhs.v.e1*rhs.b.eoi;
+    result.t.e2oi = lhs.v.e2*rhs.b.eoi;
+    result.t.e3oi = lhs.v.e3*rhs.b.eoi;
+    result.q.e123o = lhs.b.e12*rhs.b.e3o+lhs.b.e23*rhs.b.e1o+lhs.b.e31*rhs.b.e2o;
+    result.q.e123i = lhs.b.e12*rhs.b.e3i+lhs.b.e23*rhs.b.e1i+lhs.b.e31*rhs.b.e2i;
+    result.q.e23oi = lhs.b.e23*rhs.b.eoi;
+    result.q.e31oi = lhs.b.e31*rhs.b.eoi;
+    result.q.e12oi = lhs.b.e12*rhs.b.eoi;
+    result.I5 = lhs.I3*rhs.b.eoi;
+    return result;
+}
+
+Multivector operator*(const Multivector3 &lhs, const Versor &rhs) {
+    Multivector result;
+    result.s = lhs.s*rhs.s-lhs.b.e12*rhs.b.e12-lhs.b.e23*rhs.b.e23-lhs.b.e31*rhs.b.e31;
+    result.v.e1 = lhs.v.e1*rhs.s+lhs.v.e3*rhs.b.e31-lhs.I3*rhs.b.e23-lhs.v.e2*rhs.b.e12;
+    result.v.e2 = lhs.v.e1*rhs.b.e12+lhs.v.e2*rhs.s-lhs.I3*rhs.b.e31-lhs.v.e3*rhs.b.e23;
+    result.v.e3 = lhs.v.e2*rhs.b.e23+lhs.v.e3*rhs.s-lhs.I3*rhs.b.e12-lhs.v.e1*rhs.b.e31;
+    result.v.eo = lhs.v.e1*rhs.b.e1o+lhs.v.e2*rhs.b.e2o+lhs.v.e3*rhs.b.e3o-lhs.I3*rhs.q.e123o;
+    result.v.ei = lhs.v.e1*rhs.b.e1i+lhs.v.e2*rhs.b.e2i+lhs.v.e3*rhs.b.e3i-lhs.I3*rhs.q.e123i;
+    result.b.e23 = lhs.b.e12*rhs.b.e31+lhs.b.e23*rhs.s+lhs.s*rhs.b.e23-lhs.b.e31*rhs.b.e12;
+    result.b.e31 = lhs.b.e23*rhs.b.e12+lhs.b.e31*rhs.s+lhs.s*rhs.b.e31-lhs.b.e12*rhs.b.e23;
+    result.b.e12 = lhs.b.e12*rhs.s+lhs.b.e31*rhs.b.e23+lhs.s*rhs.b.e12-lhs.b.e23*rhs.b.e31;
+    result.b.e1o = lhs.b.e12*rhs.b.e2o+lhs.s*rhs.b.e1o-lhs.b.e23*rhs.q.e123o-lhs.b.e31*rhs.b.e3o;
+    result.b.e2o = lhs.b.e23*rhs.b.e3o+lhs.s*rhs.b.e2o-lhs.b.e12*rhs.b.e1o-lhs.b.e31*rhs.q.e123o;
+    result.b.e3o = lhs.b.e31*rhs.b.e1o+lhs.s*rhs.b.e3o-lhs.b.e12*rhs.q.e123o-lhs.b.e23*rhs.b.e2o;
+    result.b.e1i = lhs.b.e12*rhs.b.e2i+lhs.s*rhs.b.e1i-lhs.b.e23*rhs.q.e123i-lhs.b.e31*rhs.b.e3i;
+    result.b.e2i = lhs.b.e23*rhs.b.e3i+lhs.s*rhs.b.e2i-lhs.b.e12*rhs.b.e1i-lhs.b.e31*rhs.q.e123i;
+    result.b.e3i = lhs.b.e31*rhs.b.e1i+lhs.s*rhs.b.e3i-lhs.b.e12*rhs.q.e123i-lhs.b.e23*rhs.b.e2i;
+    result.b.eoi = lhs.s*rhs.b.eoi-lhs.b.e12*rhs.q.e12oi-lhs.b.e23*rhs.q.e23oi-lhs.b.e31*rhs.q.e31oi;
+    result.t.e123 = lhs.I3*rhs.s+lhs.v.e1*rhs.b.e23+lhs.v.e2*rhs.b.e31+lhs.v.e3*rhs.b.e12;
+    result.t.e23o = lhs.I3*rhs.b.e1o+lhs.v.e1*rhs.q.e123o+lhs.v.e2*rhs.b.e3o-lhs.v.e3*rhs.b.e2o;
+    result.t.e31o = lhs.I3*rhs.b.e2o+lhs.v.e2*rhs.q.e123o+lhs.v.e3*rhs.b.e1o-lhs.v.e1*rhs.b.e3o;
+    result.t.e12o = lhs.I3*rhs.b.e3o+lhs.v.e1*rhs.b.e2o+lhs.v.e3*rhs.q.e123o-lhs.v.e2*rhs.b.e1o;
+    result.t.e23i = lhs.I3*rhs.b.e1i+lhs.v.e1*rhs.q.e123i+lhs.v.e2*rhs.b.e3i-lhs.v.e3*rhs.b.e2i;
+    result.t.e31i = lhs.I3*rhs.b.e2i+lhs.v.e2*rhs.q.e123i+lhs.v.e3*rhs.b.e1i-lhs.v.e1*rhs.b.e3i;
+    result.t.e12i = lhs.I3*rhs.b.e3i+lhs.v.e1*rhs.b.e2i+lhs.v.e3*rhs.q.e123i-lhs.v.e2*rhs.b.e1i;
+    result.t.e1oi = lhs.v.e1*rhs.b.eoi+lhs.v.e3*rhs.q.e31oi-lhs.I3*rhs.q.e23oi-lhs.v.e2*rhs.q.e12oi;
+    result.t.e2oi = lhs.v.e1*rhs.q.e12oi+lhs.v.e2*rhs.b.eoi-lhs.I3*rhs.q.e31oi-lhs.v.e3*rhs.q.e23oi;
+    result.t.e3oi = lhs.v.e2*rhs.q.e23oi+lhs.v.e3*rhs.b.eoi-lhs.I3*rhs.q.e12oi-lhs.v.e1*rhs.q.e31oi;
+    result.q.e123o = lhs.b.e12*rhs.b.e3o+lhs.b.e23*rhs.b.e1o+lhs.b.e31*rhs.b.e2o+lhs.s*rhs.q.e123o;
+    result.q.e123i = lhs.b.e12*rhs.b.e3i+lhs.b.e23*rhs.b.e1i+lhs.b.e31*rhs.b.e2i+lhs.s*rhs.q.e123i;
+    result.q.e23oi = lhs.b.e12*rhs.q.e31oi+lhs.b.e23*rhs.b.eoi+lhs.s*rhs.q.e23oi-lhs.b.e31*rhs.q.e12oi;
+    result.q.e31oi = lhs.b.e23*rhs.q.e12oi+lhs.b.e31*rhs.b.eoi+lhs.s*rhs.q.e31oi-lhs.b.e12*rhs.q.e23oi;
+    result.q.e12oi = lhs.b.e12*rhs.b.eoi+lhs.b.e31*rhs.q.e23oi+lhs.s*rhs.q.e12oi-lhs.b.e23*rhs.q.e31oi;
+    result.I5 = lhs.I3*rhs.b.eoi+lhs.v.e1*rhs.q.e23oi+lhs.v.e2*rhs.q.e31oi+lhs.v.e3*rhs.q.e12oi;
+    return result;
+}
+
+Multivector operator*(const Multivector3 &lhs, const Multivector &rhs) {
+    Multivector result;
+    result.s = lhs.s*rhs.s+lhs.v.e1*rhs.v.e1+lhs.v.e2*rhs.v.e2+lhs.v.e3*rhs.v.e3-lhs.I3*rhs.t.e123-lhs.b.e12*rhs.b.e12-lhs.b.e23*rhs.b.e23-lhs.b.e31*rhs.b.e31;
+    result.v.e1 = lhs.b.e12*rhs.v.e2+lhs.s*rhs.v.e1+lhs.v.e1*rhs.s+lhs.v.e3*rhs.b.e31-lhs.I3*rhs.b.e23-lhs.b.e23*rhs.t.e123-lhs.b.e31*rhs.v.e3-lhs.v.e2*rhs.b.e12;
+    result.v.e2 = lhs.b.e23*rhs.v.e3+lhs.s*rhs.v.e2+lhs.v.e1*rhs.b.e12+lhs.v.e2*rhs.s-lhs.I3*rhs.b.e31-lhs.b.e12*rhs.v.e1-lhs.b.e31*rhs.t.e123-lhs.v.e3*rhs.b.e23;
+    result.v.e3 = lhs.b.e31*rhs.v.e1+lhs.s*rhs.v.e3+lhs.v.e2*rhs.b.e23+lhs.v.e3*rhs.s-lhs.I3*rhs.b.e12-lhs.b.e12*rhs.t.e123-lhs.b.e23*rhs.v.e2-lhs.v.e1*rhs.b.e31;
+    result.v.eo = lhs.s*rhs.v.eo+lhs.v.e1*rhs.b.e1o+lhs.v.e2*rhs.b.e2o+lhs.v.e3*rhs.b.e3o-lhs.I3*rhs.q.e123o-lhs.b.e12*rhs.t.e12o-lhs.b.e23*rhs.t.e23o-lhs.b.e31*rhs.t.e31o;
+    result.v.ei = lhs.s*rhs.v.ei+lhs.v.e1*rhs.b.e1i+lhs.v.e2*rhs.b.e2i+lhs.v.e3*rhs.b.e3i-lhs.I3*rhs.q.e123i-lhs.b.e12*rhs.t.e12i-lhs.b.e23*rhs.t.e23i-lhs.b.e31*rhs.t.e31i;
+    result.b.e23 = lhs.I3*rhs.v.e1+lhs.b.e12*rhs.b.e31+lhs.b.e23*rhs.s+lhs.s*rhs.b.e23+lhs.v.e1*rhs.t.e123+lhs.v.e2*rhs.v.e3-lhs.b.e31*rhs.b.e12-lhs.v.e3*rhs.v.e2;
+    result.b.e31 = lhs.I3*rhs.v.e2+lhs.b.e23*rhs.b.e12+lhs.b.e31*rhs.s+lhs.s*rhs.b.e31+lhs.v.e2*rhs.t.e123+lhs.v.e3*rhs.v.e1-lhs.b.e12*rhs.b.e23-lhs.v.e1*rhs.v.e3;
+    result.b.e12 = lhs.I3*rhs.v.e3+lhs.b.e12*rhs.s+lhs.b.e31*rhs.b.e23+lhs.s*rhs.b.e12+lhs.v.e1*rhs.v.e2+lhs.v.e3*rhs.t.e123-lhs.b.e23*rhs.b.e31-lhs.v.e2*rhs.v.e1;
+    result.b.e1o = lhs.b.e12*rhs.b.e2o+lhs.s*rhs.b.e1o+lhs.v.e1*rhs.v.eo+lhs.v.e3*rhs.t.e31o-lhs.I3*rhs.t.e23o-lhs.b.e23*rhs.q.e123o-lhs.b.e31*rhs.b.e3o-lhs.v.e2*rhs.t.e12o;
+    result.b.e2o = lhs.b.e23*rhs.b.e3o+lhs.s*rhs.b.e2o+lhs.v.e1*rhs.t.e12o+lhs.v.e2*rhs.v.eo-lhs.I3*rhs.t.e31o-lhs.b.e12*rhs.b.e1o-lhs.b.e31*rhs.q.e123o-lhs.v.e3*rhs.t.e23o;
+    result.b.e3o = lhs.b.e31*rhs.b.e1o+lhs.s*rhs.b.e3o+lhs.v.e2*rhs.t.e23o+lhs.v.e3*rhs.v.eo-lhs.I3*rhs.t.e12o-lhs.b.e12*rhs.q.e123o-lhs.b.e23*rhs.b.e2o-lhs.v.e1*rhs.t.e31o;
+    result.b.e1i = lhs.b.e12*rhs.b.e2i+lhs.s*rhs.b.e1i+lhs.v.e1*rhs.v.ei+lhs.v.e3*rhs.t.e31i-lhs.I3*rhs.t.e23i-lhs.b.e23*rhs.q.e123i-lhs.b.e31*rhs.b.e3i-lhs.v.e2*rhs.t.e12i;
+    result.b.e2i = lhs.b.e23*rhs.b.e3i+lhs.s*rhs.b.e2i+lhs.v.e1*rhs.t.e12i+lhs.v.e2*rhs.v.ei-lhs.I3*rhs.t.e31i-lhs.b.e12*rhs.b.e1i-lhs.b.e31*rhs.q.e123i-lhs.v.e3*rhs.t.e23i;
+    result.b.e3i = lhs.b.e31*rhs.b.e1i+lhs.s*rhs.b.e3i+lhs.v.e2*rhs.t.e23i+lhs.v.e3*rhs.v.ei-lhs.I3*rhs.t.e12i-lhs.b.e12*rhs.q.e123i-lhs.b.e23*rhs.b.e2i-lhs.v.e1*rhs.t.e31i;
+    result.b.eoi = lhs.s*rhs.b.eoi+lhs.v.e1*rhs.t.e1oi+lhs.v.e2*rhs.t.e2oi+lhs.v.e3*rhs.t.e3oi-lhs.I3*rhs.I5-lhs.b.e12*rhs.q.e12oi-lhs.b.e23*rhs.q.e23oi-lhs.b.e31*rhs.q.e31oi;
+    result.t.e123 = lhs.I3*rhs.s+lhs.b.e12*rhs.v.e3+lhs.b.e23*rhs.v.e1+lhs.b.e31*rhs.v.e2+lhs.s*rhs.t.e123+lhs.v.e1*rhs.b.e23+lhs.v.e2*rhs.b.e31+lhs.v.e3*rhs.b.e12;
+    result.t.e23o = lhs.I3*rhs.b.e1o+lhs.b.e12*rhs.t.e31o+lhs.b.e23*rhs.v.eo+lhs.s*rhs.t.e23o+lhs.v.e1*rhs.q.e123o+lhs.v.e2*rhs.b.e3o-lhs.b.e31*rhs.t.e12o-lhs.v.e3*rhs.b.e2o;
+    result.t.e31o = lhs.I3*rhs.b.e2o+lhs.b.e23*rhs.t.e12o+lhs.b.e31*rhs.v.eo+lhs.s*rhs.t.e31o+lhs.v.e2*rhs.q.e123o+lhs.v.e3*rhs.b.e1o-lhs.b.e12*rhs.t.e23o-lhs.v.e1*rhs.b.e3o;
+    result.t.e12o = lhs.I3*rhs.b.e3o+lhs.b.e12*rhs.v.eo+lhs.b.e31*rhs.t.e23o+lhs.s*rhs.t.e12o+lhs.v.e1*rhs.b.e2o+lhs.v.e3*rhs.q.e123o-lhs.b.e23*rhs.t.e31o-lhs.v.e2*rhs.b.e1o;
+    result.t.e23i = lhs.I3*rhs.b.e1i+lhs.b.e12*rhs.t.e31i+lhs.b.e23*rhs.v.ei+lhs.s*rhs.t.e23i+lhs.v.e1*rhs.q.e123i+lhs.v.e2*rhs.b.e3i-lhs.b.e31*rhs.t.e12i-lhs.v.e3*rhs.b.e2i;
+    result.t.e31i = lhs.I3*rhs.b.e2i+lhs.b.e23*rhs.t.e12i+lhs.b.e31*rhs.v.ei+lhs.s*rhs.t.e31i+lhs.v.e2*rhs.q.e123i+lhs.v.e3*rhs.b.e1i-lhs.b.e12*rhs.t.e23i-lhs.v.e1*rhs.b.e3i;
+    result.t.e12i = lhs.I3*rhs.b.e3i+lhs.b.e12*rhs.v.ei+lhs.b.e31*rhs.t.e23i+lhs.s*rhs.t.e12i+lhs.v.e1*rhs.b.e2i+lhs.v.e3*rhs.q.e123i-lhs.b.e23*rhs.t.e31i-lhs.v.e2*rhs.b.e1i;
+    result.t.e1oi = lhs.b.e12*rhs.t.e2oi+lhs.s*rhs.t.e1oi+lhs.v.e1*rhs.b.eoi+lhs.v.e3*rhs.q.e31oi-lhs.I3*rhs.q.e23oi-lhs.b.e23*rhs.I5-lhs.b.e31*rhs.t.e3oi-lhs.v.e2*rhs.q.e12oi;
+    result.t.e2oi = lhs.b.e23*rhs.t.e3oi+lhs.s*rhs.t.e2oi+lhs.v.e1*rhs.q.e12oi+lhs.v.e2*rhs.b.eoi-lhs.I3*rhs.q.e31oi-lhs.b.e12*rhs.t.e1oi-lhs.b.e31*rhs.I5-lhs.v.e3*rhs.q.e23oi;
+    result.t.e3oi = lhs.b.e31*rhs.t.e1oi+lhs.s*rhs.t.e3oi+lhs.v.e2*rhs.q.e23oi+lhs.v.e3*rhs.b.eoi-lhs.I3*rhs.q.e12oi-lhs.b.e12*rhs.I5-lhs.b.e23*rhs.t.e2oi-lhs.v.e1*rhs.q.e31oi;
+    result.q.e123o = lhs.I3*rhs.v.eo+lhs.b.e12*rhs.b.e3o+lhs.b.e23*rhs.b.e1o+lhs.b.e31*rhs.b.e2o+lhs.s*rhs.q.e123o+lhs.v.e1*rhs.t.e23o+lhs.v.e2*rhs.t.e31o+lhs.v.e3*rhs.t.e12o;
+    result.q.e123i = lhs.I3*rhs.v.ei+lhs.b.e12*rhs.b.e3i+lhs.b.e23*rhs.b.e1i+lhs.b.e31*rhs.b.e2i+lhs.s*rhs.q.e123i+lhs.v.e1*rhs.t.e23i+lhs.v.e2*rhs.t.e31i+lhs.v.e3*rhs.t.e12i;
+    result.q.e23oi = lhs.I3*rhs.t.e1oi+lhs.b.e12*rhs.q.e31oi+lhs.b.e23*rhs.b.eoi+lhs.s*rhs.q.e23oi+lhs.v.e1*rhs.I5+lhs.v.e2*rhs.t.e3oi-lhs.b.e31*rhs.q.e12oi-lhs.v.e3*rhs.t.e2oi;
+    result.q.e31oi = lhs.I3*rhs.t.e2oi+lhs.b.e23*rhs.q.e12oi+lhs.b.e31*rhs.b.eoi+lhs.s*rhs.q.e31oi+lhs.v.e2*rhs.I5+lhs.v.e3*rhs.t.e1oi-lhs.b.e12*rhs.q.e23oi-lhs.v.e1*rhs.t.e3oi;
+    result.q.e12oi = lhs.I3*rhs.t.e3oi+lhs.b.e12*rhs.b.eoi+lhs.b.e31*rhs.q.e23oi+lhs.s*rhs.q.e12oi+lhs.v.e1*rhs.t.e2oi+lhs.v.e3*rhs.I5-lhs.b.e23*rhs.q.e31oi-lhs.v.e2*rhs.t.e1oi;
+    result.I5 = lhs.I3*rhs.b.eoi+lhs.b.e12*rhs.t.e3oi+lhs.b.e23*rhs.t.e1oi+lhs.b.e31*rhs.t.e2oi+lhs.s*rhs.I5+lhs.v.e1*rhs.q.e23oi+lhs.v.e2*rhs.q.e31oi+lhs.v.e3*rhs.q.e12oi;
     return result;
 }
 
@@ -1750,6 +2198,12 @@ double outer(const Pseudoscalar3 &lhs, const Quadvector &rhs) {
     return result;
 }
 
+Pseudoscalar3 outer(const Pseudoscalar3 &lhs, const Multivector3 &rhs) {
+    Pseudoscalar3 result;
+    result.I3 = lhs.I3*rhs.s;
+    return result;
+}
+
 Pseudoscalar outer(const Pseudoscalar3 &lhs, const Bivector &rhs) {
     Pseudoscalar result;
     result.I5 = lhs.I3*rhs.eoi;
@@ -1815,6 +2269,12 @@ double outer(const Pseudoscalar &lhs, const Quadvector &rhs) {
     return result;
 }
 
+Pseudoscalar outer(const Pseudoscalar &lhs, const Multivector3 &rhs) {
+    Pseudoscalar result;
+    result.I5 = lhs.I5*rhs.s;
+    return result;
+}
+
 double outer(const Pseudoscalar &lhs, const Bivector &rhs) {
     double result;
     return result;
@@ -1857,12 +2317,12 @@ Pseudoscalar3 outer(const Vector3 &lhs, const Bivector3 &rhs) {
     return result;
 }
 
-Multivector outer(const Vector3 &lhs, const Rotor3 &rhs) {
-    Multivector result;
+Multivector3 outer(const Vector3 &lhs, const Rotor3 &rhs) {
+    Multivector3 result;
     result.v.e1 = lhs.e1*rhs.s;
     result.v.e2 = lhs.e2*rhs.s;
     result.v.e3 = lhs.e3*rhs.s;
-    result.t.e123 = lhs.e1*rhs.b.e23+lhs.e2*rhs.b.e31+lhs.e3*rhs.b.e12;
+    result.I3 = lhs.e1*rhs.b.e23+lhs.e2*rhs.b.e31+lhs.e3*rhs.b.e12;
     return result;
 }
 
@@ -1883,6 +2343,18 @@ Bivector outer(const Vector3 &lhs, const Vector &rhs) {
 Pseudoscalar outer(const Vector3 &lhs, const Quadvector &rhs) {
     Pseudoscalar result;
     result.I5 = lhs.e1*rhs.e23oi+lhs.e2*rhs.e31oi+lhs.e3*rhs.e12oi;
+    return result;
+}
+
+Multivector3 outer(const Vector3 &lhs, const Multivector3 &rhs) {
+    Multivector3 result;
+    result.v.e1 = lhs.e1*rhs.s;
+    result.v.e2 = lhs.e2*rhs.s;
+    result.v.e3 = lhs.e3*rhs.s;
+    result.b.e23 = lhs.e2*rhs.v.e3-lhs.e3*rhs.v.e2;
+    result.b.e31 = lhs.e3*rhs.v.e1-lhs.e1*rhs.v.e3;
+    result.b.e12 = lhs.e1*rhs.v.e2-lhs.e2*rhs.v.e1;
+    result.I3 = lhs.e1*rhs.b.e23+lhs.e2*rhs.b.e31+lhs.e3*rhs.b.e12;
     return result;
 }
 
@@ -2011,6 +2483,15 @@ double outer(const Bivector3 &lhs, const Quadvector &rhs) {
     return result;
 }
 
+Multivector3 outer(const Bivector3 &lhs, const Multivector3 &rhs) {
+    Multivector3 result;
+    result.b.e23 = lhs.e23*rhs.s;
+    result.b.e31 = lhs.e31*rhs.s;
+    result.b.e12 = lhs.e12*rhs.s;
+    result.I3 = lhs.e12*rhs.v.e3+lhs.e23*rhs.v.e1+lhs.e31*rhs.v.e2;
+    return result;
+}
+
 Quadvector outer(const Bivector3 &lhs, const Bivector &rhs) {
     Quadvector result;
     result.e123o = lhs.e12*rhs.e3o+lhs.e23*rhs.e1o+lhs.e31*rhs.e2o;
@@ -2107,6 +2588,19 @@ Quadvector outer(const Rotor3 &lhs, const Quadvector &rhs) {
     result.e23oi = lhs.s*rhs.e23oi;
     result.e31oi = lhs.s*rhs.e31oi;
     result.e12oi = lhs.s*rhs.e12oi;
+    return result;
+}
+
+Multivector3 outer(const Rotor3 &lhs, const Multivector3 &rhs) {
+    Multivector3 result;
+    result.s = lhs.s*rhs.s;
+    result.v.e1 = lhs.s*rhs.v.e1;
+    result.v.e2 = lhs.s*rhs.v.e2;
+    result.v.e3 = lhs.s*rhs.v.e3;
+    result.b.e23 = lhs.b.e23*rhs.s+lhs.s*rhs.b.e23;
+    result.b.e31 = lhs.b.e31*rhs.s+lhs.s*rhs.b.e31;
+    result.b.e12 = lhs.b.e12*rhs.s+lhs.s*rhs.b.e12;
+    result.I3 = lhs.b.e12*rhs.v.e3+lhs.b.e23*rhs.v.e1+lhs.b.e31*rhs.v.e2+lhs.s*rhs.I3;
     return result;
 }
 
@@ -2246,6 +2740,34 @@ Pseudoscalar outer(const Vector &lhs, const Quadvector &rhs) {
     return result;
 }
 
+Multivector outer(const Vector &lhs, const Multivector3 &rhs) {
+    Multivector result;
+    result.v.e1 = lhs.e1*rhs.s;
+    result.v.e2 = lhs.e2*rhs.s;
+    result.v.e3 = lhs.e3*rhs.s;
+    result.v.eo = lhs.eo*rhs.s;
+    result.v.ei = lhs.ei*rhs.s;
+    result.b.e23 = lhs.e2*rhs.v.e3-lhs.e3*rhs.v.e2;
+    result.b.e31 = lhs.e3*rhs.v.e1-lhs.e1*rhs.v.e3;
+    result.b.e12 = lhs.e1*rhs.v.e2-lhs.e2*rhs.v.e1;
+    result.b.e1o = -lhs.eo*rhs.v.e1;
+    result.b.e2o = -lhs.eo*rhs.v.e2;
+    result.b.e3o = -lhs.eo*rhs.v.e3;
+    result.b.e1i = -lhs.ei*rhs.v.e1;
+    result.b.e2i = -lhs.ei*rhs.v.e2;
+    result.b.e3i = -lhs.ei*rhs.v.e3;
+    result.t.e123 = lhs.e1*rhs.b.e23+lhs.e2*rhs.b.e31+lhs.e3*rhs.b.e12;
+    result.t.e23o = lhs.eo*rhs.b.e23;
+    result.t.e31o = lhs.eo*rhs.b.e31;
+    result.t.e12o = lhs.eo*rhs.b.e12;
+    result.t.e23i = lhs.ei*rhs.b.e23;
+    result.t.e31i = lhs.ei*rhs.b.e31;
+    result.t.e12i = lhs.ei*rhs.b.e12;
+    result.q.e123o = -lhs.eo*rhs.I3;
+    result.q.e123i = -lhs.ei*rhs.I3;
+    return result;
+}
+
 Trivector outer(const Vector &lhs, const Bivector &rhs) {
     Trivector result;
     result.e123 = lhs.e1*rhs.e23+lhs.e2*rhs.e31+lhs.e3*rhs.e12;
@@ -2353,6 +2875,17 @@ double outer(const Quadvector &lhs, const Quadvector &rhs) {
     return result;
 }
 
+Multivector outer(const Quadvector &lhs, const Multivector3 &rhs) {
+    Multivector result;
+    result.q.e123o = lhs.e123o*rhs.s;
+    result.q.e123i = lhs.e123i*rhs.s;
+    result.q.e23oi = lhs.e23oi*rhs.s;
+    result.q.e31oi = lhs.e31oi*rhs.s;
+    result.q.e12oi = lhs.e12oi*rhs.s;
+    result.I5 = lhs.e12oi*rhs.v.e3+lhs.e23oi*rhs.v.e1+lhs.e31oi*rhs.v.e2;
+    return result;
+}
+
 double outer(const Quadvector &lhs, const Bivector &rhs) {
     double result;
     return result;
@@ -2391,6 +2924,178 @@ Multivector outer(const Quadvector &lhs, const Multivector &rhs) {
     result.q.e31oi = lhs.e31oi*rhs.s;
     result.q.e12oi = lhs.e12oi*rhs.s;
     result.I5 = lhs.e123o*rhs.v.ei+lhs.e12oi*rhs.v.e3+lhs.e23oi*rhs.v.e1+lhs.e31oi*rhs.v.e2-lhs.e123i*rhs.v.eo;
+    return result;
+}
+
+Multivector3 outer(const Multivector3 &lhs, const Multivector3 &rhs) {
+    Multivector3 result;
+    result.s = lhs.s*rhs.s;
+    result.v.e1 = lhs.s*rhs.v.e1+lhs.v.e1*rhs.s;
+    result.v.e2 = lhs.s*rhs.v.e2+lhs.v.e2*rhs.s;
+    result.v.e3 = lhs.s*rhs.v.e3+lhs.v.e3*rhs.s;
+    result.b.e23 = lhs.b.e23*rhs.s+lhs.s*rhs.b.e23+lhs.v.e2*rhs.v.e3-lhs.v.e3*rhs.v.e2;
+    result.b.e31 = lhs.b.e31*rhs.s+lhs.s*rhs.b.e31+lhs.v.e3*rhs.v.e1-lhs.v.e1*rhs.v.e3;
+    result.b.e12 = lhs.b.e12*rhs.s+lhs.s*rhs.b.e12+lhs.v.e1*rhs.v.e2-lhs.v.e2*rhs.v.e1;
+    result.I3 = lhs.I3*rhs.s+lhs.b.e12*rhs.v.e3+lhs.b.e23*rhs.v.e1+lhs.b.e31*rhs.v.e2+lhs.s*rhs.I3+lhs.v.e1*rhs.b.e23+lhs.v.e2*rhs.b.e31+lhs.v.e3*rhs.b.e12;
+    return result;
+}
+
+Multivector outer(const Multivector3 &lhs, const Bivector &rhs) {
+    Multivector result;
+    result.b.e23 = lhs.s*rhs.e23;
+    result.b.e31 = lhs.s*rhs.e31;
+    result.b.e12 = lhs.s*rhs.e12;
+    result.b.e1o = lhs.s*rhs.e1o;
+    result.b.e2o = lhs.s*rhs.e2o;
+    result.b.e3o = lhs.s*rhs.e3o;
+    result.b.e1i = lhs.s*rhs.e1i;
+    result.b.e2i = lhs.s*rhs.e2i;
+    result.b.e3i = lhs.s*rhs.e3i;
+    result.b.eoi = lhs.s*rhs.eoi;
+    result.t.e123 = lhs.v.e1*rhs.e23+lhs.v.e2*rhs.e31+lhs.v.e3*rhs.e12;
+    result.t.e23o = lhs.v.e2*rhs.e3o-lhs.v.e3*rhs.e2o;
+    result.t.e31o = lhs.v.e3*rhs.e1o-lhs.v.e1*rhs.e3o;
+    result.t.e12o = lhs.v.e1*rhs.e2o-lhs.v.e2*rhs.e1o;
+    result.t.e23i = lhs.v.e2*rhs.e3i-lhs.v.e3*rhs.e2i;
+    result.t.e31i = lhs.v.e3*rhs.e1i-lhs.v.e1*rhs.e3i;
+    result.t.e12i = lhs.v.e1*rhs.e2i-lhs.v.e2*rhs.e1i;
+    result.t.e1oi = lhs.v.e1*rhs.eoi;
+    result.t.e2oi = lhs.v.e2*rhs.eoi;
+    result.t.e3oi = lhs.v.e3*rhs.eoi;
+    result.q.e123o = lhs.b.e12*rhs.e3o+lhs.b.e23*rhs.e1o+lhs.b.e31*rhs.e2o;
+    result.q.e123i = lhs.b.e12*rhs.e3i+lhs.b.e23*rhs.e1i+lhs.b.e31*rhs.e2i;
+    result.q.e23oi = lhs.b.e23*rhs.eoi;
+    result.q.e31oi = lhs.b.e31*rhs.eoi;
+    result.q.e12oi = lhs.b.e12*rhs.eoi;
+    result.I5 = lhs.I3*rhs.eoi;
+    return result;
+}
+
+Multivector outer(const Multivector3 &lhs, const Trivector &rhs) {
+    Multivector result;
+    result.t.e123 = lhs.s*rhs.e123;
+    result.t.e23o = lhs.s*rhs.e23o;
+    result.t.e31o = lhs.s*rhs.e31o;
+    result.t.e12o = lhs.s*rhs.e12o;
+    result.t.e23i = lhs.s*rhs.e23i;
+    result.t.e31i = lhs.s*rhs.e31i;
+    result.t.e12i = lhs.s*rhs.e12i;
+    result.t.e1oi = lhs.s*rhs.e1oi;
+    result.t.e2oi = lhs.s*rhs.e2oi;
+    result.t.e3oi = lhs.s*rhs.e3oi;
+    result.q.e123o = lhs.v.e1*rhs.e23o+lhs.v.e2*rhs.e31o+lhs.v.e3*rhs.e12o;
+    result.q.e123i = lhs.v.e1*rhs.e23i+lhs.v.e2*rhs.e31i+lhs.v.e3*rhs.e12i;
+    result.q.e23oi = lhs.v.e2*rhs.e3oi-lhs.v.e3*rhs.e2oi;
+    result.q.e31oi = lhs.v.e3*rhs.e1oi-lhs.v.e1*rhs.e3oi;
+    result.q.e12oi = lhs.v.e1*rhs.e2oi-lhs.v.e2*rhs.e1oi;
+    result.I5 = lhs.b.e12*rhs.e3oi+lhs.b.e23*rhs.e1oi+lhs.b.e31*rhs.e2oi;
+    return result;
+}
+
+Multivector outer(const Multivector3 &lhs, const Rotor &rhs) {
+    Multivector result;
+    result.s = lhs.s*rhs.s;
+    result.v.e1 = lhs.v.e1*rhs.s;
+    result.v.e2 = lhs.v.e2*rhs.s;
+    result.v.e3 = lhs.v.e3*rhs.s;
+    result.b.e23 = lhs.b.e23*rhs.s+lhs.s*rhs.b.e23;
+    result.b.e31 = lhs.b.e31*rhs.s+lhs.s*rhs.b.e31;
+    result.b.e12 = lhs.b.e12*rhs.s+lhs.s*rhs.b.e12;
+    result.b.e1o = lhs.s*rhs.b.e1o;
+    result.b.e2o = lhs.s*rhs.b.e2o;
+    result.b.e3o = lhs.s*rhs.b.e3o;
+    result.b.e1i = lhs.s*rhs.b.e1i;
+    result.b.e2i = lhs.s*rhs.b.e2i;
+    result.b.e3i = lhs.s*rhs.b.e3i;
+    result.b.eoi = lhs.s*rhs.b.eoi;
+    result.t.e123 = lhs.I3*rhs.s+lhs.v.e1*rhs.b.e23+lhs.v.e2*rhs.b.e31+lhs.v.e3*rhs.b.e12;
+    result.t.e23o = lhs.v.e2*rhs.b.e3o-lhs.v.e3*rhs.b.e2o;
+    result.t.e31o = lhs.v.e3*rhs.b.e1o-lhs.v.e1*rhs.b.e3o;
+    result.t.e12o = lhs.v.e1*rhs.b.e2o-lhs.v.e2*rhs.b.e1o;
+    result.t.e23i = lhs.v.e2*rhs.b.e3i-lhs.v.e3*rhs.b.e2i;
+    result.t.e31i = lhs.v.e3*rhs.b.e1i-lhs.v.e1*rhs.b.e3i;
+    result.t.e12i = lhs.v.e1*rhs.b.e2i-lhs.v.e2*rhs.b.e1i;
+    result.t.e1oi = lhs.v.e1*rhs.b.eoi;
+    result.t.e2oi = lhs.v.e2*rhs.b.eoi;
+    result.t.e3oi = lhs.v.e3*rhs.b.eoi;
+    result.q.e123o = lhs.b.e12*rhs.b.e3o+lhs.b.e23*rhs.b.e1o+lhs.b.e31*rhs.b.e2o;
+    result.q.e123i = lhs.b.e12*rhs.b.e3i+lhs.b.e23*rhs.b.e1i+lhs.b.e31*rhs.b.e2i;
+    result.q.e23oi = lhs.b.e23*rhs.b.eoi;
+    result.q.e31oi = lhs.b.e31*rhs.b.eoi;
+    result.q.e12oi = lhs.b.e12*rhs.b.eoi;
+    result.I5 = lhs.I3*rhs.b.eoi;
+    return result;
+}
+
+Multivector outer(const Multivector3 &lhs, const Versor &rhs) {
+    Multivector result;
+    result.s = lhs.s*rhs.s;
+    result.v.e1 = lhs.v.e1*rhs.s;
+    result.v.e2 = lhs.v.e2*rhs.s;
+    result.v.e3 = lhs.v.e3*rhs.s;
+    result.b.e23 = lhs.b.e23*rhs.s+lhs.s*rhs.b.e23;
+    result.b.e31 = lhs.b.e31*rhs.s+lhs.s*rhs.b.e31;
+    result.b.e12 = lhs.b.e12*rhs.s+lhs.s*rhs.b.e12;
+    result.b.e1o = lhs.s*rhs.b.e1o;
+    result.b.e2o = lhs.s*rhs.b.e2o;
+    result.b.e3o = lhs.s*rhs.b.e3o;
+    result.b.e1i = lhs.s*rhs.b.e1i;
+    result.b.e2i = lhs.s*rhs.b.e2i;
+    result.b.e3i = lhs.s*rhs.b.e3i;
+    result.b.eoi = lhs.s*rhs.b.eoi;
+    result.t.e123 = lhs.I3*rhs.s+lhs.v.e1*rhs.b.e23+lhs.v.e2*rhs.b.e31+lhs.v.e3*rhs.b.e12;
+    result.t.e23o = lhs.v.e2*rhs.b.e3o-lhs.v.e3*rhs.b.e2o;
+    result.t.e31o = lhs.v.e3*rhs.b.e1o-lhs.v.e1*rhs.b.e3o;
+    result.t.e12o = lhs.v.e1*rhs.b.e2o-lhs.v.e2*rhs.b.e1o;
+    result.t.e23i = lhs.v.e2*rhs.b.e3i-lhs.v.e3*rhs.b.e2i;
+    result.t.e31i = lhs.v.e3*rhs.b.e1i-lhs.v.e1*rhs.b.e3i;
+    result.t.e12i = lhs.v.e1*rhs.b.e2i-lhs.v.e2*rhs.b.e1i;
+    result.t.e1oi = lhs.v.e1*rhs.b.eoi;
+    result.t.e2oi = lhs.v.e2*rhs.b.eoi;
+    result.t.e3oi = lhs.v.e3*rhs.b.eoi;
+    result.q.e123o = lhs.b.e12*rhs.b.e3o+lhs.b.e23*rhs.b.e1o+lhs.b.e31*rhs.b.e2o+lhs.s*rhs.q.e123o;
+    result.q.e123i = lhs.b.e12*rhs.b.e3i+lhs.b.e23*rhs.b.e1i+lhs.b.e31*rhs.b.e2i+lhs.s*rhs.q.e123i;
+    result.q.e23oi = lhs.b.e23*rhs.b.eoi+lhs.s*rhs.q.e23oi;
+    result.q.e31oi = lhs.b.e31*rhs.b.eoi+lhs.s*rhs.q.e31oi;
+    result.q.e12oi = lhs.b.e12*rhs.b.eoi+lhs.s*rhs.q.e12oi;
+    result.I5 = lhs.I3*rhs.b.eoi+lhs.v.e1*rhs.q.e23oi+lhs.v.e2*rhs.q.e31oi+lhs.v.e3*rhs.q.e12oi;
+    return result;
+}
+
+Multivector outer(const Multivector3 &lhs, const Multivector &rhs) {
+    Multivector result;
+    result.s = lhs.s*rhs.s;
+    result.v.e1 = lhs.s*rhs.v.e1+lhs.v.e1*rhs.s;
+    result.v.e2 = lhs.s*rhs.v.e2+lhs.v.e2*rhs.s;
+    result.v.e3 = lhs.s*rhs.v.e3+lhs.v.e3*rhs.s;
+    result.v.eo = lhs.s*rhs.v.eo;
+    result.v.ei = lhs.s*rhs.v.ei;
+    result.b.e23 = lhs.b.e23*rhs.s+lhs.s*rhs.b.e23+lhs.v.e2*rhs.v.e3-lhs.v.e3*rhs.v.e2;
+    result.b.e31 = lhs.b.e31*rhs.s+lhs.s*rhs.b.e31+lhs.v.e3*rhs.v.e1-lhs.v.e1*rhs.v.e3;
+    result.b.e12 = lhs.b.e12*rhs.s+lhs.s*rhs.b.e12+lhs.v.e1*rhs.v.e2-lhs.v.e2*rhs.v.e1;
+    result.b.e1o = lhs.s*rhs.b.e1o+lhs.v.e1*rhs.v.eo;
+    result.b.e2o = lhs.s*rhs.b.e2o+lhs.v.e2*rhs.v.eo;
+    result.b.e3o = lhs.s*rhs.b.e3o+lhs.v.e3*rhs.v.eo;
+    result.b.e1i = lhs.s*rhs.b.e1i+lhs.v.e1*rhs.v.ei;
+    result.b.e2i = lhs.s*rhs.b.e2i+lhs.v.e2*rhs.v.ei;
+    result.b.e3i = lhs.s*rhs.b.e3i+lhs.v.e3*rhs.v.ei;
+    result.b.eoi = lhs.s*rhs.b.eoi;
+    result.t.e123 = lhs.I3*rhs.s+lhs.b.e12*rhs.v.e3+lhs.b.e23*rhs.v.e1+lhs.b.e31*rhs.v.e2+lhs.s*rhs.t.e123+lhs.v.e1*rhs.b.e23+lhs.v.e2*rhs.b.e31+lhs.v.e3*rhs.b.e12;
+    result.t.e23o = lhs.b.e23*rhs.v.eo+lhs.s*rhs.t.e23o+lhs.v.e2*rhs.b.e3o-lhs.v.e3*rhs.b.e2o;
+    result.t.e31o = lhs.b.e31*rhs.v.eo+lhs.s*rhs.t.e31o+lhs.v.e3*rhs.b.e1o-lhs.v.e1*rhs.b.e3o;
+    result.t.e12o = lhs.b.e12*rhs.v.eo+lhs.s*rhs.t.e12o+lhs.v.e1*rhs.b.e2o-lhs.v.e2*rhs.b.e1o;
+    result.t.e23i = lhs.b.e23*rhs.v.ei+lhs.s*rhs.t.e23i+lhs.v.e2*rhs.b.e3i-lhs.v.e3*rhs.b.e2i;
+    result.t.e31i = lhs.b.e31*rhs.v.ei+lhs.s*rhs.t.e31i+lhs.v.e3*rhs.b.e1i-lhs.v.e1*rhs.b.e3i;
+    result.t.e12i = lhs.b.e12*rhs.v.ei+lhs.s*rhs.t.e12i+lhs.v.e1*rhs.b.e2i-lhs.v.e2*rhs.b.e1i;
+    result.t.e1oi = lhs.s*rhs.t.e1oi+lhs.v.e1*rhs.b.eoi;
+    result.t.e2oi = lhs.s*rhs.t.e2oi+lhs.v.e2*rhs.b.eoi;
+    result.t.e3oi = lhs.s*rhs.t.e3oi+lhs.v.e3*rhs.b.eoi;
+    result.q.e123o = lhs.I3*rhs.v.eo+lhs.b.e12*rhs.b.e3o+lhs.b.e23*rhs.b.e1o+lhs.b.e31*rhs.b.e2o+lhs.s*rhs.q.e123o+lhs.v.e1*rhs.t.e23o+lhs.v.e2*rhs.t.e31o+lhs.v.e3*rhs.t.e12o;
+    result.q.e123i = lhs.I3*rhs.v.ei+lhs.b.e12*rhs.b.e3i+lhs.b.e23*rhs.b.e1i+lhs.b.e31*rhs.b.e2i+lhs.s*rhs.q.e123i+lhs.v.e1*rhs.t.e23i+lhs.v.e2*rhs.t.e31i+lhs.v.e3*rhs.t.e12i;
+    result.q.e23oi = lhs.b.e23*rhs.b.eoi+lhs.s*rhs.q.e23oi+lhs.v.e2*rhs.t.e3oi-lhs.v.e3*rhs.t.e2oi;
+    result.q.e31oi = lhs.b.e31*rhs.b.eoi+lhs.s*rhs.q.e31oi+lhs.v.e3*rhs.t.e1oi-lhs.v.e1*rhs.t.e3oi;
+    result.q.e12oi = lhs.b.e12*rhs.b.eoi+lhs.s*rhs.q.e12oi+lhs.v.e1*rhs.t.e2oi-lhs.v.e2*rhs.t.e1oi;
+    result.I5 = lhs.I3*rhs.b.eoi+lhs.b.e12*rhs.t.e3oi+lhs.b.e23*rhs.t.e1oi+lhs.b.e31*rhs.t.e2oi+lhs.s*rhs.I5+lhs.v.e1*rhs.q.e23oi+lhs.v.e2*rhs.q.e31oi+lhs.v.e3*rhs.q.e12oi;
     return result;
 }
 
@@ -2764,6 +3469,18 @@ Vector inner(const Pseudoscalar3 &lhs, const Quadvector &rhs) {
     return result;
 }
 
+Multivector3 inner(const Pseudoscalar3 &lhs, const Multivector3 &rhs) {
+    Multivector3 result;
+    result.s = -lhs.I3*rhs.I3;
+    result.v.e1 = -lhs.I3*rhs.b.e23;
+    result.v.e2 = -lhs.I3*rhs.b.e31;
+    result.v.e3 = -lhs.I3*rhs.b.e12;
+    result.b.e23 = lhs.I3*rhs.v.e1;
+    result.b.e31 = lhs.I3*rhs.v.e2;
+    result.b.e12 = lhs.I3*rhs.v.e3;
+    return result;
+}
+
 Vector3 inner(const Pseudoscalar3 &lhs, const Bivector &rhs) {
     Vector3 result;
     result.e1 = -lhs.I3*rhs.e23;
@@ -2858,6 +3575,18 @@ Vector inner(const Pseudoscalar &lhs, const Quadvector &rhs) {
     result.e3 = -lhs.I5*rhs.e12oi;
     result.eo = lhs.I5*rhs.e123o;
     result.ei = -lhs.I5*rhs.e123i;
+    return result;
+}
+
+Multivector inner(const Pseudoscalar &lhs, const Multivector3 &rhs) {
+    Multivector result;
+    result.b.eoi = -lhs.I5*rhs.I3;
+    result.t.e1oi = -lhs.I5*rhs.b.e23;
+    result.t.e2oi = -lhs.I5*rhs.b.e31;
+    result.t.e3oi = -lhs.I5*rhs.b.e12;
+    result.q.e23oi = lhs.I5*rhs.v.e1;
+    result.q.e31oi = lhs.I5*rhs.v.e2;
+    result.q.e12oi = lhs.I5*rhs.v.e3;
     return result;
 }
 
@@ -3004,6 +3733,18 @@ Trivector inner(const Vector3 &lhs, const Quadvector &rhs) {
     return result;
 }
 
+Multivector3 inner(const Vector3 &lhs, const Multivector3 &rhs) {
+    Multivector3 result;
+    result.s = lhs.e1*rhs.v.e1+lhs.e2*rhs.v.e2+lhs.e3*rhs.v.e3;
+    result.v.e1 = lhs.e3*rhs.b.e31-lhs.e2*rhs.b.e12;
+    result.v.e2 = lhs.e1*rhs.b.e12-lhs.e3*rhs.b.e23;
+    result.v.e3 = lhs.e2*rhs.b.e23-lhs.e1*rhs.b.e31;
+    result.b.e23 = lhs.e1*rhs.I3;
+    result.b.e31 = lhs.e2*rhs.I3;
+    result.b.e12 = lhs.e3*rhs.I3;
+    return result;
+}
+
 Vector inner(const Vector3 &lhs, const Bivector &rhs) {
     Vector result;
     result.e1 = lhs.e3*rhs.e31-lhs.e2*rhs.e12;
@@ -3123,6 +3864,15 @@ Bivector inner(const Bivector3 &lhs, const Quadvector &rhs) {
     return result;
 }
 
+Multivector3 inner(const Bivector3 &lhs, const Multivector3 &rhs) {
+    Multivector3 result;
+    result.s = -lhs.e12*rhs.b.e12-lhs.e23*rhs.b.e23-lhs.e31*rhs.b.e31;
+    result.v.e1 = lhs.e12*rhs.v.e2-lhs.e23*rhs.I3-lhs.e31*rhs.v.e3;
+    result.v.e2 = lhs.e23*rhs.v.e3-lhs.e12*rhs.v.e1-lhs.e31*rhs.I3;
+    result.v.e3 = lhs.e31*rhs.v.e1-lhs.e12*rhs.I3-lhs.e23*rhs.v.e2;
+    return result;
+}
+
 double inner(const Bivector3 &lhs, const Bivector &rhs) {
     double result;
     result = -lhs.e12*rhs.e12-lhs.e23*rhs.e23-lhs.e31*rhs.e31;
@@ -3205,6 +3955,15 @@ Bivector inner(const Rotor3 &lhs, const Quadvector &rhs) {
     return result;
 }
 
+Multivector3 inner(const Rotor3 &lhs, const Multivector3 &rhs) {
+    Multivector3 result;
+    result.s = -lhs.b.e12*rhs.b.e12-lhs.b.e23*rhs.b.e23-lhs.b.e31*rhs.b.e31;
+    result.v.e1 = lhs.b.e12*rhs.v.e2-lhs.b.e23*rhs.I3-lhs.b.e31*rhs.v.e3;
+    result.v.e2 = lhs.b.e23*rhs.v.e3-lhs.b.e12*rhs.v.e1-lhs.b.e31*rhs.I3;
+    result.v.e3 = lhs.b.e31*rhs.v.e1-lhs.b.e12*rhs.I3-lhs.b.e23*rhs.v.e2;
+    return result;
+}
+
 double inner(const Rotor3 &lhs, const Bivector &rhs) {
     double result;
     result = -lhs.b.e12*rhs.e12-lhs.b.e23*rhs.e23-lhs.b.e31*rhs.e31;
@@ -3279,6 +4038,18 @@ Trivector inner(const Vector &lhs, const Quadvector &rhs) {
     result.e1oi = lhs.e3*rhs.e31oi-lhs.e2*rhs.e12oi;
     result.e2oi = lhs.e1*rhs.e12oi-lhs.e3*rhs.e23oi;
     result.e3oi = lhs.e2*rhs.e23oi-lhs.e1*rhs.e31oi;
+    return result;
+}
+
+Multivector3 inner(const Vector &lhs, const Multivector3 &rhs) {
+    Multivector3 result;
+    result.s = lhs.e1*rhs.v.e1+lhs.e2*rhs.v.e2+lhs.e3*rhs.v.e3;
+    result.v.e1 = lhs.e3*rhs.b.e31-lhs.e2*rhs.b.e12;
+    result.v.e2 = lhs.e1*rhs.b.e12-lhs.e3*rhs.b.e23;
+    result.v.e3 = lhs.e2*rhs.b.e23-lhs.e1*rhs.b.e31;
+    result.b.e23 = lhs.e1*rhs.I3;
+    result.b.e31 = lhs.e2*rhs.I3;
+    result.b.e12 = lhs.e3*rhs.I3;
     return result;
 }
 
@@ -3379,6 +4150,29 @@ double inner(const Quadvector &lhs, const Quadvector &rhs) {
     return result;
 }
 
+Multivector inner(const Quadvector &lhs, const Multivector3 &rhs) {
+    Multivector result;
+    result.v.eo = lhs.e123o*rhs.I3;
+    result.v.ei = lhs.e123i*rhs.I3;
+    result.b.e1o = -lhs.e123o*rhs.b.e23;
+    result.b.e2o = -lhs.e123o*rhs.b.e31;
+    result.b.e3o = -lhs.e123o*rhs.b.e12;
+    result.b.e1i = -lhs.e123i*rhs.b.e23;
+    result.b.e2i = -lhs.e123i*rhs.b.e31;
+    result.b.e3i = -lhs.e123i*rhs.b.e12;
+    result.b.eoi = -lhs.e12oi*rhs.b.e12-lhs.e23oi*rhs.b.e23-lhs.e31oi*rhs.b.e31;
+    result.t.e23o = -lhs.e123o*rhs.v.e1;
+    result.t.e31o = -lhs.e123o*rhs.v.e2;
+    result.t.e12o = -lhs.e123o*rhs.v.e3;
+    result.t.e23i = -lhs.e123i*rhs.v.e1;
+    result.t.e31i = -lhs.e123i*rhs.v.e2;
+    result.t.e12i = -lhs.e123i*rhs.v.e3;
+    result.t.e1oi = lhs.e12oi*rhs.v.e2-lhs.e31oi*rhs.v.e3;
+    result.t.e2oi = lhs.e23oi*rhs.v.e3-lhs.e12oi*rhs.v.e1;
+    result.t.e3oi = lhs.e31oi*rhs.v.e1-lhs.e23oi*rhs.v.e2;
+    return result;
+}
+
 Bivector inner(const Quadvector &lhs, const Bivector &rhs) {
     Bivector result;
     result.e23 = lhs.e123i*rhs.e1o+lhs.e123o*rhs.e1i+lhs.e23oi*rhs.eoi;
@@ -3463,6 +4257,121 @@ Multivector inner(const Quadvector &lhs, const Multivector &rhs) {
     result.t.e1oi = lhs.e12oi*rhs.v.e2-lhs.e31oi*rhs.v.e3;
     result.t.e2oi = lhs.e23oi*rhs.v.e3-lhs.e12oi*rhs.v.e1;
     result.t.e3oi = lhs.e31oi*rhs.v.e1-lhs.e23oi*rhs.v.e2;
+    return result;
+}
+
+Multivector3 inner(const Multivector3 &lhs, const Multivector3 &rhs) {
+    Multivector3 result;
+    result.s = lhs.v.e1*rhs.v.e1+lhs.v.e2*rhs.v.e2+lhs.v.e3*rhs.v.e3-lhs.I3*rhs.I3-lhs.b.e12*rhs.b.e12-lhs.b.e23*rhs.b.e23-lhs.b.e31*rhs.b.e31;
+    result.v.e1 = lhs.b.e12*rhs.v.e2+lhs.v.e3*rhs.b.e31-lhs.I3*rhs.b.e23-lhs.b.e23*rhs.I3-lhs.b.e31*rhs.v.e3-lhs.v.e2*rhs.b.e12;
+    result.v.e2 = lhs.b.e23*rhs.v.e3+lhs.v.e1*rhs.b.e12-lhs.I3*rhs.b.e31-lhs.b.e12*rhs.v.e1-lhs.b.e31*rhs.I3-lhs.v.e3*rhs.b.e23;
+    result.v.e3 = lhs.b.e31*rhs.v.e1+lhs.v.e2*rhs.b.e23-lhs.I3*rhs.b.e12-lhs.b.e12*rhs.I3-lhs.b.e23*rhs.v.e2-lhs.v.e1*rhs.b.e31;
+    result.b.e23 = lhs.I3*rhs.v.e1+lhs.v.e1*rhs.I3;
+    result.b.e31 = lhs.I3*rhs.v.e2+lhs.v.e2*rhs.I3;
+    result.b.e12 = lhs.I3*rhs.v.e3+lhs.v.e3*rhs.I3;
+    return result;
+}
+
+Multivector inner(const Multivector3 &lhs, const Bivector &rhs) {
+    Multivector result;
+    result.s = -lhs.b.e12*rhs.e12-lhs.b.e23*rhs.e23-lhs.b.e31*rhs.e31;
+    result.v.e1 = lhs.v.e3*rhs.e31-lhs.I3*rhs.e23-lhs.v.e2*rhs.e12;
+    result.v.e2 = lhs.v.e1*rhs.e12-lhs.I3*rhs.e31-lhs.v.e3*rhs.e23;
+    result.v.e3 = lhs.v.e2*rhs.e23-lhs.I3*rhs.e12-lhs.v.e1*rhs.e31;
+    result.v.eo = lhs.v.e1*rhs.e1o+lhs.v.e2*rhs.e2o+lhs.v.e3*rhs.e3o;
+    result.v.ei = lhs.v.e1*rhs.e1i+lhs.v.e2*rhs.e2i+lhs.v.e3*rhs.e3i;
+    return result;
+}
+
+Multivector inner(const Multivector3 &lhs, const Trivector &rhs) {
+    Multivector result;
+    result.s = -lhs.I3*rhs.e123;
+    result.v.e1 = -lhs.b.e23*rhs.e123;
+    result.v.e2 = -lhs.b.e31*rhs.e123;
+    result.v.e3 = -lhs.b.e12*rhs.e123;
+    result.v.eo = -lhs.b.e12*rhs.e12o-lhs.b.e23*rhs.e23o-lhs.b.e31*rhs.e31o;
+    result.v.ei = -lhs.b.e12*rhs.e12i-lhs.b.e23*rhs.e23i-lhs.b.e31*rhs.e31i;
+    result.b.e23 = lhs.v.e1*rhs.e123;
+    result.b.e31 = lhs.v.e2*rhs.e123;
+    result.b.e12 = lhs.v.e3*rhs.e123;
+    result.b.e1o = lhs.v.e3*rhs.e31o-lhs.v.e2*rhs.e12o;
+    result.b.e2o = lhs.v.e1*rhs.e12o-lhs.v.e3*rhs.e23o;
+    result.b.e3o = lhs.v.e2*rhs.e23o-lhs.v.e1*rhs.e31o;
+    result.b.e1i = lhs.v.e3*rhs.e31i-lhs.v.e2*rhs.e12i;
+    result.b.e2i = lhs.v.e1*rhs.e12i-lhs.v.e3*rhs.e23i;
+    result.b.e3i = lhs.v.e2*rhs.e23i-lhs.v.e1*rhs.e31i;
+    result.b.eoi = lhs.v.e1*rhs.e1oi+lhs.v.e2*rhs.e2oi+lhs.v.e3*rhs.e3oi;
+    return result;
+}
+
+Multivector inner(const Multivector3 &lhs, const Rotor &rhs) {
+    Multivector result;
+    result.s = -lhs.b.e12*rhs.b.e12-lhs.b.e23*rhs.b.e23-lhs.b.e31*rhs.b.e31;
+    result.v.e1 = lhs.v.e3*rhs.b.e31-lhs.I3*rhs.b.e23-lhs.v.e2*rhs.b.e12;
+    result.v.e2 = lhs.v.e1*rhs.b.e12-lhs.I3*rhs.b.e31-lhs.v.e3*rhs.b.e23;
+    result.v.e3 = lhs.v.e2*rhs.b.e23-lhs.I3*rhs.b.e12-lhs.v.e1*rhs.b.e31;
+    result.v.eo = lhs.v.e1*rhs.b.e1o+lhs.v.e2*rhs.b.e2o+lhs.v.e3*rhs.b.e3o;
+    result.v.ei = lhs.v.e1*rhs.b.e1i+lhs.v.e2*rhs.b.e2i+lhs.v.e3*rhs.b.e3i;
+    return result;
+}
+
+Multivector inner(const Multivector3 &lhs, const Versor &rhs) {
+    Multivector result;
+    result.s = -lhs.b.e12*rhs.b.e12-lhs.b.e23*rhs.b.e23-lhs.b.e31*rhs.b.e31;
+    result.v.e1 = lhs.v.e3*rhs.b.e31-lhs.I3*rhs.b.e23-lhs.v.e2*rhs.b.e12;
+    result.v.e2 = lhs.v.e1*rhs.b.e12-lhs.I3*rhs.b.e31-lhs.v.e3*rhs.b.e23;
+    result.v.e3 = lhs.v.e2*rhs.b.e23-lhs.I3*rhs.b.e12-lhs.v.e1*rhs.b.e31;
+    result.v.eo = lhs.v.e1*rhs.b.e1o+lhs.v.e2*rhs.b.e2o+lhs.v.e3*rhs.b.e3o-lhs.I3*rhs.q.e123o;
+    result.v.ei = lhs.v.e1*rhs.b.e1i+lhs.v.e2*rhs.b.e2i+lhs.v.e3*rhs.b.e3i-lhs.I3*rhs.q.e123i;
+    result.b.e1o = -lhs.b.e23*rhs.q.e123o;
+    result.b.e2o = -lhs.b.e31*rhs.q.e123o;
+    result.b.e3o = -lhs.b.e12*rhs.q.e123o;
+    result.b.e1i = -lhs.b.e23*rhs.q.e123i;
+    result.b.e2i = -lhs.b.e31*rhs.q.e123i;
+    result.b.e3i = -lhs.b.e12*rhs.q.e123i;
+    result.b.eoi = -lhs.b.e12*rhs.q.e12oi-lhs.b.e23*rhs.q.e23oi-lhs.b.e31*rhs.q.e31oi;
+    result.t.e23o = lhs.v.e1*rhs.q.e123o;
+    result.t.e31o = lhs.v.e2*rhs.q.e123o;
+    result.t.e12o = lhs.v.e3*rhs.q.e123o;
+    result.t.e23i = lhs.v.e1*rhs.q.e123i;
+    result.t.e31i = lhs.v.e2*rhs.q.e123i;
+    result.t.e12i = lhs.v.e3*rhs.q.e123i;
+    result.t.e1oi = lhs.v.e3*rhs.q.e31oi-lhs.v.e2*rhs.q.e12oi;
+    result.t.e2oi = lhs.v.e1*rhs.q.e12oi-lhs.v.e3*rhs.q.e23oi;
+    result.t.e3oi = lhs.v.e2*rhs.q.e23oi-lhs.v.e1*rhs.q.e31oi;
+    return result;
+}
+
+Multivector inner(const Multivector3 &lhs, const Multivector &rhs) {
+    Multivector result;
+    result.s = lhs.v.e1*rhs.v.e1+lhs.v.e2*rhs.v.e2+lhs.v.e3*rhs.v.e3-lhs.I3*rhs.t.e123-lhs.b.e12*rhs.b.e12-lhs.b.e23*rhs.b.e23-lhs.b.e31*rhs.b.e31;
+    result.v.e1 = lhs.b.e12*rhs.v.e2+lhs.v.e3*rhs.b.e31-lhs.I3*rhs.b.e23-lhs.b.e23*rhs.t.e123-lhs.b.e31*rhs.v.e3-lhs.v.e2*rhs.b.e12;
+    result.v.e2 = lhs.b.e23*rhs.v.e3+lhs.v.e1*rhs.b.e12-lhs.I3*rhs.b.e31-lhs.b.e12*rhs.v.e1-lhs.b.e31*rhs.t.e123-lhs.v.e3*rhs.b.e23;
+    result.v.e3 = lhs.b.e31*rhs.v.e1+lhs.v.e2*rhs.b.e23-lhs.I3*rhs.b.e12-lhs.b.e12*rhs.t.e123-lhs.b.e23*rhs.v.e2-lhs.v.e1*rhs.b.e31;
+    result.v.eo = lhs.v.e1*rhs.b.e1o+lhs.v.e2*rhs.b.e2o+lhs.v.e3*rhs.b.e3o-lhs.I3*rhs.q.e123o-lhs.b.e12*rhs.t.e12o-lhs.b.e23*rhs.t.e23o-lhs.b.e31*rhs.t.e31o;
+    result.v.ei = lhs.v.e1*rhs.b.e1i+lhs.v.e2*rhs.b.e2i+lhs.v.e3*rhs.b.e3i-lhs.I3*rhs.q.e123i-lhs.b.e12*rhs.t.e12i-lhs.b.e23*rhs.t.e23i-lhs.b.e31*rhs.t.e31i;
+    result.b.e23 = lhs.I3*rhs.v.e1+lhs.v.e1*rhs.t.e123;
+    result.b.e31 = lhs.I3*rhs.v.e2+lhs.v.e2*rhs.t.e123;
+    result.b.e12 = lhs.I3*rhs.v.e3+lhs.v.e3*rhs.t.e123;
+    result.b.e1o = lhs.v.e3*rhs.t.e31o-lhs.b.e23*rhs.q.e123o-lhs.v.e2*rhs.t.e12o;
+    result.b.e2o = lhs.v.e1*rhs.t.e12o-lhs.b.e31*rhs.q.e123o-lhs.v.e3*rhs.t.e23o;
+    result.b.e3o = lhs.v.e2*rhs.t.e23o-lhs.b.e12*rhs.q.e123o-lhs.v.e1*rhs.t.e31o;
+    result.b.e1i = lhs.v.e3*rhs.t.e31i-lhs.b.e23*rhs.q.e123i-lhs.v.e2*rhs.t.e12i;
+    result.b.e2i = lhs.v.e1*rhs.t.e12i-lhs.b.e31*rhs.q.e123i-lhs.v.e3*rhs.t.e23i;
+    result.b.e3i = lhs.v.e2*rhs.t.e23i-lhs.b.e12*rhs.q.e123i-lhs.v.e1*rhs.t.e31i;
+    result.b.eoi = lhs.v.e1*rhs.t.e1oi+lhs.v.e2*rhs.t.e2oi+lhs.v.e3*rhs.t.e3oi-lhs.I3*rhs.I5-lhs.b.e12*rhs.q.e12oi-lhs.b.e23*rhs.q.e23oi-lhs.b.e31*rhs.q.e31oi;
+    result.t.e23o = lhs.v.e1*rhs.q.e123o;
+    result.t.e31o = lhs.v.e2*rhs.q.e123o;
+    result.t.e12o = lhs.v.e3*rhs.q.e123o;
+    result.t.e23i = lhs.v.e1*rhs.q.e123i;
+    result.t.e31i = lhs.v.e2*rhs.q.e123i;
+    result.t.e12i = lhs.v.e3*rhs.q.e123i;
+    result.t.e1oi = lhs.v.e3*rhs.q.e31oi-lhs.b.e23*rhs.I5-lhs.v.e2*rhs.q.e12oi;
+    result.t.e2oi = lhs.v.e1*rhs.q.e12oi-lhs.b.e31*rhs.I5-lhs.v.e3*rhs.q.e23oi;
+    result.t.e3oi = lhs.v.e2*rhs.q.e23oi-lhs.b.e12*rhs.I5-lhs.v.e1*rhs.q.e31oi;
+    result.q.e23oi = lhs.v.e1*rhs.I5;
+    result.q.e31oi = lhs.v.e2*rhs.I5;
+    result.q.e12oi = lhs.v.e3*rhs.I5;
     return result;
 }
 
@@ -3727,6 +4636,19 @@ Rotor3 reverse(const Rotor3 &x) {
     return result;
 }
 
+Multivector3 reverse(const Multivector3 &x) {
+    Multivector3 result;
+    result.s = x.s;
+    result.v.e1 = x.v.e1;
+    result.v.e2 = x.v.e2;
+    result.v.e3 = x.v.e3;
+    result.b.e23 = -x.b.e23;
+    result.b.e31 = -x.b.e31;
+    result.b.e12 = -x.b.e12;
+    result.I3 = -x.I3;
+    return result;
+}
+
 Rotor reverse(const Rotor &x) {
     Rotor result;
     result.s = x.s;
@@ -3833,6 +4755,11 @@ std::ostream& operator<<(std::ostream& outs, const Vector &x) {
 
 std::ostream& operator<<(std::ostream& outs, const Quadvector &x) {
     outs<<"e123o: "<<x.e123o<<", e123i: "<<x.e123i<<", e23oi: "<<x.e23oi<<", e31oi: "<<x.e31oi<<", e12oi: "<<x.e12oi;
+    return outs;
+}
+
+std::ostream& operator<<(std::ostream& outs, const Multivector3 &x) {
+    outs<<"s: "<<x.s<<std::endl<<"v: "<<x.v<<std::endl<<"b: "<<x.b<<", I3: "<<x.I3;
     return outs;
 }
 

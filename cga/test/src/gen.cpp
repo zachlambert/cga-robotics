@@ -13,7 +13,14 @@ TEST(gen, geometric_product)
 
 TEST(gen, outer_product)
 {
-    cga::Vector a(1, 2, 3, 4, 5);
-    cga::Vector b(5, 4, 3, 2, 1);
-    auto c = a*b;
+    cga::Vector3 a(5, 1, 3);
+    cga::Vector3 b(4, 2, -8);
+    auto c = outer(a, b);
+
+    cga::Bivector3 expect;
+    expect.e31 = 3*4 - 5*-8;
+    expect.e23 = 1*-8 - 3*2;
+    expect.e12 = 5*2 - 1*4;
+
+    ASSERT_EQ(c, expect);
 }

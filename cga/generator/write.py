@@ -142,6 +142,24 @@ def write_struct(struct, f_h, f_cpp):
         f_cpp.write("}\n")
         f_cpp.write("\n")
 
+    # Comparision operators
+
+    # operator==
+    f_h.write("    bool operator==(const {name} &other)const;\n".format(name=struct.name))
+    f_cpp.write("bool {name}::operator==(const {name} &other)const\n".format(name=struct.name))
+    f_cpp.write("{\n")
+    for member in struct.members:
+        if member.struct is None:
+            f_cpp.write("    if (fabs({m}-other.{m}) > 1e-12) return false;\n".format(m=member.name))
+        else:
+            f_cpp.write("    if ({m}!=other.{m}) return false;\n".format(m=member.name))
+    f_cpp.write("    return true;\n")
+    f_cpp.write("}\n")
+
+    # operator!=
+    f_h.write("    bool operator!=(const {name} &other)const ".format(name=struct.name))
+    f_h.write("{ return !(*this==other); }\n")
+
     # operator+=
     f_h.write("    {name}& operator+=(const {name} &other) ".format(name=struct.name)+"{\n")
     for member in struct.members:

@@ -27,7 +27,7 @@ inline Rotor make_translation(double x, double y, double z)
 
 inline Vector3 transform_vector(const Vector3 &x, const Rotor3 &R)
 {
-    return Vector3((R*x*reverse(R)).v);
+    return (R*x*reverse(R)).v;
 }
 inline Vector transform_vector(const Vector &x, const Rotor3 &R)
 {

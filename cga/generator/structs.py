@@ -261,6 +261,17 @@ def make_structs():
     structs.append(Versor)
 
 
+    # MULTIVECTOR3
+
+    Multivector3 = Struct("Multivector3")
+    Multivector3.add_variable("s", s, s);
+    Multivector3.add_struct("v", Vector3);
+    Multivector3.add_struct("b", Bivector3);
+    Multivector3.add_variable("I3", e1^e2^e3, -e1^e2^e3);
+
+    Multivector3.validate()
+    structs.append(Multivector3)
+
     # MULTIVECTOR
 
     Multivector = Struct("Multivector")
@@ -284,11 +295,15 @@ def make_structs():
     Bivector.add_extra_constructor(Bivector3)
 
     Rotor3.add_extra_constructor(Rotor)
+    Rotor3.add_extra_constructor(Multivector3)
+
     Rotor.add_extra_constructor(Rotor3)
     Rotor.add_extra_constructor(Versor)
     Rotor.add_extra_constructor(Multivector)
 
     Versor.add_extra_constructor(Multivector)
+
+    Multivector3.add_extra_constructor(Rotor3)
 
     Multivector.add_extra_constructor(Rotor)
     Multivector.add_extra_constructor(Versor)
