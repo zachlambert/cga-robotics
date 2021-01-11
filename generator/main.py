@@ -7,8 +7,8 @@ def main():
     structs, available = make_structs()
     operations = get_operations()
 
-    h_base = "include/gen/"
-    cpp_base = "src/gen/"
+    h_base = "cga/include/cga/"
+    cpp_base = "cga/src/"
 
     with open(h_base+"cga.h", "w") as f_h:
         with open(cpp_base+"cga.cpp", "w") as f_cpp:

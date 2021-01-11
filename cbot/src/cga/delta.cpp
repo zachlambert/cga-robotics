@@ -1,4 +1,16 @@
-#include "cbot/cga/delta.h"
+#include "cbot/delta.h"
+
+namespace cga {
+
+class Delta::Impl {
+public:
+    double joint_pos[3];
+};
+
+Delta::Delta(Structure structure): DeltaBase(structure), pimpl(new Impl())
+{
+
+}
 
 Pose Delta::fk_pose(const std::unordered_map<std::string, JointState> &joints)
 {
@@ -26,3 +38,5 @@ void Delta::force_control(const Twist &twist, std::unordered_map<std::string, Jo
 {
 
 }
+
+} // namespace cga
