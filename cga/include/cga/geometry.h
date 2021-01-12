@@ -2,9 +2,21 @@
 #define TRANSFORMATIONS_H
 
 #include "cga/cga.h"
+#include "cga/transform.h"
 #include <iostream>
 
 namespace cga {
+
+// Useful basis vectors
+Vector3 e1(1, 0, 0);
+Vector3 e2(0, 1, 0);
+Vector3 e3(0, 0, 1);
+Vector eo(0, 0, 0, 1, 0);
+Vector ei(0, 0, 0, 0, 1);
+
+// Pseudoscalars
+Pseudoscalar3 I3(1);
+Pseudoscalar I5(1);
 
 inline Vector make_point(const Vector3 &x)
 {
@@ -109,22 +121,46 @@ inline std::ostream& operator<<(std::ostream &outs, const GeometryResult &geomet
 
 Quadvector dual(const Vector &x)
 {
-    return cga::Pseudoscalar(1) * x;
+    return cga::I5 * x;
 }
 
 Trivector dual(const Bivector &x)
 {
-    return cga::Pseudoscalar(1) * x;
+    return cga::I5 * x;
 }
 
 Bivector dual(const Trivector &x)
 {
-    return cga::Pseudoscalar(1) * x;
+    return cga::I5 * x;
 }
 
 Vector dual(const Quadvector &x)
 {
-    return cga::Pseudoscalar(1) * x;
+    return cga::I5 * x;
+}
+
+struct PointPair {
+    bool valid;
+    Vector3 point1;
+    Vector3 point2;
+};
+
+PointPair intersect(const Vector spheres[3])
+{
+    PointPair intersection;
+    cga::Bivector T = dual(outer(spheres[0], outer(spheres[1], spheres[2])));
+
+    if (inner(T, T) < 0) {
+        intersection.valid = false;
+    } else {
+        intersection.valid = true;
+        cga::Rotor P(1, -T/std::sqrt(inner(T, T)));
+        cga::Vector Y = -transform_vector(inner(T, cga::ei), P);
+        intersection.point1 = describe(Y).point.position;
+        Y = transform_vector(inner(T, cga::ei), reverse(P));
+        intersection.point2 = describe(Y).point.position;
+    }
+    return intersection;
 }
 
 } // namespace cga

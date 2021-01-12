@@ -32,43 +32,30 @@ bool Delta::fk_pose(
     JointsDep &joints_dep_pos,
     Pose &pose)
 {
-    // Location of each pseudo-elbow point
+    // Location of each pseudo-elbow point, and corresponding spheres
     cga::Vector3 a[3];
-    // Conformal vector reprsenting a sphere about each pseudo-elbow point
     cga::Vector A_sphere[3];
     for (int i = 0; i < 3; i++) {
         a[i] = pimpl->n[i] * (
             config.r_base + config.l_upper * std::cos(joints_pos.theta[i]) - config.r_ee
         );
-        std::cout << "a["<<i<<"] = " << a[i] << std::endl;
         a[i].e3 = -config.l_upper*std::sin(joints_pos.theta[i]);
-        std::cout << "a["<<i<<"] = " << a[i] << std::endl;
         A_sphere[i] = cga::make_sphere(a[i], config.l_lower);
     }
 
-    cga::Bivector T = cga::Pseudoscalar(1)
-        *outer(A_sphere[0], outer(A_sphere[1], A_sphere[2]));
+    auto result = cga::intersect(A_sphere);
+    if (!result.valid) return false;
 
-    if ((T*T).s < 0) return false;
+    cga::Vector3 y =
+        (result.point1.e3 < result.point2.e3? result.point1 : result.point2);
 
-    cga::Versor P;
-    P.s = 1;
-    P.b = T/std::sqrt(((T*T).s));
-
-    cga::Vector Y = -(reverse(P) * inner(T, cga::Vector(0, 0, 0, 0, 1)) * P).v;
-
-    cga::Vector3 y = describe(Y).point.position;
-    pose.position.x = y.e1;
-    pose.position.y = y.e2;
-    pose.position.z = y.e3;
-
-    std::cout << "Y = " << Y << std::endl;
-    std::cout <<" y = " << y << std::endl;
-
+    // Displacement between the end effector position and pseudo-elbow
+    // position, from which the configuration of the parallel linkage can
+    // be determined with simple trigonometry
     cga::Vector3 lower_disp;
     for (int i = 0; i < 3; i++) {
         lower_disp = y - a[i];
-        joints_dep_pos.alpha[i] = std::atan2(
+        joints_dep_pos.gamma[i] = std::atan2(
             -inner(lower_disp, cga::Vector3(0, 0, 1)),
             -inner(lower_disp, pimpl->n[i])
         );
@@ -78,12 +65,17 @@ bool Delta::fk_pose(
                 -std::cos(joints_dep_pos.alpha[i])*pimpl->n[i]
                 -std::sin(joints_dep_pos.alpha[i])*cga::Vector3(0, 0, 1))
         );
+        joints_dep_pos.alpha[i] = M_PI - joints_pos.theta[i] - joints_dep_pos.gamma[i];
     }
 
-    for (int i = 0; i < 3; i++) {
-        joints_dep_pos.gamma[i] = joints_dep_pos.alpha[i];
-        joints_dep_pos.alpha[i] = M_PI - joints_pos.theta[i] - joints_dep_pos.alpha[i];
-    }
+    // Read end effector position from y
+    pose.position.x = y.e1;
+    pose.position.y = y.e2;
+    pose.position.z = y.e3;
+
+    // Always point downward
+    pose.orientation.w = 1/std::sqrt(2);
+    pose.orientation.y = 1/std::sqrt(2);
 
     return true;
 }
