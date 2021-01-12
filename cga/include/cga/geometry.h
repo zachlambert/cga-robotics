@@ -119,22 +119,32 @@ inline std::ostream& operator<<(std::ostream &outs, const GeometryResult &geomet
     return outs;
 }
 
-Quadvector dual(const Vector &x)
+inline Bivector3 dual(const Vector3 &x)
+{
+    return cga::I3 * x;
+}
+
+inline Vector3 dual(const Bivector3 &x)
+{
+    return cga::I3 * x;
+}
+
+inline Quadvector dual(const Vector &x)
 {
     return cga::I5 * x;
 }
 
-Trivector dual(const Bivector &x)
+inline Trivector dual(const Bivector &x)
 {
     return cga::I5 * x;
 }
 
-Bivector dual(const Trivector &x)
+inline Bivector dual(const Trivector &x)
 {
     return cga::I5 * x;
 }
 
-Vector dual(const Quadvector &x)
+inline Vector dual(const Quadvector &x)
 {
     return cga::I5 * x;
 }
@@ -145,7 +155,7 @@ struct PointPair {
     Vector3 point2;
 };
 
-PointPair intersect(const Vector spheres[3])
+inline PointPair intersect(const Vector spheres[3])
 {
     PointPair intersection;
     cga::Bivector T = dual(outer(spheres[0], outer(spheres[1], spheres[2])));
@@ -161,6 +171,27 @@ PointPair intersect(const Vector spheres[3])
         intersection.point2 = describe(Y).point.position;
     }
     return intersection;
+}
+
+inline PointPair intersect(const Vector &sphere, const Bivector &circle)
+{
+    PointPair intersection;
+    cga::Bivector T = dual(outer(sphere, circle));
+    if (inner(T, T) < 0) {
+        intersection.valid = false;
+    } else {
+        intersection.valid = true;
+        cga::Rotor P(1, -T/std::sqrt(inner(T, T)));
+        cga::Vector Y = -transform_vector(inner(T, cga::ei), P);
+        intersection.point1 = describe(Y).point.position;
+        Y = transform_vector(inner(T, cga::ei), reverse(P));
+        intersection.point2 = describe(Y).point.position;
+    }
+    return intersection;
+}
+inline PointPair intersect(const Bivector &circle, const Vector &sphere)
+{
+    return intersect(sphere, circle);
 }
 
 } // namespace cga

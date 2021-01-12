@@ -33,6 +33,13 @@ public:
         const Joints &joints_pos,
         const Joints &joints_vel,
         Twist &twist)=0;
+    virtual bool ik_pose(
+        const Pose &pose,
+        Joints &joints_pos)=0;
+    virtual bool ik_twist(
+        const Twist &twist,
+        const Joints &joints_pos,
+        Joints &joints_vel)=0;
 
 protected:
     Config config;
@@ -54,6 +61,13 @@ public:
         const Joints &joints_pos,
         const Joints &joints_vel,
         Twist &twist);
+    bool ik_pose(
+        const Pose &pose,
+        Joints &joints_pos);
+    bool ik_twist(
+        const Twist &twist,
+        const Joints &joints_pos,
+        Joints &joints_vel);
 
 private:
     class Impl;
@@ -78,6 +92,13 @@ public:
         const Joints &joints_pos,
         const Joints &joints_vel,
         Twist &twist);
+    bool ik_pose(
+        const Pose &pose,
+        Joints &joints_pos);
+    bool ik_twist(
+        const Twist &twist,
+        const Joints &joints_pos,
+        Joints &joints_vel);
 
 private:
     class Impl;
