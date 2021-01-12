@@ -42,6 +42,9 @@ bool Delta::fk_pose(
                 config.r_base + config.l_upper*std::cos(joints_pos.theta[i]));
     }
     x = A.inverse() * b;
+    pose.position.x = x.x();
+    pose.position.y = x.y();
+    pose.position.z = x.z();
 
     return true;
 }

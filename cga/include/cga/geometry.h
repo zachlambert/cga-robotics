@@ -24,14 +24,16 @@ inline Vector make_plane(const Vector3 &normal, double dist)
 inline Vector make_sphere(const Vector3& position, double radius)
 {
     Vector result = position;
-    result.ei = -0.5*radius*radius;
+    result.eo = 1;
+    result.ei = 0.5*(norm2(position) - radius*radius);
     return result;
 }
 
 inline Vector make_imaginary_sphere(const Vector3& position, double radius)
 {
     Vector result = position;
-    result.ei = 0.5*radius*radius;
+    result.eo = 1;
+    result.ei = 0.5*(norm2(position) + radius*radius);
     return result;
 }
 
@@ -62,11 +64,11 @@ struct GeometryResult {
 GeometryResult describe(const Vector& x)
 {
     GeometryResult result;
-    if (x.eo == 0) {
+    if (x.eo < 1e-12) {
         result.type = GeometryResult::Plane;
         result.plane.normal = Vector3(x);
         result.plane.dist = x.ei;
-    } else if (norm2(x)==0) {
+    } else if (norm2(x)<1e-12) {
         result.type = GeometryResult::Point;
         result.point.position = Vector3(x/x.eo);
     } else {

@@ -7,13 +7,18 @@ namespace cbot { using namespace cga_impl; }
 int main()
 {
     cbot::Delta::Config config;
+    config.r_base = 0.15;
+    config.r_ee = 0.1;
+    config.l_upper = 0.3;
+    config.l_lower = 0.4;
+
     cbot::Delta delta(config);
     cbot::Pose pose;
 
     cbot::Delta::Joints joints_pos;
-    joints_pos.theta[0] = 0.8;
-    joints_pos.theta[1] = 0.8;
-    joints_pos.theta[2] = 0.8;
+    joints_pos.theta[0] = 0;
+    joints_pos.theta[1] = 0;
+    joints_pos.theta[2] = 0;
 
     cbot::Delta::JointsDep joints_dep_pos;
 
