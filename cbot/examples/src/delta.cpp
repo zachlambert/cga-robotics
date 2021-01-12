@@ -1,14 +1,14 @@
 #include "cbot/delta.h"
 #include <iostream>
 
-// namespace cbot { using namespace linalg_impl; }
-namespace cbot { using namespace cga_impl; }
+namespace cbot { using namespace linalg_impl; }
+// namespace cbot { using namespace cga_impl; }
 
 int main()
 {
     cbot::Delta::Config config;
     config.r_base = 0.15;
-    config.r_ee = 0.1;
+    config.r_ee = 0.05;
     config.l_upper = 0.3;
     config.l_lower = 0.4;
 
@@ -33,7 +33,19 @@ int main()
         std::cout<<pose.orientation.y<<", ";
         std::cout<<pose.orientation.z<<")"<<std::endl;
     } else {
-        std::cerr << "No solution found." << std::endl;
+        std::cerr << "No FK solution found." << std::endl;
+    }
+
+    pose.position.x = 0;
+    pose.position.y = 0;
+    pose.position.z = -0.2;
+    if (delta.ik_pose(pose, joints_pos)) {
+        for (int i = 0; i < 3; i++) {
+            std::cout << "Theta " << (i+1) << " = ";
+            std::cout << joints_pos.theta[i] << std::endl;;
+        }
+    } else {
+        std::cerr << "No IK solution found." << std::endl;
     }
 
     return 0;
