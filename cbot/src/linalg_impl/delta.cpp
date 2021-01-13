@@ -1,6 +1,5 @@
 #include "cbot/delta.h"
 
-#include <iostream>
 #include <Eigen/Dense>
 
 #define SQ(x) (x*x)
@@ -55,7 +54,6 @@ bool Delta::fk_pose(
     double d = (centre - a[0]).norm();
     // Plus or minus
     double alpha = std::acos((SQ(config.l_lower) - SQ(R) - SQ(d)) / (-2*R*d));
-    std::cout << "d = " << d << ", R = " << R << ", alpha = " << alpha << std::endl;
 
     auto y = centre + R*u2*std::cos(alpha) - R*u1*std::sin(alpha);
 

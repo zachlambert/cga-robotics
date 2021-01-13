@@ -1,8 +1,8 @@
 #include "cbot/delta.h"
 #include <iostream>
 
-namespace cbot { using namespace linalg_impl; }
-// namespace cbot { using namespace cga_impl; }
+// namespace cbot { using namespace linalg_impl; }
+namespace cbot { using namespace cga_impl; }
 
 int main()
 {
@@ -16,9 +16,9 @@ int main()
     cbot::Pose pose;
 
     cbot::Delta::Joints joints_pos;
-    joints_pos.theta[0] = 0;
-    joints_pos.theta[1] = 0;
-    joints_pos.theta[2] = 0;
+    joints_pos.theta[0] = 0.8;
+    joints_pos.theta[1] = 0.4;
+    joints_pos.theta[2] = 1.1;
 
     cbot::Delta::JointsDep joints_dep_pos;
 
@@ -36,9 +36,9 @@ int main()
         std::cerr << "No FK solution found." << std::endl;
     }
 
-    pose.position.x = 0;
-    pose.position.y = 0;
-    pose.position.z = -0.2;
+    pose.position.x = 0.05;
+    pose.position.y = 0.1;
+    pose.position.z = -0.3;
     if (delta.ik_pose(pose, joints_pos)) {
         for (int i = 0; i < 3; i++) {
             std::cout << "Theta " << (i+1) << " = ";

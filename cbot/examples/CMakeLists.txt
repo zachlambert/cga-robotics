@@ -6,3 +6,4 @@ function(add_example name)
 endfunction()
 
 add_example(delta)
+add_example(delta_benchmark)

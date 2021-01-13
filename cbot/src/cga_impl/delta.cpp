@@ -86,38 +86,24 @@ bool Delta::ik_pose(
     y.e2 = pose.position.y;
     y.e3 = pose.position.z;
 
-    cga::Vector3 s[3];
-    // Create three circles for the set of possible
-    // elbow positions, from the theta joints
-    cga::Bivector C[3];
-    // Create three dual spheres for the set of possible
-    // elbow positions, from the parallel linkage
-    cga::Vector Sigma[3];
+    cga::Vector Sigma_y = cga::make_sphere(y, config.l_lower);
+    cga::Vector3 s, a, upper_disp;
+    cga::Bivector C;
+    cga::PointPair result;
     for (int i = 0; i < 3; i++) {
-        s[i] = pimpl->n[i]*config.r_base;
-        C[i] = outer(
+        s = pimpl->n[i]*(config.r_base - config.r_ee);
+        C = outer(
             // Intersect plane of upper link with ..
-            dual(outer(s[i], cga::e3)),
+            dual(outer(s, cga::e3)),
             // .. sphere about joint, of radius = upper length
-            cga::make_sphere(config.r_base*pimpl->n[i], config.l_upper)
+            cga::make_sphere(s, config.l_upper)
         );
-        Sigma[i] = cga::make_sphere(y + config.r_ee*pimpl->n[i], config.l_lower);
-    }
-
-    cga::Vector3 a, upper_disp;
-    for (int i = 0; i < 3; i++) {
-        auto result = cga::intersect(C[i], Sigma[i]);
+        result = cga::intersect(C, Sigma_y);
         if (!result.valid) return false;
-        // Select the point that is further radially along n[i]
         a = (inner(result.point1, pimpl->n[i]) > inner(result.point2, pimpl->n[i]) ?
             result.point1 : result.point2);
-
-        // Get displacement of upper link and extract theta
-        upper_disp = a - s[i];
-        joints_pos.theta[i] = atan2(
-            inner(upper_disp, -cga::e3),
-            inner(upper_disp, pimpl->n[i])
-        );
+        upper_disp = a - s;
+        joints_pos.theta[i] = std::asin(-upper_disp.e3/config.l_upper);
     }
     return true;
 }
