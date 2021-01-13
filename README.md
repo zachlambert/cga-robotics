@@ -37,4 +37,4 @@ if there is time.
 
 ## ROS integration
 
-A wrapper library is provided for using this library with ROS, given [here](https://github.com/zachlambert/ros-cga-kinematics).
+A wrapper library is provided for using this library with ROS, given [here](https://github.com/zachlambert/cga-robotics-ros).
