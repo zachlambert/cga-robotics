@@ -76,11 +76,11 @@ struct GeometryResult {
 GeometryResult describe(const Vector& x)
 {
     GeometryResult result;
-    if (x.eo < 1e-12) {
+    if (std::fabs(x.eo) < 1e-12) { // x.eo = 0
         result.type = GeometryResult::Plane;
         result.plane.normal = Vector3(x);
         result.plane.dist = x.ei;
-    } else if (norm2(x)<1e-12) {
+    } else if (norm2(x)<1e-12) { // norm = 0
         result.type = GeometryResult::Point;
         result.point.position = Vector3(x/x.eo);
     } else {
@@ -164,8 +164,8 @@ inline PointPair intersect(const Vector spheres[3])
         intersection.valid = false;
     } else {
         intersection.valid = true;
-        cga::Rotor P(1, -T/std::sqrt(inner(T, T)));
-        cga::Vector Y = -transform_vector(inner(T, cga::ei), P);
+        cga::Rotor P(1, T/std::sqrt(inner(T, T)));
+        cga::Vector Y = transform_vector(inner(T, cga::ei), P);
         intersection.point1 = describe(Y).point.position;
         Y = transform_vector(inner(T, cga::ei), reverse(P));
         intersection.point2 = describe(Y).point.position;

@@ -7,37 +7,47 @@
 namespace cbot {
 namespace linalg_impl {
 
-Delta::~Delta() = default;
-Delta::Delta(Delta&&) = default;
-Delta& Delta::operator=(Delta&&) = default;
+
+// ========== Delta::Impl class definition ==========
 
 class Delta::Impl {
 public:
+    Impl(const Config &config);
+    bool fk_pose(const Joints &joints_pos, JointsDep &joints_dep_pos, Pose &pose);
+    bool fk_twist(const Joints &joints_pos, const Joints &joints_vel, Twist &twist);
+    bool ik_pose( const Pose &pose, Joints &joints_pos);
+    bool ik_twist( const Twist &twist, const Joints &joints_pos, Joints &joints_vel);
+
+private:
+
+    Config config;
     Eigen::Vector3d n[3];
     Eigen::Vector3d n_perp[3];
     Eigen::Matrix3d n_R[3];
 };
 
-Delta::Delta(Config config): DeltaBase(config), pimpl(new Impl())
-{
+Delta::Impl::Impl(const Config &config): config(config) {
     auto angle_axis= Eigen::AngleAxisd();
     angle_axis.axis() = Eigen::Vector3d(0, 0, 1);
     for (int i = 0; i < 3; i++) {
         angle_axis.angle() = i*M_PI*2/3;
-        pimpl->n_R[i] = angle_axis.toRotationMatrix();
-        pimpl->n[i] = pimpl->n_R[i].col(0);
-        pimpl->n_perp[i] = pimpl->n_R[i].col(1);
+        n_R[i] = angle_axis.toRotationMatrix();
+        n[i] = n_R[i].col(0);
+        n_perp[i] = n_R[i].col(1);
     }
 }
 
-bool Delta::fk_pose(
+
+// ========= Delta::Impl kinematics methods =========
+
+bool Delta::Impl::fk_pose(
     const Joints &joints_pos,
     JointsDep &joints_dep_pos,
     Pose &pose)
 {
     Eigen::Vector3d a[3];
     for (int i = 0; i < 3; i++) {
-        a[i] = pimpl->n[i] * (config.r_base + config.l_upper*std::cos(joints_pos.theta[i]) - config.r_ee);
+        a[i] = n[i] * (config.r_base + config.l_upper*std::cos(joints_pos.theta[i]) - config.r_ee);
         a[i].z() = -config.l_upper * std::sin(joints_pos.theta[i]);
     }
 
@@ -64,10 +74,10 @@ bool Delta::fk_pose(
         lower_disp = y - a[i];
         joints_dep_pos.gamma[i] = std::atan2(
             -lower_disp.z(),
-            -lower_disp.dot(pimpl->n[i])
+            -lower_disp.dot(n[i])
         );
         joints_dep_pos.beta[i] = std::asin(
-            lower_disp.dot(pimpl->n_perp[i]) / config.l_lower
+            lower_disp.dot(n_perp[i]) / config.l_lower
         );
         joints_dep_pos.alpha[i] = M_PI - joints_pos.theta[i] - joints_dep_pos.gamma[i];
     }
@@ -81,7 +91,7 @@ bool Delta::fk_pose(
     return true;
 }
 
-bool Delta::ik_pose(
+bool Delta::Impl::ik_pose(
     const Pose &pose,
     Joints &joints_pos)
 {
@@ -93,7 +103,7 @@ bool Delta::ik_pose(
     Eigen::Vector3d yi;
     for (int i = 0; i < 3; i++) {
         // Rotate into frame where n[i] = x.
-        yi = pimpl->n_R[i].transpose() * y;
+        yi = n_R[i].transpose() * y;
         // Change to displacement between base joint and
         // end effector joint
         yi.x() += config.r_ee - config.r_base;
@@ -120,21 +130,48 @@ bool Delta::ik_pose(
     return true;
 }
 
-bool Delta::fk_twist(
+bool Delta::Impl::fk_twist(
     const Joints &joints_pos,
     const Joints &joints_vel,
     Twist &twist)
 {
+    // JointsDep joints_dep;
+    // Pose pose;
+    // fk_pose(joints_pos, joints_dep, pose);
+
+
     return true;
 }
 
-bool Delta::ik_twist(
+bool Delta::Impl::ik_twist(
     const Twist &twist,
     const Joints &joints_pos,
     Joints &joints_vel)
 {
     return true;
 }
+
+
+// ========== Pimpl stuff ==========
+
+Delta::Delta(Config config): pimpl(new Impl(config)) {}
+Delta::~Delta() = default;
+Delta::Delta(Delta&&) = default;
+Delta& Delta::operator=(Delta&&) = default;
+
+bool Delta::fk_pose(const Joints &joints_pos, JointsDep &joints_dep_pos, Pose &pose) {
+    return pimpl->fk_pose(joints_pos, joints_dep_pos, pose);
+}
+bool Delta::ik_pose(const Pose &pose, Joints &joints_pos) {
+    return pimpl->ik_pose(pose, joints_pos);
+}
+bool Delta::fk_twist(const Joints &joints_pos, const Joints &joints_vel, Twist &twist) {
+    return pimpl->fk_twist(joints_pos, joints_vel, twist);
+}
+bool Delta::ik_twist(const Twist &twist, const Joints &joints_pos, Joints &joints_vel) {
+    return pimpl->ik_twist(twist, joints_pos, joints_vel);
+}
+
 
 } // namespace linalg_impl
 } // namespace cbot

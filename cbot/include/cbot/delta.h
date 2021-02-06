@@ -23,8 +23,6 @@ public:
         double gamma[3];
     };
 
-    DeltaBase(Config config): config(config) {}
-
     virtual bool fk_pose(
         const Joints &joints_pos,
         JointsDep &joints_dep_pos,
@@ -40,9 +38,6 @@ public:
         const Twist &twist,
         const Joints &joints_pos,
         Joints &joints_vel)=0;
-
-protected:
-    Config config;
 };
 
 namespace cga_impl {

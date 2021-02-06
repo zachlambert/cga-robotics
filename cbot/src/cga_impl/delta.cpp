@@ -4,30 +4,42 @@
 #include "cga/geometry.h"
 #include "cga/transform.h"
 
+#define SQ(x) (x*x)
+
 namespace cbot {
 namespace cga_impl {
 
-Delta::~Delta() = default;
-Delta::Delta(Delta&&) = default;
-Delta& Delta::operator=(Delta&&) = default;
+
+// ========== Delta::Impl class definition ==========
 
 class Delta::Impl {
 public:
+    Impl(const Config &config);
+    bool fk_pose(const Joints &joints_pos, JointsDep &joints_dep_pos, Pose &pose);
+    bool fk_twist(const Joints &joints_pos, const Joints &joints_vel, Twist &twist);
+    bool ik_pose( const Pose &pose, Joints &joints_pos);
+    bool ik_twist( const Twist &twist, const Joints &joints_pos, Joints &joints_vel);
+
+private:
+
+    Config config;
     cga::Vector3 n[3];
     cga::Vector3 n_perp[3];
 };
 
-Delta::Delta(Config config): DeltaBase(config), pimpl(new Impl())
-{
+Delta::Impl::Impl(const Config &config): config(config) {
     for (int i = 0; i < 3; i++) {
-        pimpl->n[i].e1 = std::cos(i*M_PI*2/3);
-        pimpl->n[i].e2 = std::sin(i*M_PI*2/3);
-        pimpl->n_perp[i].e1 = -pimpl->n[i].e2;
-        pimpl->n_perp[i].e2 = pimpl->n[i].e1;
+        n[i].e1 = std::cos(i*M_PI*2/3);
+        n[i].e2 = std::sin(i*M_PI*2/3);
+        n_perp[i].e1 = -n[i].e2;
+        n_perp[i].e2 = n[i].e1;
     }
 }
 
-bool Delta::fk_pose(
+
+// ========= Delta::Impl kinematics methods =========
+
+bool Delta::Impl::fk_pose(
     const Joints &joints_pos,
     JointsDep &joints_dep_pos,
     Pose &pose)
@@ -36,7 +48,7 @@ bool Delta::fk_pose(
     cga::Vector3 a[3];
     cga::Vector A_sphere[3];
     for (int i = 0; i < 3; i++) {
-        a[i] = pimpl->n[i] * (
+        a[i] = n[i] * (
             config.r_base + config.l_upper * std::cos(joints_pos.theta[i]) - config.r_ee
         );
         a[i].e3 = -config.l_upper*std::sin(joints_pos.theta[i]);
@@ -57,10 +69,10 @@ bool Delta::fk_pose(
         lower_disp = y - a[i];
         joints_dep_pos.gamma[i] = std::atan2(
             -inner(lower_disp, cga::Vector3(0, 0, 1)),
-            -inner(lower_disp, pimpl->n[i])
+            -inner(lower_disp, n[i])
         );
         joints_dep_pos.beta[i] = std::asin(
-            inner(lower_disp, pimpl->n_perp[i]) / config.l_lower
+            inner(lower_disp, n_perp[i]) / config.l_lower
         );
         joints_dep_pos.alpha[i] = M_PI - joints_pos.theta[i] - joints_dep_pos.gamma[i];
     }
@@ -77,7 +89,7 @@ bool Delta::fk_pose(
     return true;
 }
 
-bool Delta::ik_pose(
+bool Delta::Impl::ik_pose(
     const Pose &pose,
     Joints &joints_pos)
 {
@@ -91,7 +103,7 @@ bool Delta::ik_pose(
     cga::Bivector C;
     cga::PointPair result;
     for (int i = 0; i < 3; i++) {
-        s = pimpl->n[i]*(config.r_base - config.r_ee);
+        s = n[i]*(config.r_base - config.r_ee);
         C = outer(
             // Intersect plane of upper link with ..
             dual(outer(s, cga::e3)),
@@ -100,7 +112,7 @@ bool Delta::ik_pose(
         );
         result = cga::intersect(C, Sigma_y);
         if (!result.valid) return false;
-        a = (inner(result.point1, pimpl->n[i]) > inner(result.point2, pimpl->n[i]) ?
+        a = (inner(result.point1, n[i]) > inner(result.point2, n[i]) ?
             result.point1 : result.point2);
         upper_disp = a - s;
         joints_pos.theta[i] = std::asin(-upper_disp.e3/config.l_upper);
@@ -108,15 +120,20 @@ bool Delta::ik_pose(
     return true;
 }
 
-bool Delta::fk_twist(
+bool Delta::Impl::fk_twist(
     const Joints &joints_pos,
     const Joints &joints_vel,
     Twist &twist)
 {
+    // JointsDep joints_dep;
+    // Pose pose;
+    // fk_pose(joints_pos, joints_dep, pose);
+
+
     return true;
 }
 
-bool Delta::ik_twist(
+bool Delta::Impl::ik_twist(
     const Twist &twist,
     const Joints &joints_pos,
     Joints &joints_vel)
@@ -124,5 +141,27 @@ bool Delta::ik_twist(
     return true;
 }
 
-} // namespace cga_impl
+
+// ========== Pimpl stuff ==========
+
+Delta::Delta(Config config): pimpl(new Impl(config)) {}
+Delta::~Delta() = default;
+Delta::Delta(Delta&&) = default;
+Delta& Delta::operator=(Delta&&) = default;
+
+bool Delta::fk_pose(const Joints &joints_pos, JointsDep &joints_dep_pos, Pose &pose) {
+    return pimpl->fk_pose(joints_pos, joints_dep_pos, pose);
+}
+bool Delta::ik_pose(const Pose &pose, Joints &joints_pos) {
+    return pimpl->ik_pose(pose, joints_pos);
+}
+bool Delta::fk_twist(const Joints &joints_pos, const Joints &joints_vel, Twist &twist) {
+    return pimpl->fk_twist(joints_pos, joints_vel, twist);
+}
+bool Delta::ik_twist(const Twist &twist, const Joints &joints_pos, Joints &joints_vel) {
+    return pimpl->ik_twist(twist, joints_pos, joints_vel);
+}
+
+
+} // namespace linalg_impl
 } // namespace cbot
