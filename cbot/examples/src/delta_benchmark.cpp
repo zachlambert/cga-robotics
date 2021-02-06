@@ -41,7 +41,7 @@ int main()
         joints_pos.theta[2] = -1 + 2*sample();
 
         t_start = clock_t::now();
-        delta.fk_pose(joints_pos, joints_dep_pos, pose);
+        delta.fk_pose(joints_pos, &joints_dep_pos, pose);
         fk_time += std::chrono::duration_cast<second_t>(clock_t::now() - t_start).count();
 
         pose.position.x = -0.2 + 0.4*sample();

@@ -25,7 +25,7 @@ public:
 
     virtual bool fk_pose(
         const Joints &joints_pos,
-        JointsDep &joints_dep_pos,
+        JointsDep *joints_dep_pos,
         Pose &pose)=0;
     virtual bool fk_twist(
         const Joints &joints_pos,
@@ -50,7 +50,7 @@ public:
 
     bool fk_pose(
         const Joints &joints_pos,
-        JointsDep &joints_dep_pos,
+        JointsDep *joints_dep_pos,
         Pose &pose);
     bool fk_twist(
         const Joints &joints_pos,
@@ -81,7 +81,7 @@ public:
 
     bool fk_pose(
         const Joints &joints_pos,
-        JointsDep &joints_dep_pos,
+        JointsDep *joints_dep_pos,
         Pose &pose);
     bool fk_twist(
         const Joints &joints_pos,

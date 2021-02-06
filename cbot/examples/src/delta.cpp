@@ -22,7 +22,7 @@ int main()
 
     cbot::Delta::JointsDep joints_dep_pos;
 
-    if (delta.fk_pose(joints_pos, joints_dep_pos, pose)) {
+    if (delta.fk_pose(joints_pos, &joints_dep_pos, pose)) {
         std::cout << "Pos = (";
         std::cout<<pose.position.x<<", ";
         std::cout<<pose.position.y<<", ";

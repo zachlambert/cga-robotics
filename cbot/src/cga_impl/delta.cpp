@@ -15,7 +15,7 @@ namespace cga_impl {
 class Delta::Impl {
 public:
     Impl(const Config &config);
-    bool fk_pose(const Joints &joints_pos, JointsDep &joints_dep_pos, Pose &pose);
+    bool fk_pose(const Joints &joints_pos, JointsDep *joints_dep_pos, Pose &pose);
     bool fk_twist(const Joints &joints_pos, const Joints &joints_vel, Twist &twist);
     bool ik_pose( const Pose &pose, Joints &joints_pos);
     bool ik_twist( const Twist &twist, const Joints &joints_pos, Joints &joints_vel);
@@ -41,7 +41,7 @@ Delta::Impl::Impl(const Config &config): config(config) {
 
 bool Delta::Impl::fk_pose(
     const Joints &joints_pos,
-    JointsDep &joints_dep_pos,
+    JointsDep *joints_dep_pos,
     Pose &pose)
 {
     // Location of each pseudo-elbow point, and corresponding spheres
@@ -64,17 +64,19 @@ bool Delta::Impl::fk_pose(
     // Displacement between the end effector position and pseudo-elbow
     // position, from which the configuration of the parallel linkage can
     // be determined with simple trigonometry
-    cga::Vector3 lower_disp;
-    for (int i = 0; i < 3; i++) {
-        lower_disp = y - a[i];
-        joints_dep_pos.gamma[i] = std::atan2(
-            -inner(lower_disp, cga::Vector3(0, 0, 1)),
-            -inner(lower_disp, n[i])
-        );
-        joints_dep_pos.beta[i] = std::asin(
-            inner(lower_disp, n_perp[i]) / config.l_lower
-        );
-        joints_dep_pos.alpha[i] = M_PI - joints_pos.theta[i] - joints_dep_pos.gamma[i];
+    if (joints_dep_pos) {
+        cga::Vector3 lower_disp;
+        for (int i = 0; i < 3; i++) {
+            lower_disp = y - a[i];
+            joints_dep_pos->gamma[i] = std::atan2(
+                -inner(lower_disp, cga::Vector3(0, 0, 1)),
+                -inner(lower_disp, n[i])
+            );
+            joints_dep_pos->beta[i] = std::asin(
+                inner(lower_disp, n_perp[i]) / config.l_lower
+            );
+            joints_dep_pos->alpha[i] = M_PI - joints_pos.theta[i] - joints_dep_pos->gamma[i];
+        }
     }
 
     // Read end effector position from y
@@ -149,7 +151,7 @@ Delta::~Delta() = default;
 Delta::Delta(Delta&&) = default;
 Delta& Delta::operator=(Delta&&) = default;
 
-bool Delta::fk_pose(const Joints &joints_pos, JointsDep &joints_dep_pos, Pose &pose) {
+bool Delta::fk_pose(const Joints &joints_pos, JointsDep *joints_dep_pos, Pose &pose) {
     return pimpl->fk_pose(joints_pos, joints_dep_pos, pose);
 }
 bool Delta::ik_pose(const Pose &pose, Joints &joints_pos) {

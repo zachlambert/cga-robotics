@@ -13,12 +13,13 @@ namespace linalg_impl {
 class Delta::Impl {
 public:
     Impl(const Config &config);
-    bool fk_pose(const Joints &joints_pos, JointsDep &joints_dep_pos, Pose &pose);
+    bool fk_pose(const Joints &joints_pos, JointsDep *joints_dep_pos, Pose &pose);
     bool fk_twist(const Joints &joints_pos, const Joints &joints_vel, Twist &twist);
     bool ik_pose( const Pose &pose, Joints &joints_pos);
     bool ik_twist( const Twist &twist, const Joints &joints_pos, Joints &joints_vel);
 
 private:
+    Eigen::MatrixXd get_jacbian(const Joints &joints_pos);
 
     Config config;
     Eigen::Vector3d n[3];
@@ -42,7 +43,7 @@ Delta::Impl::Impl(const Config &config): config(config) {
 
 bool Delta::Impl::fk_pose(
     const Joints &joints_pos,
-    JointsDep &joints_dep_pos,
+    JointsDep *joints_dep_pos,
     Pose &pose)
 {
     Eigen::Vector3d a[3];
@@ -67,19 +68,21 @@ bool Delta::Impl::fk_pose(
 
     auto y = centre + R*u2*std::cos(alpha) - R*u1*std::sin(alpha);
 
-    Eigen::Vector3d lower_disp;
-    for (int i = 0; i < 3; i++) {
-        lower_disp = y - a[i];
+    if (joints_dep_pos) {
+        Eigen::Vector3d lower_disp;
+        for (int i = 0; i < 3; i++) {
+            lower_disp = y - a[i];
 
-        lower_disp = y - a[i];
-        joints_dep_pos.gamma[i] = std::atan2(
-            -lower_disp.z(),
-            -lower_disp.dot(n[i])
-        );
-        joints_dep_pos.beta[i] = std::asin(
-            lower_disp.dot(n_perp[i]) / config.l_lower
-        );
-        joints_dep_pos.alpha[i] = M_PI - joints_pos.theta[i] - joints_dep_pos.gamma[i];
+            lower_disp = y - a[i];
+            joints_dep_pos->gamma[i] = std::atan2(
+                -lower_disp.z(),
+                -lower_disp.dot(n[i])
+            );
+            joints_dep_pos->beta[i] = std::asin(
+                lower_disp.dot(n_perp[i]) / config.l_lower
+            );
+            joints_dep_pos->alpha[i] = M_PI - joints_pos.theta[i] - joints_dep_pos->gamma[i];
+        }
     }
 
     pose.position.x = y.x();
@@ -159,7 +162,7 @@ Delta::~Delta() = default;
 Delta::Delta(Delta&&) = default;
 Delta& Delta::operator=(Delta&&) = default;
 
-bool Delta::fk_pose(const Joints &joints_pos, JointsDep &joints_dep_pos, Pose &pose) {
+bool Delta::fk_pose(const Joints &joints_pos, JointsDep *joints_dep_pos, Pose &pose) {
     return pimpl->fk_pose(joints_pos, joints_dep_pos, pose);
 }
 bool Delta::ik_pose(const Pose &pose, Joints &joints_pos) {
