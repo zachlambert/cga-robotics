@@ -19,15 +19,21 @@ public:
     bool ik_twist( const Twist &twist, const Joints &joints_pos, Joints &joints_vel);
 
 private:
-    Eigen::MatrixXd get_jacbian(const Joints &joints_pos);
+    Eigen::MatrixXd get_inverse_jacobian(const Joints &joints_pos);
 
     Config config;
     Eigen::Vector3d n[3];
     Eigen::Vector3d n_perp[3];
     Eigen::Matrix3d n_R[3];
+    
+    // For calculating jacobian
+    Eigen::Matrix3d A[3];
+    Eigen::Matrix<double, 2, 3> B[3];
+    Eigen::Matrix<double, 3, 2> C[3];
 };
 
 Delta::Impl::Impl(const Config &config): config(config) {
+
     auto angle_axis= Eigen::AngleAxisd();
     angle_axis.axis() = Eigen::Vector3d(0, 0, 1);
     for (int i = 0; i < 3; i++) {
@@ -35,6 +41,16 @@ Delta::Impl::Impl(const Config &config): config(config) {
         n_R[i] = angle_axis.toRotationMatrix();
         n[i] = n_R[i].col(0);
         n_perp[i] = n_R[i].col(1);
+
+        A[i] = -2*n[i]*n[i].transpose() + n_perp[i]*n_perp[i].transpose();
+        A[i](2, 2) = 1;
+        B[i] <<  0,          0,         1,
+                -2*n[i](0), -2*n[i](1), 0;
+        B[i] *= config.l_upper;
+        C[i] << 2*n[i](0), 0,
+                2*n[i](1), 0,
+                0,         2;
+        C[i] *= config.l_upper;
     }
 }
 
@@ -138,10 +154,17 @@ bool Delta::Impl::fk_twist(
     const Joints &joints_vel,
     Twist &twist)
 {
-    // JointsDep joints_dep;
-    // Pose pose;
-    // fk_pose(joints_pos, joints_dep, pose);
+    Eigen::Matrix3d jacobian = get_inverse_jacobian(joints_pos).inverse();
+    Eigen::Vector3d theta_vel;
+    for (int i = 0; i < 3; i++) theta_vel[i] = joints_vel.theta[i];
+    Eigen::Vector3d vel = jacobian * theta_vel;
 
+    twist.linear.x = vel[0];
+    twist.linear.y = vel[1];
+    twist.linear.z = vel[2];
+    twist.angular.x = 0;
+    twist.angular.y = 0;
+    twist.angular.z = 0;
 
     return true;
 }
@@ -151,7 +174,36 @@ bool Delta::Impl::ik_twist(
     const Joints &joints_pos,
     Joints &joints_vel)
 {
+    Eigen::Matrix3d inverse_jacobian = get_inverse_jacobian(joints_pos);
+
+    Eigen::Vector3d vel(twist.linear.x, twist.linear.y, twist.linear.z);
+    Eigen::Vector3d theta_vel = inverse_jacobian * vel;
+
+    for (int i = 0; i < 3; i++) joints_vel.theta[i] = theta_vel(i);
+
     return true;
+}
+
+
+Eigen::MatrixXd Delta::Impl::get_inverse_jacobian(const Joints &joints_pos)
+{
+    Pose pose;
+    fk_pose(joints_pos, 0, pose);
+    Eigen::Vector3d y(pose.position.x, pose.position.y, pose.position.z);
+
+    Eigen::Matrix3d inverse_jacobian;
+    Eigen::Vector2d s[3];
+    double denom;
+    for (int i = 0; i < 3; i++){
+        s[i](0) = sin(joints_pos.theta[i]);
+        s[i](1) = cos(joints_pos.theta[i]);
+
+        denom = y.transpose()*C[i]*s[i];
+        inverse_jacobian.block<1, 3>(i, 0) =
+            (y.transpose()*A[i] + s[i].transpose()*B[i]) / denom;
+    }
+
+    return inverse_jacobian;
 }
 
 
