@@ -1,105 +1,59 @@
 #ifndef COMMON_DELTA_H
 #define COMMON_DELTA_H
 
+#include <vector>
+#include <string>
 #include <memory>
 #include "cbot/types.h"
 
 namespace cbot {
 
-class DeltaBase {
+class Delta {
 public:
     struct Config {
-        // Base and end effector radius
-        double r_base, r_ee;
-        // Uppwer and lower length
-        double l_upper, l_lower;
-    };
-    struct Joints {
-        double theta[3];
-    };
-    struct JointsDep {
-        double alpha[3];
-        double beta[3];
-        double gamma[3];
+        double r_base, r_ee; // Base and end effector radius
+        double l_upper, l_lower; // Upper and lower length
+        std::vector<std::string> theta;
+        std::vector<std::string> alpha;
+        std::vector<std::string> beta;
+        std::vector<std::string> gamma;
     };
 
-    virtual bool fk_pose(
-        const Joints &joints_pos,
-        JointsDep *joints_dep_pos,
-        Pose &pose)=0;
-    virtual bool fk_twist(
-        const Joints &joints_pos,
-        const Joints &joints_vel,
-        Twist &twist)=0;
-    virtual bool ik_pose(
-        const Pose &pose,
-        Joints &joints_pos)=0;
-    virtual bool ik_twist(
-        const Twist &twist,
-        const Joints &joints_pos,
-        Joints &joints_vel)=0;
-};
-
-namespace cga_impl {
-class Delta: public DeltaBase {
-public:
     Delta(Config config);
     ~Delta();
     Delta(Delta&&);
     Delta& operator=(Delta&&);
 
-    bool fk_pose(
-        const Joints &joints_pos,
-        JointsDep *joints_dep_pos,
-        Pose &pose);
-    bool fk_twist(
-        const Joints &joints_pos,
-        const Joints &joints_vel,
-        Twist &twist);
-    bool ik_pose(
-        const Pose &pose,
-        Joints &joints_pos);
-    bool ik_twist(
-        const Twist &twist,
-        const Joints &joints_pos,
-        Joints &joints_vel);
+    // Functions for updating the robot state (pose, twist, joints) such
+    // that they are consistent. Either with FK (setting pose and twist
+    // to be consistent with joints) or with IK (setting joints to be
+    // consistent with pose and twist).
+    bool update_pose(); // Set pose with FK
+    bool update_twist(); // Set twist with FK
+    bool update_joint_positions(); // Set joint positions with IK
+    bool update_joint_velocities(); // Set joint velocities with IK
+    bool update_dependent_joints();
+
+    // Primarily just update private members.
+    // However, can also invalidate calculations done (by impl), meaning
+    // they are recalculated when required by an update function
+    void set_pose(const Pose &pose);
+    void set_twist(const Twist &twist);
+    void set_joint_position(const std::string &name, double value);
+    void set_joint_velocity(const std::string &name, double value);
+
+    const Pose &get_pose()const{ return pose; }
+    const Twist &get_twist()const{ return twist; }
+    const Joints &get_joints()const{ return joints; }
 
 private:
+    Pose pose;
+    Twist twist;
+    Joints joints;
+
     class Impl;
     std::unique_ptr<Impl> pimpl;
 };
-
-} // namespace cga_impl
-
-namespace linalg_impl {
-class Delta: public DeltaBase {
-public:
-    Delta(Config config);
-    ~Delta();
-    Delta(Delta&&);
-    Delta& operator=(Delta&&);
-
-    bool fk_pose(
-        const Joints &joints_pos,
-        JointsDep *joints_dep_pos,
-        Pose &pose);
-    bool fk_twist(
-        const Joints &joints_pos,
-        const Joints &joints_vel,
-        Twist &twist);
-    bool ik_pose(
-        const Pose &pose,
-        Joints &joints_pos);
-    bool ik_twist(
-        const Twist &twist,
-        const Joints &joints_pos,
-        Joints &joints_vel);
-
-private:
-    class Impl;
-    std::unique_ptr<Impl> pimpl;
-};
-} // namespace linalg_impl
 
 } // namespace cbot
 

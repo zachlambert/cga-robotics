@@ -5,31 +5,37 @@
 #define SQ(x) (x*x)
 
 namespace cbot {
-namespace linalg_impl {
-
 
 // ========== Delta::Impl class definition ==========
 
 class Delta::Impl {
 public:
     Impl(const Config &config);
-    bool fk_pose(const Joints &joints_pos, JointsDep *joints_dep_pos, Pose &pose);
-    bool fk_twist(const Joints &joints_pos, const Joints &joints_vel, Twist &twist);
-    bool ik_pose( const Pose &pose, Joints &joints_pos);
-    bool ik_twist( const Twist &twist, const Joints &joints_pos, Joints &joints_vel);
+    bool update_pose(const Joints &joints, Pose &pose);
+    bool update_twist(const Joints &joints, Twist &twist);
+    bool update_joint_positions(const Pose &pose, Joints &joints);
+    bool update_joint_velocities(const Twist &twist, Joints &joints);
+    bool update_dependent_joints(Joints &joints);
 
 private:
-    Eigen::MatrixXd get_inverse_jacobian(const Joints &joints_pos);
+    void update_inverse_jacobian(const Joints &joints_pos);
 
     Config config;
     Eigen::Vector3d n[3];
     Eigen::Vector3d n_perp[3];
     Eigen::Matrix3d n_R[3];
-    
+
+    Eigen::Vector3d a[3];
+    Eigen::Vector3d y; // End effector position
     // For calculating jacobian
+    Eigen::Matrix3d inverse_jacobian;
     Eigen::Matrix3d A[3];
     Eigen::Matrix<double, 2, 3> B[3];
     Eigen::Matrix<double, 3, 2> C[3];
+
+    // flags
+    bool position_valid; // a[3], y
+    bool inverse_jacobian_valid; // inverse_jacobian
 };
 
 Delta::Impl::Impl(const Config &config): config(config) {
@@ -52,20 +58,21 @@ Delta::Impl::Impl(const Config &config): config(config) {
                 0,         2;
         C[i] *= config.l_upper;
     }
+
+    position_valid = false;
+    inverse_jacobian_valid = false;
 }
 
 
 // ========= Delta::Impl kinematics methods =========
 
-bool Delta::Impl::fk_pose(
-    const Joints &joints_pos,
-    JointsDep *joints_dep_pos,
-    Pose &pose)
+bool Delta::Impl::update_pose(const Joints &joints, Pose &pose)
 {
-    Eigen::Vector3d a[3];
+    double theta_i;
     for (int i = 0; i < 3; i++) {
-        a[i] = n[i] * (config.r_base + config.l_upper*std::cos(joints_pos.theta[i]) - config.r_ee);
-        a[i].z() = -config.l_upper * std::sin(joints_pos.theta[i]);
+        theta_i = joints.at(config.theta[i]).position;
+        a[i] = n[i] * (config.r_base + config.l_upper*std::cos(theta_i) - config.r_ee);
+        a[i].z() = -config.l_upper * std::sin(theta_i);
     }
 
     // Form a circle of possible ee position from the second
@@ -82,24 +89,8 @@ bool Delta::Impl::fk_pose(
     // Plus or minus
     double alpha = std::acos((SQ(config.l_lower) - SQ(R) - SQ(d)) / (-2*R*d));
 
-    auto y = centre + R*u2*std::cos(alpha) - R*u1*std::sin(alpha);
-
-    if (joints_dep_pos) {
-        Eigen::Vector3d lower_disp;
-        for (int i = 0; i < 3; i++) {
-            lower_disp = y - a[i];
-
-            lower_disp = y - a[i];
-            joints_dep_pos->gamma[i] = std::atan2(
-                -lower_disp.z(),
-                -lower_disp.dot(n[i])
-            );
-            joints_dep_pos->beta[i] = std::asin(
-                lower_disp.dot(n_perp[i]) / config.l_lower
-            );
-            joints_dep_pos->alpha[i] = M_PI - joints_pos.theta[i] - joints_dep_pos->gamma[i];
-        }
-    }
+    y = centre + R*u2*std::cos(alpha) - R*u1*std::sin(alpha);
+    position_valid = true;
 
     pose.position.x = y.x();
     pose.position.y = y.y();
@@ -110,10 +101,9 @@ bool Delta::Impl::fk_pose(
     return true;
 }
 
-bool Delta::Impl::ik_pose(
-    const Pose &pose,
-    Joints &joints_pos)
+bool Delta::Impl::update_joint_positions( const Pose &pose, Joints &joints)
 {
+    // (Not using the y saved for FK and updating dependent joints)
     Eigen::Vector3d y;
     y.x() = pose.position.x;
     y.y() = pose.position.y;
@@ -144,20 +134,22 @@ bool Delta::Impl::ik_pose(
         if (solution2 < -M_PI) solution2 += 2*M_PI;
         if (solution2 > M_PI) solution2 -= 2*M_PI;
 
-        joints_pos.theta[i] = fabs(solution1) < fabs(solution2) ? solution1 : solution2;
+        joints[config.theta[i]].position =
+            fabs(solution1) < fabs(solution2) ? solution1 : solution2;
     }
     return true;
 }
 
-bool Delta::Impl::fk_twist(
-    const Joints &joints_pos,
-    const Joints &joints_vel,
-    Twist &twist)
+bool Delta::Impl::update_twist(const Joints &joints, Twist &twist)
 {
-    Eigen::Matrix3d jacobian = get_inverse_jacobian(joints_pos).inverse();
+    if (!inverse_jacobian_valid) {
+        update_inverse_jacobian(joints);
+    }
     Eigen::Vector3d theta_vel;
-    for (int i = 0; i < 3; i++) theta_vel[i] = joints_vel.theta[i];
-    Eigen::Vector3d vel = jacobian * theta_vel;
+    for (int i = 0; i < 3; i++) {
+        theta_vel[i] = joints.at(config.theta[i]).velocity;
+    }
+    Eigen::Vector3d vel = inverse_jacobian.inverse() * theta_vel;
 
     twist.linear.x = vel[0];
     twist.linear.y = vel[1];
@@ -169,41 +161,68 @@ bool Delta::Impl::fk_twist(
     return true;
 }
 
-bool Delta::Impl::ik_twist(
-    const Twist &twist,
-    const Joints &joints_pos,
-    Joints &joints_vel)
+bool Delta::Impl::update_joint_velocities(const Twist &twist, Joints &joints)
 {
-    Eigen::Matrix3d inverse_jacobian = get_inverse_jacobian(joints_pos);
+    if (!inverse_jacobian_valid) {
+        update_inverse_jacobian(joints);
+    }
 
     Eigen::Vector3d vel(twist.linear.x, twist.linear.y, twist.linear.z);
     Eigen::Vector3d theta_vel = inverse_jacobian * vel;
 
-    for (int i = 0; i < 3; i++) joints_vel.theta[i] = theta_vel(i);
+    for (int i = 0; i < 3; i++) {
+        joints[config.theta[i]].velocity = theta_vel(i);
+    }
 
     return true;
 }
 
-
-Eigen::MatrixXd Delta::Impl::get_inverse_jacobian(const Joints &joints_pos)
+bool Delta::Impl::update_dependent_joints(Joints &joints)
 {
-    Pose pose;
-    fk_pose(joints_pos, 0, pose);
-    Eigen::Vector3d y(pose.position.x, pose.position.y, pose.position.z);
+    if (!position_valid) {
+        Pose pose; // unused
+        update_pose(joints, pose);
+    }
 
-    Eigen::Matrix3d inverse_jacobian;
+    Eigen::Vector3d lower_disp;
+    double theta_i, alpha_i, beta_i, gamma_i;
+    for (int i = 0; i < 3; i++) {
+        lower_disp = y - a[i];
+
+        theta_i = joints[config.theta[i]].position;
+        gamma_i = std::atan2(
+            -lower_disp.z(),
+            -lower_disp.dot(n[i])
+        );
+        beta_i = std::asin(
+            lower_disp.dot(n_perp[i]) / config.l_lower
+        );
+        alpha_i = M_PI - theta_i - gamma_i;
+
+        joints[config.alpha[i]].position = alpha_i;
+        joints[config.beta[i]].position = beta_i;
+        joints[config.gamma[i]].position = gamma_i;
+    }
+}
+
+void Delta::Impl::update_inverse_jacobian(const Joints &joints)
+{
+    if (!position_valid) {
+        Pose pose; // Unused
+        update_pose(joints, pose);
+    }
+
     Eigen::Vector2d s[3];
-    double denom;
+    double theta_i, denom;
     for (int i = 0; i < 3; i++){
-        s[i](0) = sin(joints_pos.theta[i]);
-        s[i](1) = cos(joints_pos.theta[i]);
+        theta_i = joints.at(config.theta[i]).position;
+        s[i](0) = sin(theta_i);
+        s[i](1) = cos(theta_i);
 
         denom = y.transpose()*C[i]*s[i];
         inverse_jacobian.block<1, 3>(i, 0) =
             (y.transpose()*A[i] + s[i].transpose()*B[i]) / denom;
     }
-
-    return inverse_jacobian;
 }
 
 
@@ -214,19 +233,45 @@ Delta::~Delta() = default;
 Delta::Delta(Delta&&) = default;
 Delta& Delta::operator=(Delta&&) = default;
 
-bool Delta::fk_pose(const Joints &joints_pos, JointsDep *joints_dep_pos, Pose &pose) {
-    return pimpl->fk_pose(joints_pos, joints_dep_pos, pose);
+bool Delta::update_pose() {
+    return pimpl->update_pose(joints, pose);
 }
-bool Delta::ik_pose(const Pose &pose, Joints &joints_pos) {
-    return pimpl->ik_pose(pose, joints_pos);
+bool Delta::update_twist() {
+    return pimpl->update_twist(joints, twist);
 }
-bool Delta::fk_twist(const Joints &joints_pos, const Joints &joints_vel, Twist &twist) {
-    return pimpl->fk_twist(joints_pos, joints_vel, twist);
+bool Delta::update_joint_positions() {
+    return pimpl->update_joint_positions(pose, joints);
 }
-bool Delta::ik_twist(const Twist &twist, const Joints &joints_pos, Joints &joints_vel) {
-    return pimpl->ik_twist(twist, joints_pos, joints_vel);
+bool Delta::update_joint_velocities() {
+    return pimpl->update_joint_velocities(twist, joints);
+}
+bool Delta::update_dependent_joints() {
+    return pimpl->update_dependent_joints(joints);
 }
 
+// Setters
 
-} // namespace linalg_impl
+// For now, only set member variables.
+// However, have chosen to add getters/setters such that the implementation
+// knows when certain things have changed, meaning some calculations need
+// to be invalidated.
+// eg: Changing pose or joint position invalidates the Jacobian
+
+void Delta::set_pose(const Pose &pose) {
+    this->pose = pose;
+}
+void Delta::set_twist(const Twist &twist) {
+    this->twist = twist;
+}
+void Delta::set_joint_position(const std::string &name, double value) {
+    if (joints.find(name) != joints.end() && !joints[name].dependent) {
+        joints[name].position = value;
+    }
+}
+void Delta::set_joint_velocity(const std::string &name, double value) {
+    if (joints.find(name) != joints.end() && !joints[name].dependent) {
+        joints[name].velocity = value;
+    }
+}
+
 } // namespace cbot

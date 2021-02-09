@@ -1,6 +1,9 @@
 #ifndef CBOT_TYPES_H
 #define CBOT_TYPES_H
 
+#include <map>
+#include <string>
+
 namespace cbot {
 
 // Allow different robots to use their own objects for
@@ -45,6 +48,13 @@ struct Inertia {
     Pose pose;
     Inertia(): mass{0}, inertial{0, 0, 0, 0, 0, 0}, pose() {}
 };
+
+struct Joint {
+    double position;
+    double velocity;
+    bool dependent;
+};
+typedef std::map<std::string, Joint> Joints;
 
 } // namespace cbot
 
