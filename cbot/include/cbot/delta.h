@@ -10,16 +10,18 @@ namespace cbot {
 
 class Delta {
 public:
-    struct Config {
+    struct Dimensions {
         double r_base, r_ee; // Base and end effector radius
         double l_upper, l_lower; // Upper and lower length
+    };
+    struct JointNames {
         std::vector<std::string> theta;
         std::vector<std::string> alpha;
         std::vector<std::string> beta;
         std::vector<std::string> gamma;
     };
 
-    Delta(Config config);
+    Delta(const Dimensions &dim, const JointNames &joint_names);
     ~Delta();
     Delta(Delta&&);
     Delta& operator=(Delta&&);

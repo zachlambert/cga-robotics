@@ -54,6 +54,7 @@ struct Joint {
     double position;
     double velocity;
     bool dependent;
+    Joint(bool dependent=false): dependent(dependent) {}
 };
 typedef std::map<std::string, Joint> Joints;
 
