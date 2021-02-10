@@ -16,6 +16,7 @@ public:
     bool update_joint_positions(const Pose &pose, Joints &joints);
     bool update_joint_velocities(const Twist &twist, Joints &joints);
     bool update_dependent_joints(Joints &joints);
+    bool calculate_trajectory(const Joints &joints, const Pose &pose, double time, JointTrajectory &trajectory);
 
 private:
     void update_inverse_jacobian(const Joints &joints_pos);
@@ -203,6 +204,46 @@ bool Delta::Impl::update_dependent_joints(Joints &joints)
         joints[config.beta[i]].position = beta_i;
         joints[config.gamma[i]].position = gamma_i;
     }
+    return true;
+}
+
+bool Delta::Impl::calculate_trajectory(const Joints &joints, const Pose &goal, double time, JointTrajectory &trajectory)
+{
+    constexpr double delta_pos = 0.1;
+    if (!position_valid) {
+        Pose pose; // unused
+        update_pose(joints, pose);
+    }
+
+    Eigen::Vector3d start_y = y;
+    Eigen::Vector3d goal_y(goal.position.x, goal.position.y, goal.position.z);
+    std::size_t N = ceil((goal_y - start_y).norm() / delta_pos);
+
+    Eigen::Vector3d current_y;
+    Pose current_pose;
+    Joints current_joints;
+    trajectory.points.resize(N);
+    trajectory.names = config.theta;
+    for (std::size_t i = 0; i < N; i++) {
+        // u = normalised time
+        double u = ((double)i) / N;
+        trajectory.points[i].time = u * time;
+        trajectory.points[i].positions.resize(config.theta.size());
+
+        // For now just fit a linear trajectory
+        current_y = start_y + u * (goal_y - start_y);
+        current_pose.position.x = current_y.x();
+        current_pose.position.y = current_y.y();
+        current_pose.position.z = current_y.z();
+        if (!update_joint_positions(current_pose, current_joints)) {
+            return false;
+        }
+
+        for (std::size_t j = 0; j < config.theta.size(); j++) {
+            trajectory.points[i].positions[j] = current_joints.at(config.theta[j]).position;
+        }
+    }
+    return true;
 }
 
 void Delta::Impl::update_inverse_jacobian(const Joints &joints)
@@ -247,6 +288,9 @@ bool Delta::update_joint_velocities() {
 }
 bool Delta::update_dependent_joints() {
     return pimpl->update_dependent_joints(joints);
+}
+bool Delta::calculate_trajectory(const Pose &pose, double time, JointTrajectory &trajectory) {
+    return pimpl->calculate_trajectory(joints, pose, time, trajectory);
 }
 
 // Setters

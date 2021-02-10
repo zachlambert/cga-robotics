@@ -3,6 +3,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 namespace cbot {
 
@@ -55,6 +56,16 @@ struct Joint {
     bool dependent;
 };
 typedef std::map<std::string, Joint> Joints;
+
+struct JointTrajectoryPoint {
+    std::vector<double> positions;
+    double time;
+};
+
+struct JointTrajectory {
+    std::vector<std::string> names;
+    std::vector<JointTrajectoryPoint> points;
+};
 
 } // namespace cbot
 

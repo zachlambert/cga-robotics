@@ -21,6 +21,6 @@ target_link_libraries(cbot
 
 # add_subdirectory(examples)
 
-# install(TARGETS cbot EXPORT cbot-export DESTINATION lib)
-# install(DIRECTORY include/cbot DESTINATION include/cbot)
-# install(FILES cbotConfig.cmake DESTINATION lib/cmake/cbot)
+install(TARGETS cbot EXPORT cbot-export DESTINATION lib)
+install(DIRECTORY include/cbot DESTINATION include/cbot)
+install(FILES cbotConfig.cmake DESTINATION lib/cmake/cbot)

@@ -34,6 +34,8 @@ public:
     bool update_joint_velocities(); // Set joint velocities with IK
     bool update_dependent_joints();
 
+    bool calculate_trajectory(const Pose &goal, double time, JointTrajectory &trajectory);
+
     // Primarily just update private members.
     // However, can also invalidate calculations done (by impl), meaning
     // they are recalculated when required by an update function
