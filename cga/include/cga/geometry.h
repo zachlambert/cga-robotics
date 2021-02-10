@@ -1,5 +1,5 @@
-#ifndef TRANSFORMATIONS_H
-#define TRANSFORMATIONS_H
+#ifndef CGA_GEOMETRY_H
+#define CGA_GEOMETRY_H
 
 #include "cga/cga.h"
 #include "cga/transform.h"

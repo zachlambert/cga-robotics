@@ -1,5 +1,5 @@
-#ifndef COMMON_CHAIN_H
-#define COMMON_CHAIN_H
+#ifndef CBOT_SERIAL_H
+#define CBOT_SERIAL_H
 
 #include <vector>
 #include <vector>

@@ -1,5 +1,5 @@
-#ifndef COMMON_DELTA_H
-#define COMMON_DELTA_H
+#ifndef CBOT_DELTA_H
+#define CBOT_DELTA_H
 
 #include <vector>
 #include <string>

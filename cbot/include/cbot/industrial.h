@@ -1,5 +1,5 @@
-#ifndef COMMON_INDUSTRIAL_H
-#define COMMON_INDUSTRIAL_H
+#ifndef CBOT_INDUSTRIAL_H
+#define CBOT_INDUSTRIAL_H
 
 #include "cbot/types.h"
 
