@@ -48,6 +48,9 @@ public:
     const Twist &get_twist()const{ return twist; }
     const Joints &get_joints()const{ return joints; }
 
+    const std::vector<std::string> get_independent_joint_names()const;
+    const std::vector<std::string> get_dependent_joint_names()const;
+
 private:
     Pose pose;
     Twist twist;

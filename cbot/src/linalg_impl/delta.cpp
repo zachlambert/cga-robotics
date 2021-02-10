@@ -318,4 +318,22 @@ void Delta::set_joint_velocity(const std::string &name, double value) {
     }
 }
 
+const std::vector<std::string> Delta::get_independent_joint_names()const
+{
+    std::vector<std::string> joint_names;
+    for (auto it = joints.begin(); it != joints.end(); it++) {
+        if (!it->second.dependent) joint_names.push_back(it->first);
+    }
+    return joint_names;
+}
+
+const std::vector<std::string> Delta::get_dependent_joint_names()const 
+{
+    std::vector<std::string> joint_names;
+    for (auto it = joints.begin(); it != joints.end(); it++) {
+        if (it->second.dependent) joint_names.push_back(it->first);
+    }
+    return joint_names;
+}
+
 } // namespace cbot
