@@ -6,5 +6,4 @@ function(add_example name)
 endfunction()
 
 add_example(delta)
-add_example(delta_benchmark)
-add_example(delta_vel)
+# add_example(delta_benchmark)

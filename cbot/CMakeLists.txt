@@ -4,7 +4,7 @@ add_compile_options(-std=c++11)
 
 set(USE_CGA FALSE)
 
-set(SOURCES )
+set(SOURCES src/types.cpp)
 if(USE_CGA)
     list(APPEND SOURCES src/cga_impl/delta.cpp)
 else()
@@ -19,7 +19,7 @@ target_link_libraries(cbot
     PRIVATE cga Eigen3::Eigen
 )
 
-# add_subdirectory(examples)
+add_subdirectory(examples)
 
 install(TARGETS cbot EXPORT cbot-export DESTINATION lib)
 install(DIRECTORY include/cbot DESTINATION include/cbot)

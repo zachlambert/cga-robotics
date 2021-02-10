@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <iostream>
 
 namespace cbot {
 
@@ -67,6 +68,10 @@ struct JointTrajectory {
     std::vector<std::string> names;
     std::vector<JointTrajectoryPoint> points;
 };
+
+std::ostream& operator<<(std::ostream& outs, const Pose &pose);
+std::ostream& operator<<(std::ostream& outs, const Twist &twist);
+std::ostream& operator<<(std::ostream& outs, const Joint &joint);
 
 } // namespace cbot
 

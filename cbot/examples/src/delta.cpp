@@ -1,51 +1,38 @@
 #include "cbot/delta.h"
 #include <iostream>
 
-// namespace cbot { using namespace linalg_impl; }
-namespace cbot { using namespace cga_impl; }
-
 int main()
 {
-    cbot::Delta::Config config;
-    config.r_base = 0.15;
-    config.r_ee = 0.05;
-    config.l_upper = 0.3;
-    config.l_lower = 0.4;
+    cbot::Delta::Dimensions dim;
+    dim.r_base = 0.15;
+    dim.r_ee = 0.05;
+    dim.l_upper = 0.3;
+    dim.l_lower = 0.4;
+    
+    cbot::Delta::JointNames joint_names;
+    joint_names.theta.push_back("theta_1");
+    joint_names.theta.push_back("theta_2");
+    joint_names.theta.push_back("theta_3");
+    joint_names.alpha.push_back("alpha_1");
+    joint_names.alpha.push_back("alpha_2");
+    joint_names.alpha.push_back("alpha_3");
+    joint_names.beta.push_back("beta_1");
+    joint_names.beta.push_back("beta_2");
+    joint_names.beta.push_back("beta_3");
+    joint_names.gamma.push_back("gamma_1");
+    joint_names.gamma.push_back("gamma_2");
+    joint_names.gamma.push_back("gamma_3");
 
-    cbot::Delta delta(config);
-    cbot::Pose pose;
+    cbot::Delta delta(dim, joint_names);
 
-    cbot::Delta::Joints joints_pos;
-    joints_pos.theta[0] = 0.8;
-    joints_pos.theta[1] = 0.4;
-    joints_pos.theta[2] = 1.1;
+    delta.set_joint_position("theta_1", 0.5);
+    delta.set_joint_position("theta_2", 0.5);
+    delta.set_joint_position("theta_3", 0.5);
 
-    cbot::Delta::JointsDep joints_dep_pos;
-
-    if (delta.fk_pose(joints_pos, &joints_dep_pos, pose)) {
-        std::cout << "Pos = (";
-        std::cout<<pose.position.x<<", ";
-        std::cout<<pose.position.y<<", ";
-        std::cout<<pose.position.z<<")"<<std::endl;
-        std::cout << "Orient = (";
-        std::cout<<pose.orientation.w<<", ";
-        std::cout<<pose.orientation.x<<", ";
-        std::cout<<pose.orientation.y<<", ";
-        std::cout<<pose.orientation.z<<")"<<std::endl;
+    if (delta.update_pose()) {
+        std::cout << delta.get_pose() << std::endl;
     } else {
-        std::cerr << "No FK solution found." << std::endl;
-    }
-
-    pose.position.x = 0.05;
-    pose.position.y = 0.1;
-    pose.position.z = -0.3;
-    if (delta.ik_pose(pose, joints_pos)) {
-        for (int i = 0; i < 3; i++) {
-            std::cout << "Theta " << (i+1) << " = ";
-            std::cout << joints_pos.theta[i] << std::endl;;
-        }
-    } else {
-        std::cerr << "No IK solution found." << std::endl;
+        std::cerr << "Failed to update pose." << std::endl;
     }
 
     return 0;
