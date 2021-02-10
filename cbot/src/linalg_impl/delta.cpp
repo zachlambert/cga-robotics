@@ -18,6 +18,10 @@ public:
     bool update_dependent_joints(Joints &joints);
     bool calculate_trajectory(const Joints &joints, const Pose &pose, double time, JointTrajectory &trajectory);
 
+    // flags - Used by Delta
+    bool position_valid; // a[3], y
+    bool inverse_jacobian_valid; // inverse_jacobian
+
 private:
     void update_inverse_jacobian(const Joints &joints_pos);
 
@@ -34,10 +38,6 @@ private:
     Eigen::Matrix3d A[3];
     Eigen::Matrix<double, 2, 3> B[3];
     Eigen::Matrix<double, 3, 2> C[3];
-
-    // flags
-    bool position_valid; // a[3], y
-    bool inverse_jacobian_valid; // inverse_jacobian
 };
 
 Delta::Impl::Impl(
@@ -267,6 +267,8 @@ void Delta::Impl::update_inverse_jacobian(const Joints &joints)
         inverse_jacobian.block<1, 3>(i, 0) =
             (y.transpose()*A[i] + s[i].transpose()*B[i]) / denom;
     }
+
+    inverse_jacobian_valid = true;
 }
 
 
@@ -307,14 +309,10 @@ bool Delta::calculate_trajectory(const Pose &pose, double time, JointTrajectory 
 
 // Setters
 
-// For now, only set member variables.
-// However, have chosen to add getters/setters such that the implementation
-// knows when certain things have changed, meaning some calculations need
-// to be invalidated.
-// eg: Changing pose or joint position invalidates the Jacobian
-
 void Delta::set_pose(const Pose &pose) {
     this->pose = pose;
+    pimpl->position_valid = false;
+    pimpl->inverse_jacobian_valid = false;
 }
 void Delta::set_twist(const Twist &twist) {
     this->twist = twist;
@@ -323,12 +321,16 @@ void Delta::set_joint_position(const std::string &name, double value) {
     if (joints.find(name) != joints.end() && !joints[name].dependent) {
         joints[name].position = value;
     }
+    pimpl->position_valid = false;
+    pimpl->inverse_jacobian_valid = false;
 }
 void Delta::set_joint_velocity(const std::string &name, double value) {
     if (joints.find(name) != joints.end() && !joints[name].dependent) {
         joints[name].velocity = value;
     }
 }
+
+// Get joint names
 
 const std::vector<std::string> Delta::get_independent_joint_names()const
 {
