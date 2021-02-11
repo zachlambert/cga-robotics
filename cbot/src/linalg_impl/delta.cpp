@@ -265,7 +265,7 @@ void Delta::Impl::update_inverse_jacobian(const Joints &joints)
 
         denom = y.transpose()*C[i]*s[i];
         inverse_jacobian.block<1, 3>(i, 0) =
-            (y.transpose()*A[i] + s[i].transpose()*B[i]) / denom;
+            - (y.transpose()*A[i] + s[i].transpose()*B[i]) / denom;
     }
 
     inverse_jacobian_valid = true;
