@@ -16,7 +16,7 @@ public:
     bool update_joint_positions(const Pose &pose, Joints &joints);
     bool update_joint_velocities(const Twist &twist, Joints &joints);
     bool update_dependent_joints(Joints &joints);
-    bool calculate_trajectory(const Joints &joints, const Pose &pose, double time, JointTrajectory &trajectory);
+    bool calculate_trajectory(const Joints &joints, const Pose &pose, const TrajectoryConstraints &constraints, JointTrajectory &trajectory);
 
     // flags - Used by Delta
     bool position_valid; // a[3], y
@@ -210,17 +210,20 @@ bool Delta::Impl::update_dependent_joints(Joints &joints)
     return true;
 }
 
-bool Delta::Impl::calculate_trajectory(const Joints &joints, const Pose &goal, double time, JointTrajectory &trajectory)
+bool Delta::Impl::calculate_trajectory(const Joints &joints, const Pose &goal, const TrajectoryConstraints &constraints, JointTrajectory &trajectory)
 {
-    constexpr double delta_pos = 0.1;
     if (!position_valid) {
         Pose pose; // unused
         update_pose(joints, pose);
     }
 
+    constexpr double delta_t = 1.0/20;
+
     Eigen::Vector3d start_y = y;
     Eigen::Vector3d goal_y(goal.position.x, goal.position.y, goal.position.z);
-    std::size_t N = ceil((goal_y - start_y).norm() / delta_pos);
+    double time = ceil((goal_y - start_y).norm() / constraints.max_linear_speed);
+
+    std::size_t N = ceil(time / delta_t);
 
     Eigen::Vector3d current_y;
     Pose current_pose;
@@ -303,8 +306,8 @@ bool Delta::update_joint_velocities() {
 bool Delta::update_dependent_joints() {
     return pimpl->update_dependent_joints(joints);
 }
-bool Delta::calculate_trajectory(const Pose &pose, double time, JointTrajectory &trajectory) {
-    return pimpl->calculate_trajectory(joints, pose, time, trajectory);
+bool Delta::calculate_trajectory(const Pose &pose, const TrajectoryConstraints &constraints, JointTrajectory &trajectory) {
+    return pimpl->calculate_trajectory(joints, pose, constraints, trajectory);
 }
 
 // Setters

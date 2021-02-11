@@ -36,7 +36,14 @@ public:
     bool update_joint_velocities(); // Set joint velocities with IK
     bool update_dependent_joints();
 
-    bool calculate_trajectory(const Pose &goal, double time, JointTrajectory &trajectory);
+    // TODO: May make more sense to store the trajectory in the Delta object
+    // and have a function to interpolate. Also allows storing pose trajectories
+    // But, leave it as is for now. Only change if there is a good reason.
+    bool calculate_trajectory(
+        const Pose &goal,
+        const TrajectoryConstraints &constraints,
+        JointTrajectory &trajectory
+    );
 
     // Primarily just update private members.
     // However, can also invalidate calculations done (by impl), meaning

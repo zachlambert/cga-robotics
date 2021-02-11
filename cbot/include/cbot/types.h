@@ -69,6 +69,11 @@ struct JointTrajectory {
     std::vector<JointTrajectoryPoint> points;
 };
 
+struct TrajectoryConstraints {
+    double max_linear_speed;
+    double max_angular_speed;
+};
+
 std::ostream& operator<<(std::ostream& outs, const Pose &pose);
 std::ostream& operator<<(std::ostream& outs, const Twist &twist);
 std::ostream& operator<<(std::ostream& outs, const Joint &joint);
