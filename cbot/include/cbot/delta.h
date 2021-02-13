@@ -53,18 +53,14 @@ public:
     void set_joint_position(const std::string &name, double value);
     void set_joint_velocity(const std::string &name, double value);
 
-    const Pose &get_pose()const{ return pose; }
-    const Twist &get_twist()const{ return twist; }
-    const Joints &get_joints()const{ return joints; }
+    const Pose &get_pose()const;
+    const Twist &get_twist()const;
+    const Joints &get_joints()const;
 
     const std::vector<std::string> get_independent_joint_names()const;
     const std::vector<std::string> get_dependent_joint_names()const;
 
 private:
-    Pose pose;
-    Twist twist;
-    Joints joints;
-
     class Impl;
     std::unique_ptr<Impl> pimpl;
 };

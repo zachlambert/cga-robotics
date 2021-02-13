@@ -18,50 +18,49 @@ public:
     bool update_dependent_joints(Joints &joints);
     bool calculate_trajectory(const Joints &joints, const Pose &pose, const TrajectoryConstraints &constraints, JointTrajectory &trajectory);
 
-    // flags - Used by Delta
-    bool position_valid; // a[3], y
+    // Computation valid flags
+    bool position_valid; // d[3], x
     bool jacobian_valid; // jx and jtheta
+
+    Pose pose;
+    Twist twist;
+    Joints joints;
 
 private:
     void update_jacobian(const Joints &joints_pos);
 
     Dimensions dim;
     JointNames joint_names;
-    Eigen::Vector3d n[3];
-    Eigen::Vector3d n_perp[3];
-    Eigen::Matrix3d n_R[3];
 
-    Eigen::Vector3d a[3];
-    Eigen::Vector3d y; // End effector position
+    // Unit vectors towards and perpendicular to each base joint
+    Eigen::Vector3d u[3];
+    Eigen::Vector3d v[3];
+    Eigen::Matrix3d R[3];
+
+    Eigen::Vector3d d[3];
+    Eigen::Vector3d x; // End effector position
+
     // For calculating jacobian
     Eigen::Matrix3d jx, jtheta;
-    Eigen::Matrix<double, 3, 2> jA[3]; // Arbitrary names
-    Eigen::Matrix<double, 1, 2> jB[3];
-    Eigen::Matrix<double, 2, 3> jC[3];
-    Eigen::Matrix<double, 1, 3> jD[3];
 };
 
 Delta::Impl::Impl(
     const Dimensions &dim, const JointNames &joint_names):
         dim(dim), joint_names(joint_names)
 {
+    for (int i = 0; i<3; i++) {
+        joints.emplace(joint_names.theta[i], Joint());
+        joints.emplace(joint_names.alpha[i], Joint(true));
+        joints.emplace(joint_names.beta[i], Joint(true));
+        joints.emplace(joint_names.gamma[i], Joint(true));
+    }
     auto angle_axis= Eigen::AngleAxisd();
     angle_axis.axis() = Eigen::Vector3d(0, 0, 1);
     for (int i = 0; i < 3; i++) {
         angle_axis.angle() = i*M_PI*2/3;
-        n_R[i] = angle_axis.toRotationMatrix();
-        n[i] = n_R[i].col(0);
-        n_perp[i] = n_R[i].col(1);
-
-        jA[i] << n[i](0), 0,
-                 n[i](1), 0,
-                 0,       1;
-        jA[i] *= dim.l_upper;
-        jB[i] << -dim.l_upper*(dim.r_base - dim.r_ee), 0;
-        jC[i] << 0,       0,       -1,
-                 n[i](0), n[i](1),  0;
-        jC[i] *= dim.l_upper;
-        jD[i] = (dim.r_base - dim.r_ee) * n[i].transpose();
+        R[i] = angle_axis.toRotationMatrix();
+        u[i] = R[i].col(0);
+        v[i] = R[i].col(1);
     }
 
     position_valid = false;
@@ -76,33 +75,33 @@ bool Delta::Impl::update_pose(const Joints &joints, Pose &pose)
     double theta_i;
     for (int i = 0; i < 3; i++) {
         theta_i = joints.at(joint_names.theta[i]).position;
-        a[i] = n[i] * (dim.r_base + dim.l_upper*std::cos(theta_i) - dim.r_ee);
-        a[i].z() = -dim.l_upper * std::sin(theta_i);
+        d[i] = u[i] * (dim.r_base + dim.l_upper*std::cos(theta_i) - dim.r_ee);
+        d[i].z() = -dim.l_upper * std::sin(theta_i);
     }
 
     // Form a circle of possible ee position from the second
     // and third two pseudo-elbow position
-    auto centre = 0.5*(a[0] + a[1]);
-    auto u1 = (a[1]-a[0]).normalized();
-    auto u3 = u1.cross(a[2]-a[0]).normalized();
+    auto centre = 0.5*(d[0] + d[1]);
+    auto u1 = (d[1]-d[0]).normalized();
+    auto u3 = u1.cross(d[2]-d[0]).normalized();
     auto u2 = u3.cross(u1);
 
-    double w = 0.5*(a[1] - a[0]).norm();
+    double w = 0.5*(d[1] - d[0]).norm();
     double r = std::sqrt(SQ(dim.l_lower) - SQ(w));
-    double p = (a[2] - centre).dot(u1);
-    double q = (a[2] - centre).dot(u2);
+    double p = (d[2] - centre).dot(u1);
+    double q = (d[2] - centre).dot(u2);
     double t = std::hypot(p, q);
 
     double cos_alpha = (SQ(t) - SQ(w)) / (2*q*r);
     // Plus or minus. Using plus for end effector below base
     double sin_alpha = std::sqrt(1 - SQ(cos_alpha));
 
-    y = centre + r*u2*cos_alpha - r*u3*sin_alpha;
+    x = centre + r*u2*cos_alpha - r*u3*sin_alpha;
     position_valid = true;
 
-    pose.position.x = y.x();
-    pose.position.y = y.y();
-    pose.position.z = y.z();
+    pose.position.x = x.x();
+    pose.position.y = x.y();
+    pose.position.z = x.z();
     pose.orientation.w = 1/std::sqrt(2);
     pose.orientation.y = 1/std::sqrt(2);
 
@@ -111,16 +110,14 @@ bool Delta::Impl::update_pose(const Joints &joints, Pose &pose)
 
 bool Delta::Impl::update_joint_positions( const Pose &pose, Joints &joints)
 {
-    // (Not using the y saved for FK and updating dependent joints)
-    Eigen::Vector3d y;
-    y.x() = pose.position.x;
-    y.y() = pose.position.y;
-    y.z() = -pose.position.z; // Use z positive downward
+    x.x() = pose.position.x;
+    x.y() = pose.position.y;
+    x.z() = -pose.position.z; // Use z positive downward
 
     Eigen::Vector3d yi;
     for (int i = 0; i < 3; i++) {
-        // Rotate into frame where n[i] = x.
-        yi = n_R[i].transpose() * y;
+        // Rotate into frame where u[i] = x.
+        yi = R[i].transpose() * x;
         // Change to displacement between base joint and
         // end effector joint
         yi.x() += dim.r_ee - dim.r_base;
@@ -195,15 +192,15 @@ bool Delta::Impl::update_dependent_joints(Joints &joints)
     Eigen::Vector3d lower_disp;
     double theta_i, alpha_i, beta_i, gamma_i;
     for (int i = 0; i < 3; i++) {
-        lower_disp = y - a[i];
+        lower_disp = x - d[i];
 
         theta_i = joints[joint_names.theta[i]].position;
         gamma_i = std::atan2(
             -lower_disp.z(),
-            -lower_disp.dot(n[i])
+            -lower_disp.dot(u[i])
         );
         beta_i = std::asin(
-            lower_disp.dot(n_perp[i]) / dim.l_lower
+            lower_disp.dot(v[i]) / dim.l_lower
         );
         alpha_i = M_PI - theta_i - gamma_i;
 
@@ -263,17 +260,13 @@ void Delta::Impl::update_jacobian(const Joints &joints)
         update_pose(joints, pose);
     }
 
-    Eigen::Vector2d s[3];
-    double theta_i, denom;
+    double theta_i;
     for (int i = 0; i < 3; i++){
         theta_i = joints.at(joint_names.theta[i]).position;
-        s[i](0) = sin(theta_i);
-        s[i](1) = cos(theta_i);
 
         jtheta.block<1, 1>(i, i) = y.transpose()*jA[i]*s[i] + jB[i]*s[i];
         jx.block<1, 3>(i, 0) = s[i].transpose()*jC[i] + jD[i] - y.transpose();
     }
-
     jacobian_valid = true;
 }
 
@@ -282,12 +275,6 @@ void Delta::Impl::update_jacobian(const Joints &joints)
 
 Delta::Delta(const Dimensions &dim, const JointNames &joint_names):
     pimpl(new Impl(dim, joint_names)) {
-    for (int i = 0; i<3; i++) {
-        joints.emplace(joint_names.theta[i], Joint());
-        joints.emplace(joint_names.alpha[i], Joint(true));
-        joints.emplace(joint_names.beta[i], Joint(true));
-        joints.emplace(joint_names.gamma[i], Joint(true));
-    }
 }
 
 Delta::~Delta() = default;
@@ -313,15 +300,24 @@ bool Delta::calculate_trajectory(const Pose &pose, const TrajectoryConstraints &
     return pimpl->calculate_trajectory(joints, pose, constraints, trajectory);
 }
 
-// Setters
+// Getters and setters
+
+const Pose &get_pose()const{ return pimpl->pose; }
+const Twist &get_twist()const{ return pimpl->twist; }
+const Joints &get_joint_position(const std::string &name)const{
+    return pimpl->joints.at(name).position;
+}
+const Joints &get_joint_velocity(const std::string &name)const{
+    return pimpl->joints.at(name).velocity;
+}
 
 void Delta::set_pose(const Pose &pose) {
-    this->pose = pose;
+    pimpl->pose = pose;
     pimpl->position_valid = false;
     pimpl->jacobian_valid = false;
 }
 void Delta::set_twist(const Twist &twist) {
-    this->twist = twist;
+    pimpl->twist = twist;
 }
 void Delta::set_joint_position(const std::string &name, double value) {
     if (joints.find(name) != joints.end() && !joints[name].dependent) {
@@ -336,21 +332,18 @@ void Delta::set_joint_velocity(const std::string &name, double value) {
     }
 }
 
-// Get joint names
-
 const std::vector<std::string> Delta::get_independent_joint_names()const
 {
     std::vector<std::string> joint_names;
-    for (auto it = joints.begin(); it != joints.end(); it++) {
+    for (auto it = pimpl->joints.begin(); it != pimpl->joints.end(); it++) {
         if (!it->second.dependent) joint_names.push_back(it->first);
     }
     return joint_names;
 }
-
-const std::vector<std::string> Delta::get_dependent_joint_names()const 
+const std::vector<std::string> Delta::get_dependent_joint_names()const
 {
     std::vector<std::string> joint_names;
-    for (auto it = joints.begin(); it != joints.end(); it++) {
+    for (auto it = pimpl->joints.begin(); it != pimpl->joints.end(); it++) {
         if (it->second.dependent) joint_names.push_back(it->first);
     }
     return joint_names;
