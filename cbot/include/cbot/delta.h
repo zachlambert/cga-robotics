@@ -36,15 +36,6 @@ public:
     bool update_joint_velocities(); // Set joint velocities with IK
     bool update_dependent_joints();
 
-    // TODO: May make more sense to store the trajectory in the Delta object
-    // and have a function to interpolate. Also allows storing pose trajectories
-    // But, leave it as is for now. Only change if there is a good reason.
-    bool calculate_trajectory(
-        const Pose &goal,
-        const TrajectoryConstraints &constraints,
-        JointTrajectory &trajectory
-    );
-
     // Primarily just update private members.
     // However, can also invalidate calculations done (by impl), meaning
     // they are recalculated when required by an update function
@@ -55,14 +46,19 @@ public:
 
     const Pose &get_pose()const;
     const Twist &get_twist()const;
-    const Joints &get_joints()const;
+    const double &get_joint_position(const std::string &name)const;
+    const double &get_joint_velocity(const std::string &name)const;
+
+    void set_trajectory_constraints(const TrajectoryConstraints &constraints);
+    bool calculate_trajectory(const Pose &goal);
+    const JointTrajectory &get_trajectory()const;
 
     const std::vector<std::string> get_independent_joint_names()const;
     const std::vector<std::string> get_dependent_joint_names()const;
 
 private:
-    class Impl;
-    std::unique_ptr<Impl> pimpl;
+    struct Impl;
+    std::unique_ptr<Impl> pimpl; // Pointer to implementation
 };
 
 } // namespace cbot

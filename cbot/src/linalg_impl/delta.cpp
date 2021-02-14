@@ -6,47 +6,52 @@
 
 namespace cbot {
 
-// ========== Delta::Impl class definition ==========
+// ========== Delta::State class definition ==========
 
-class Delta::Impl {
-public:
+struct Delta::Impl {
     Impl(const Dimensions &dim, const JointNames &joint_names);
-    bool update_pose(const Joints &joints, Pose &pose);
-    bool update_twist(const Joints &joints, Twist &twist);
-    bool update_joint_positions(const Pose &pose, Joints &joints);
-    bool update_joint_velocities(const Twist &twist, Joints &joints);
-    bool update_dependent_joints(Joints &joints);
-    bool calculate_trajectory(const Joints &joints, const Pose &pose, const TrajectoryConstraints &constraints, JointTrajectory &trajectory);
 
-    // Computation valid flags
-    bool position_valid; // d[3], x
-    bool jacobian_valid; // jx and jtheta
-
-    Pose pose;
-    Twist twist;
-    Joints joints;
-
-private:
-    void update_jacobian(const Joints &joints_pos);
-
+    // Required constants
     Dimensions dim;
     JointNames joint_names;
 
-    // Unit vectors towards and perpendicular to each base joint
-    Eigen::Vector3d u[3];
-    Eigen::Vector3d v[3];
-    Eigen::Matrix3d R[3];
+    // Required state
+    Pose pose;
+    Twist twist;
+    Joints joints;
+    TrajectoryConstraints constraints;
+    JointTrajectory trajectory;
 
+    // Required functions
+    bool update_pose();
+    bool update_twist();
+    bool update_joint_positions();
+    bool update_joint_velocities();
+    bool update_dependent_joints();
+    bool calculate_trajectory(const Pose &goal);
+
+    // Implementation specific constants
+    Eigen::Vector3d u[3]; // Unit vector to each base joint
+    Eigen::Vector3d v[3]; // v[i] perpendicular to u[i]
+    Eigen::Matrix3d R[3]; // R[i] rotates x into frame aligned with upper link
+
+    // Implementation specific state and validity flags
+    Eigen::Vector3d x;
     Eigen::Vector3d d[3];
-    Eigen::Vector3d x; // End effector position
-
-    // For calculating jacobian
     Eigen::Matrix3d jx, jtheta;
+    bool x_valid;
+    bool di_valid;
+    bool jacobian_valid;
+
+    // Implementation specific function
+    void update_x();
+    void update_di();
+    void update_jacobian();
 };
 
-Delta::Impl::Impl(
-    const Dimensions &dim, const JointNames &joint_names):
-        dim(dim), joint_names(joint_names)
+
+Delta::Impl::Impl(const Dimensions &dim, const JointNames &joint_names):
+    dim(dim), joint_names(joint_names)
 {
     for (int i = 0; i<3; i++) {
         joints.emplace(joint_names.theta[i], Joint());
@@ -63,14 +68,22 @@ Delta::Impl::Impl(
         v[i] = R[i].col(1);
     }
 
-    position_valid = false;
+    x_valid = false;
     jacobian_valid = false;
+
+    // Set pose orientation to a constant value
+    pose.orientation.w = 1/std::sqrt(2);
+    pose.orientation.y = 1/std::sqrt(2);
+
+    // Angular velocity always zero
+    twist.angular.x = 0;
+    twist.angular.y = 0;
+    twist.angular.z = 0;
 }
 
+// ========= Required functions ==========
 
-// ========= Delta::Impl kinematics methods =========
-
-bool Delta::Impl::update_pose(const Joints &joints, Pose &pose)
+bool Delta::Impl::update_pose()
 {
     double theta_i;
     for (int i = 0; i < 3; i++) {
@@ -78,6 +91,7 @@ bool Delta::Impl::update_pose(const Joints &joints, Pose &pose)
         d[i] = u[i] * (dim.r_base + dim.l_upper*std::cos(theta_i) - dim.r_ee);
         d[i].z() = -dim.l_upper * std::sin(theta_i);
     }
+    di_valid = true;
 
     // Form a circle of possible ee position from the second
     // and third two pseudo-elbow position
@@ -97,38 +111,32 @@ bool Delta::Impl::update_pose(const Joints &joints, Pose &pose)
     double sin_alpha = std::sqrt(1 - SQ(cos_alpha));
 
     x = centre + r*u2*cos_alpha - r*u3*sin_alpha;
-    position_valid = true;
+    x_valid = true;
 
     pose.position.x = x.x();
     pose.position.y = x.y();
     pose.position.z = x.z();
-    pose.orientation.w = 1/std::sqrt(2);
-    pose.orientation.y = 1/std::sqrt(2);
 
     return true;
 }
 
-bool Delta::Impl::update_joint_positions( const Pose &pose, Joints &joints)
+bool Delta::Impl::update_joint_positions()
 {
-    x.x() = pose.position.x;
-    x.y() = pose.position.y;
-    x.z() = -pose.position.z; // Use z positive downward
-
-    Eigen::Vector3d yi;
+    Eigen::Vector3d xi;
     for (int i = 0; i < 3; i++) {
         // Rotate into frame where u[i] = x.
-        yi = R[i].transpose() * x;
+        xi = R[i].transpose() * x;
         // Change to displacement between base joint and
         // end effector joint
-        yi.x() += dim.r_ee - dim.r_base;
+        xi.x() += dim.r_ee - dim.r_base;
 
-        double k = (SQ(dim.l_lower) - SQ(dim.l_upper) - yi.squaredNorm()) / (-2*dim.l_upper);
+        double k = (SQ(dim.l_lower) - SQ(dim.l_upper) - xi.squaredNorm()) / (-2*dim.l_upper);
 
-        double P = yi.z();
-        double Q = yi.x();
+        double P = -xi.z(); // Make it positive downard
+        double Q = xi.x();
 
-        double R = std::hypot(yi.x(), yi.z());
-        double alpha = std::atan2(yi.x(), yi.z());
+        double R = std::hypot(xi.x(), xi.z());
+        double alpha = std::atan2(xi.x(), -xi.z());
 
         if (std::fabs(k/R) > 1) return false;
 
@@ -145,10 +153,10 @@ bool Delta::Impl::update_joint_positions( const Pose &pose, Joints &joints)
     return true;
 }
 
-bool Delta::Impl::update_twist(const Joints &joints, Twist &twist)
+bool Delta::Impl::update_twist()
 {
     if (!jacobian_valid) {
-        update_jacobian(joints);
+        update_jacobian();
     }
     Eigen::Vector3d theta_vel;
     for (int i = 0; i < 3; i++) {
@@ -159,17 +167,14 @@ bool Delta::Impl::update_twist(const Joints &joints, Twist &twist)
     twist.linear.x = vel[0];
     twist.linear.y = vel[1];
     twist.linear.z = vel[2];
-    twist.angular.x = 0;
-    twist.angular.y = 0;
-    twist.angular.z = 0;
 
     return true;
 }
 
-bool Delta::Impl::update_joint_velocities(const Twist &twist, Joints &joints)
+bool Delta::Impl::update_joint_velocities()
 {
     if (!jacobian_valid) {
-        update_jacobian(joints);
+        update_jacobian();
     }
 
     Eigen::Vector3d vel(twist.linear.x, twist.linear.y, twist.linear.z);
@@ -182,11 +187,10 @@ bool Delta::Impl::update_joint_velocities(const Twist &twist, Joints &joints)
     return true;
 }
 
-bool Delta::Impl::update_dependent_joints(Joints &joints)
+bool Delta::Impl::update_dependent_joints()
 {
-    if (!position_valid) {
-        Pose pose; // unused
-        update_pose(joints, pose);
+    if (!x_valid) {
+        update_pose();
     }
 
     Eigen::Vector3d lower_disp;
@@ -211,24 +215,22 @@ bool Delta::Impl::update_dependent_joints(Joints &joints)
     return true;
 }
 
-bool Delta::Impl::calculate_trajectory(const Joints &joints, const Pose &goal, const TrajectoryConstraints &constraints, JointTrajectory &trajectory)
+// Trajectory functions
+
+bool Delta::Impl::calculate_trajectory(const Pose &goal)
 {
-    if (!position_valid) {
-        Pose pose; // unused
-        update_pose(joints, pose);
+    if (!x_valid) {
+        update_pose();
     }
 
     constexpr double delta_t = 1.0/20;
 
-    Eigen::Vector3d start_y = y;
-    Eigen::Vector3d goal_y(goal.position.x, goal.position.y, goal.position.z);
-    double time = ceil((goal_y - start_y).norm() / constraints.max_linear_speed);
+    Eigen::Vector3d start_x = x;
+    Eigen::Vector3d goal_x(goal.position.x, goal.position.y, goal.position.z);
+    double time = ceil((goal_x - start_x).norm() / constraints.max_linear_speed);
 
     std::size_t N = ceil(time / delta_t);
 
-    Eigen::Vector3d current_y;
-    Pose current_pose;
-    Joints current_joints;
     trajectory.points.resize(N);
     trajectory.names = joint_names.theta;
     for (std::size_t i = 0; i < N; i++) {
@@ -238,99 +240,116 @@ bool Delta::Impl::calculate_trajectory(const Joints &joints, const Pose &goal, c
         trajectory.points[i].positions.resize(joint_names.theta.size());
 
         // For now just fit a linear trajectory
-        current_y = start_y + u * (goal_y - start_y);
-        current_pose.position.x = current_y.x();
-        current_pose.position.y = current_y.y();
-        current_pose.position.z = current_y.z();
-        if (!update_joint_positions(current_pose, current_joints)) {
+        x = start_x + u * (goal_x - start_x);
+        if (!update_joint_positions()) {
             return false;
         }
 
         for (std::size_t j = 0; j < joint_names.theta.size(); j++) {
-            trajectory.points[i].positions[j] = current_joints.at(joint_names.theta[j]).position;
+            trajectory.points[i].positions[j] = joints.at(joint_names.theta[j]).position;
         }
     }
     return true;
 }
 
-void Delta::Impl::update_jacobian(const Joints &joints)
+// Implementation specific functions
+
+void Delta::Impl::update_jacobian()
 {
-    if (!position_valid) {
-        Pose pose; // Unused
-        update_pose(joints, pose);
+    if (!x_valid) {
+        update_pose();
     }
 
     double theta_i;
+    Eigen::Vector3d n, v_hat;
     for (int i = 0; i < 3; i++){
         theta_i = joints.at(joint_names.theta[i]).position;
-
-        jtheta.block<1, 1>(i, i) = y.transpose()*jA[i]*s[i] + jB[i]*s[i];
-        jx.block<1, 3>(i, 0) = s[i].transpose()*jC[i] + jD[i] - y.transpose();
+        n = (x - d[i]).normalized();
+        v_hat = - std::sin(theta_i)*u[i] - std::cos(theta_i)*Eigen::Vector3d(0,0,1);
+        jx.block<1, 3>(i, 0) = n;
+        jtheta(i, i) = n.dot(v_hat);
     }
     jacobian_valid = true;
 }
 
+void Delta::Impl::update_di()
+{
+    double theta_i;
+    for (int i = 0; i < 3; i++) {
+        theta_i = joints.at(joint_names.theta[i]).position;
+        d[i] = u[i] * (dim.r_base + dim.l_upper*std::cos(theta_i) - dim.r_ee);
+        d[i].z() = -dim.l_upper * std::sin(theta_i);
+    }
+}
 
-// ========== Pimpl stuff ==========
+
+// Constructor
+
+// ========= Pimpl stuff ==========
 
 Delta::Delta(const Dimensions &dim, const JointNames &joint_names):
-    pimpl(new Impl(dim, joint_names)) {
-}
+    pimpl(new Impl(dim, joint_names)) {}
 
 Delta::~Delta() = default;
 Delta::Delta(Delta&&) = default;
 Delta& Delta::operator=(Delta&&) = default;
 
-bool Delta::update_pose() {
-    return pimpl->update_pose(joints, pose);
-}
-bool Delta::update_twist() {
-    return pimpl->update_twist(joints, twist);
-}
-bool Delta::update_joint_positions() {
-    return pimpl->update_joint_positions(pose, joints);
-}
-bool Delta::update_joint_velocities() {
-    return pimpl->update_joint_velocities(twist, joints);
-}
-bool Delta::update_dependent_joints() {
-    return pimpl->update_dependent_joints(joints);
-}
-bool Delta::calculate_trajectory(const Pose &pose, const TrajectoryConstraints &constraints, JointTrajectory &trajectory) {
-    return pimpl->calculate_trajectory(joints, pose, constraints, trajectory);
-}
+bool Delta::update_pose() { return pimpl->update_pose(); }
+bool Delta::update_twist() { return pimpl->update_twist(); }
+bool Delta::update_joint_positions() { return pimpl->update_joint_positions(); }
+bool Delta::update_joint_velocities() { return pimpl->update_joint_velocities(); }
+bool Delta::update_dependent_joints() { return pimpl->update_dependent_joints(); }
+bool Delta::calculate_trajectory(const Pose &goal) { return pimpl->calculate_trajectory(goal); }
 
-// Getters and setters
+// Set trajectory constraints and get trajectory
 
-const Pose &get_pose()const{ return pimpl->pose; }
-const Twist &get_twist()const{ return pimpl->twist; }
-const Joints &get_joint_position(const std::string &name)const{
-    return pimpl->joints.at(name).position;
-}
-const Joints &get_joint_velocity(const std::string &name)const{
-    return pimpl->joints.at(name).velocity;
-}
+// Setters
 
 void Delta::set_pose(const Pose &pose) {
     pimpl->pose = pose;
-    pimpl->position_valid = false;
+    pimpl->x.x() = pose.position.x;
+    pimpl->x.y() = pose.position.y;
+    pimpl->x.z() = pose.position.z;
+    pimpl->x_valid = true;
+    pimpl->di_valid = false;
     pimpl->jacobian_valid = false;
 }
 void Delta::set_twist(const Twist &twist) {
     pimpl->twist = twist;
 }
 void Delta::set_joint_position(const std::string &name, double value) {
-    if (joints.find(name) != joints.end() && !joints[name].dependent) {
-        joints[name].position = value;
+    if (pimpl->joints.find(name) != pimpl->joints.end() && !pimpl->joints[name].dependent) {
+        pimpl->joints[name].position = value;
     }
-    pimpl->position_valid = false;
+    pimpl->x_valid = false;
+    pimpl->di_valid = false;
     pimpl->jacobian_valid = false;
 }
 void Delta::set_joint_velocity(const std::string &name, double value) {
-    if (joints.find(name) != joints.end() && !joints[name].dependent) {
-        joints[name].velocity = value;
+    if (pimpl->joints.find(name) != pimpl->joints.end() && !pimpl->joints[name].dependent) {
+        pimpl->joints[name].velocity = value;
     }
 }
+void Delta::set_trajectory_constraints(const TrajectoryConstraints &constraints){
+    pimpl->constraints = constraints;
+}
+
+// Getters
+
+const Pose &Delta::get_pose()const{ return pimpl->pose; }
+const Twist &Delta::get_twist()const{ return pimpl->twist; }
+const double &Delta::get_joint_position(const std::string &name)const{
+    return pimpl->joints.at(name).position;
+}
+const double &Delta::get_joint_velocity(const std::string &name)const{
+    return pimpl->joints.at(name).velocity;
+}
+const JointTrajectory &Delta::get_trajectory()const{
+    return pimpl->trajectory;
+}
+
+
+// Get joint names
 
 const std::vector<std::string> Delta::get_independent_joint_names()const
 {

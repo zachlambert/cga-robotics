@@ -25,6 +25,8 @@ int main()
 
     cbot::Delta delta(dim, joint_names);
 
+    auto independent_joints = delta.get_independent_joint_names();
+
     delta.set_joint_position("theta_1", 0.5);
     delta.set_joint_position("theta_2", 0.7);
     delta.set_joint_position("theta_3", -0.1);
@@ -43,10 +45,8 @@ int main()
     pose.position.z = -0.2195;
     delta.set_pose(pose);
     if (delta.update_joint_positions()) {
-        for (auto it = delta.get_joints().begin(); it!=delta.get_joints().end(); it++) {
-            if (!it->second.dependent) {
-                std::cout << it->first << " = " << it->second.position << std::endl;
-            }
+        for (const std::string &name: independent_joints) {
+            std::cout << name << " = " << delta.get_joint_position(name) << std::endl;
         }
     } else {
         std::cerr << "Failed to update joint positions." << std::endl;
@@ -57,10 +57,12 @@ int main()
     goal.position.x = 0.2;
     goal.position.y = 0.1;
     goal.position.z = -0.3;
-    cbot::JointTrajectory trajectory;
     cbot::TrajectoryConstraints constraints;
     constraints.max_linear_speed = 0.1;
-    delta.calculate_trajectory(goal, constraints, trajectory);
+    delta.set_trajectory_constraints(constraints);
+    delta.calculate_trajectory(goal);
+
+    auto trajectory = delta.get_trajectory();
     for (std::size_t i = 0; i < trajectory.points.size(); i++) {
         std::cout << trajectory.points[i].time << ": (";
         for (std::size_t j = 0; j < trajectory.names.size(); j++) {
