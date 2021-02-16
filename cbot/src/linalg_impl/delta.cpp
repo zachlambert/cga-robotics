@@ -265,7 +265,7 @@ void Delta::Impl::update_jacobian()
     for (int i = 0; i < 3; i++){
         theta_i = joints.at(joint_names.theta[i]).position;
         n = (x - d[i]).normalized();
-        v_hat = - std::sin(theta_i)*u[i] - std::cos(theta_i)*Eigen::Vector3d(0,0,1);
+        v_hat = -dim.l_lower*(std::sin(theta_i)*u[i] + std::cos(theta_i)*Eigen::Vector3d(0,0,1));
         jx.block<1, 3>(i, 0) = n;
         jtheta(i, i) = n.dot(v_hat);
     }
