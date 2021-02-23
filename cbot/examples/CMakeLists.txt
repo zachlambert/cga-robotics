@@ -7,3 +7,5 @@ endfunction()
 
 add_example(delta)
 # add_example(delta_benchmark)
+
+add_example(serial)

@@ -10,8 +10,22 @@ namespace cbot {
 
 class Serial: public Robot {
 public:
+    // Can make alpha or theta the variable
     struct DHParameter {
-        double a, alpha, d;
+        double a, alpha, d, theta;
+        double q0;
+        bool fixed_alpha;
+        DHParameter(double a, double d, double fixed_angle, double q0=0, bool fixed_alpha=true):
+            a(a), alpha(fixed_alpha ? fixed_angle : 0),
+            d(d), theta(fixed_alpha ? 0 : fixed_angle),
+            q0(q0), fixed_alpha(fixed_alpha) {}
+        void set_q(double q){
+            if (fixed_alpha) {
+                theta = q0 + q;
+            } else {
+                alpha = q0 + q;
+            }
+        }
     };
     struct Dimensions {
         std::vector<DHParameter> dh_parameters;

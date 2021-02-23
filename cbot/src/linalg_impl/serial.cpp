@@ -72,25 +72,25 @@ Eigen::Quaterniond rotation_to_quaternion(const Eigen::Matrix3d &R)
     return result;
 }
 
-Eigen::Isometry3d get_dh_transform(const Serial::DHParameter &dh, double q)
+Eigen::Isometry3d get_dh_transform(const Serial::DHParameter &dh)
 {
-    return Eigen::Translation3d(0, 0, dh.d)
-        * Eigen::AngleAxisd(q, Eigen::Vector3d::UnitZ())
-        * Eigen::Translation3d(dh.a, 0, 0)
-        * Eigen::AngleAxisd(dh.alpha, Eigen::Vector3d::UnitX());
+    return Eigen::Translation3d(dh.a, 0, 0)
+        * Eigen::AngleAxisd(dh.alpha, Eigen::Vector3d::UnitX())
+        * Eigen::Translation3d(0, 0, dh.d)
+        * Eigen::AngleAxisd(dh.theta, Eigen::Vector3d::UnitZ());
 }
 
 
 bool Serial::Impl::update_pose()
 {
-    double q_i;
     for (std::size_t i = 0; i < joint_names.size(); i++) {
-        transforms[i] = get_dh_transform(
-            dim.dh_parameters[i], joints[joint_names[i]].position);
+        dim.dh_parameters[i].set_q(joints[joint_names[i]].position);
+        transforms[i] = get_dh_transform(dim.dh_parameters[i]);
     }
 
     // ee_transform = transform[0] * ... * transform[N]
-    for (std::size_t i = 0; i < transforms.size(); i++) {
+    ee_transform = transforms[0];
+    for (std::size_t i = 1; i < transforms.size(); i++) {
         ee_transform = ee_transform * transforms[i];
     }
 
@@ -124,7 +124,7 @@ bool Serial::Impl::update_twist()
     }
 
     Eigen::VectorXd theta_vel(joint_names.size());
-    for (int i = 0; i < 3; i++) {
+    for (std::size_t i = 0; i < joint_names.size(); i++) {
         theta_vel[i] = joints.at(joint_names[i]).velocity;
     }
     Eigen::Matrix<double, 6, 1> vel = jacobian * theta_vel;
@@ -205,7 +205,6 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
 void Serial::Impl::update_jacobian()
 {
     if (!transforms_valid) update_pose();
-    double q_i;
     for (std::size_t i = 0; i < joint_names.size(); i++) {
         Eigen::Vector3d pos = transforms[i].translation();
         Eigen::Matrix3d rotation = transforms[i].rotation();
@@ -219,7 +218,11 @@ void Serial::Impl::update_jacobian()
     }
 
     for (std::size_t i = 0; i < joint_names.size(); i++) {
-        jacobian.block<6,1>(i,0) << 0, 0, 1, 0, 0, 0;
+        if (dim.dh_parameters[i].fixed_alpha) {
+            jacobian.block<6,1>(i,0) << 0, 0, 1, 0, 0, 0;
+        } else {
+            jacobian.block<6,1>(i,0) << 1, 0, 0, 0, 0, 0;
+        }
         for (std::size_t j = i+1; j < joint_names.size(); j++) {
             jacobian.block<6,1>(i,0) = velocity_transforms[j]*jacobian.block<6,1>(i,0);
         }
