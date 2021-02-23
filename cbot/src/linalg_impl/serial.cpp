@@ -30,7 +30,7 @@ struct Serial::Impl {
     bool calculate_trajectory(const Pose &goal);
 
     // Implementation specific constants
-    // TODO
+    // None
 
     // Implementation specific state and validity flags
     Eigen::Isometry3d ee_transform;
@@ -41,7 +41,6 @@ struct Serial::Impl {
     bool jacobian_valid;
 
     // Implementation specific function
-    void update_transforms();
     void update_jacobian();
 };
 
@@ -58,7 +57,7 @@ Serial::Impl::Impl(const Dimensions &dim, const JointNames &joint_names):
     transforms_valid = false;
     jacobian_valid = false;
 
-    jacobian = Eigen::Matrix<double, 6, Eigen::Dynamic>(joint_names.size());
+    jacobian = Eigen::Matrix<double, 6, Eigen::Dynamic>(6, joint_names.size());
 }
 
 // ========= Required functions ==========
@@ -75,10 +74,10 @@ Eigen::Quaterniond rotation_to_quaternion(const Eigen::Matrix3d &R)
 
 Eigen::Isometry3d get_dh_transform(const Serial::DHParameter &dh, double q)
 {
-    return Eigen::AngleAxisd(dh.alpha, Eigen::Vector3f::UnitX())
-        * Eigen::Translation3d(dh.a, 0 , 0)
+    return Eigen::Translation3d(0, 0, dh.d)
         * Eigen::AngleAxisd(q, Eigen::Vector3d::UnitZ())
-        * Eigen::Translation3d(0, 0, dh.d);
+        * Eigen::Translation3d(dh.a, 0, 0)
+        * Eigen::AngleAxisd(dh.alpha, Eigen::Vector3d::UnitX());
 }
 
 
@@ -128,11 +127,11 @@ bool Serial::Impl::update_twist()
     for (int i = 0; i < 3; i++) {
         theta_vel[i] = joints.at(joint_names[i]).velocity;
     }
-    Eigen::Vector3d vel = jacobian * theta_vel;
+    Eigen::Matrix<double, 6, 1> vel = jacobian * theta_vel;
 
     twist.angular.x = vel[0];
-    twist.angular.y = vel[0];
-    twist.angular.z = vel[0];
+    twist.angular.y = vel[1];
+    twist.angular.z = vel[2];
     twist.linear.x = vel[3];
     twist.linear.y = vel[4];
     twist.linear.z = vel[5];
@@ -205,7 +204,7 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
 
 void Serial::Impl::update_jacobian()
 {
-    if (!transforms_valid) update_transforms();
+    if (!transforms_valid) update_pose();
     double q_i;
     for (std::size_t i = 0; i < joint_names.size(); i++) {
         Eigen::Vector3d pos = transforms[i].translation();
@@ -245,7 +244,7 @@ bool Serial::update_pose() { return pimpl->update_pose(); }
 bool Serial::update_twist() { return pimpl->update_twist(); }
 bool Serial::update_joint_positions() { return pimpl->update_joint_positions(); }
 bool Serial::update_joint_velocities() { return pimpl->update_joint_velocities(); }
-bool Serial::update_dependent_joints() { return true; // Not required }
+bool Serial::update_dependent_joints() { return true; } // Not required
 bool Serial::calculate_trajectory(const Pose &goal) { return pimpl->calculate_trajectory(goal); }
 
 // Set trajectory constraints and get trajectory
@@ -254,11 +253,17 @@ bool Serial::calculate_trajectory(const Pose &goal) { return pimpl->calculate_tr
 
 void Serial::set_pose(const Pose &pose) {
     pimpl->pose = pose;
-    pimpl->x.x() = pose.position.x;
-    pimpl->x.y() = pose.position.y;
-    pimpl->x.z() = pose.position.z;
-    pimpl->x_valid = true;
-    pimpl->di_valid = false;
+    pimpl->ee_transform =
+        Eigen::Translation3d(
+            pose.position.x,
+            pose.position.y,
+            pose.position.z)
+        * Eigen::Quaterniond(
+            pose.orientation.w,
+            pose.orientation.x,
+            pose.orientation.y,
+            pose.orientation.z);
+    pimpl->transforms_valid = false;
     pimpl->jacobian_valid = false;
 }
 void Serial::set_twist(const Twist &twist) {
@@ -268,8 +273,7 @@ void Serial::set_joint_position(const std::string &name, double value) {
     if (pimpl->joints.find(name) != pimpl->joints.end() && !pimpl->joints[name].dependent) {
         pimpl->joints[name].position = value;
     }
-    pimpl->x_valid = false;
-    pimpl->di_valid = false;
+    pimpl->transforms_valid = false;
     pimpl->jacobian_valid = false;
 }
 void Serial::set_joint_velocity(const std::string &name, double value) {
