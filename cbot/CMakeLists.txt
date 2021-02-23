@@ -4,11 +4,13 @@ add_compile_options(-std=c++11)
 
 set(USE_CGA FALSE)
 
-set(SOURCES src/types.cpp)
+set(SOURCES src/cbot.cpp)
 if(USE_CGA)
     list(APPEND SOURCES src/cga_impl/delta.cpp)
+    # list(APPEND SOURCES src/cga_impl/serial.cpp)
 else()
     list(APPEND SOURCES src/linalg_impl/delta.cpp)
+    list(APPEND SOURCES src/linalg_impl/serial.cpp)
 endif()
 
 add_library(cbot SHARED ${SOURCES})

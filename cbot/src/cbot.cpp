@@ -1,4 +1,4 @@
-#include "cbot/types.h"
+#include "cbot/cbot.h"
 
 namespace cbot {
 

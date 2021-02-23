@@ -4,11 +4,11 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "cbot/types.h"
+#include "cbot/cbot.h"
 
 namespace cbot {
 
-class Delta {
+class Delta: public Robot {
 public:
     struct Dimensions {
         double r_base, r_ee; // Base and end effector radius
@@ -55,6 +55,7 @@ public:
 
     const std::vector<std::string> get_independent_joint_names()const;
     const std::vector<std::string> get_dependent_joint_names()const;
+    bool is_parallel()const{ return true; }
 
 private:
     struct Impl;
