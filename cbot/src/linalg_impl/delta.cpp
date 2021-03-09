@@ -29,6 +29,7 @@ struct Delta::Impl {
     bool update_joint_velocities();
     bool update_dependent_joints();
     bool calculate_trajectory(const Pose &goal);
+    bool is_valid(constraint_t position_constraint, constraint_t velocity_constraint);
 
     // Implementation specific constants
     Eigen::Vector3d u[3]; // Unit vector to each base joint
@@ -252,6 +253,13 @@ bool Delta::Impl::calculate_trajectory(const Pose &goal)
     return true;
 }
 
+// Check state validity
+
+bool Delta::Impl::is_valid(constraint_t position_constraint, constraint_t velocity_constraint)
+{
+    return true;
+}
+
 // Implementation specific functions
 
 void Delta::Impl::update_jacobian()
@@ -300,6 +308,9 @@ bool Delta::update_joint_positions() { return pimpl->update_joint_positions(); }
 bool Delta::update_joint_velocities() { return pimpl->update_joint_velocities(); }
 bool Delta::update_dependent_joints() { return pimpl->update_dependent_joints(); }
 bool Delta::calculate_trajectory(const Pose &goal) { return pimpl->calculate_trajectory(goal); }
+bool Delta::is_valid(constraint_t position_constraint, constraint_t velocity_constraint) {
+    return pimpl->is_valid(position_constraint, velocity_constraint);
+}
 
 // Set trajectory constraints and get trajectory
 

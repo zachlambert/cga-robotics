@@ -28,6 +28,7 @@ struct Serial::Impl {
     bool update_joint_positions();
     bool update_joint_velocities();
     bool calculate_trajectory(const Pose &goal);
+    bool is_valid(constraint_t position_constraint, constraint_t velocity_constraint);
 
     // Implementation specific constants
     // None
@@ -200,33 +201,53 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
     return true;
 }
 
+// Check state validity
+
+bool Serial::Impl::is_valid(constraint_t position_constraint, constraint_t velocity_constraint)
+{
+    return true;
+}
+
 // Implementation specific functions
 
 void Serial::Impl::update_jacobian()
 {
     if (!transforms_valid) update_pose();
+    std::cout << "Updating jacobian" << std::endl;
     for (std::size_t i = 0; i < joint_names.size(); i++) {
         Eigen::Vector3d pos = transforms[i].translation();
         Eigen::Matrix3d rotation = transforms[i].rotation();
-        velocity_transforms[i].block<3,3>(0,0) = rotation;
-        velocity_transforms[i].block<3,3>(3,3) = rotation;
+        velocity_transforms[i].block<3,3>(0,0) = rotation.transpose();
+        velocity_transforms[i].block<3,3>(3,3) = rotation.transpose();
         Eigen::Matrix3d skew_matrix;
         skew_matrix << 0, -pos.z(), pos.y(),
                        pos.z(), 0, -pos.x(),
                        -pos.y(), pos.x(), 0;
-        velocity_transforms[i].block<3,3>(3,0) = skew_matrix * rotation;
+        velocity_transforms[i].block<3,3>(3,0) = -rotation.transpose() * skew_matrix;
     }
 
     for (std::size_t i = 0; i < joint_names.size(); i++) {
         if (dim.dh_parameters[i].fixed_alpha) {
-            jacobian.block<6,1>(i,0) << 0, 0, 1, 0, 0, 0;
+            jacobian.block<6,1>(0,i) << 0, 0, 1, 0, 0, 0;
         } else {
-            jacobian.block<6,1>(i,0) << 1, 0, 0, 0, 0, 0;
+            jacobian.block<6,1>(0,i) <<
+                std::cos(dim.dh_parameters[i].theta),
+                -std::sin(dim.dh_parameters[i].theta),
+                0,
+                -dim.dh_parameters[i].d*std::sin(dim.dh_parameters[i].theta),
+                -dim.dh_parameters[i].d*std::cos(dim.dh_parameters[i].theta),
+                0;
         }
         for (std::size_t j = i+1; j < joint_names.size(); j++) {
-            jacobian.block<6,1>(i,0) = velocity_transforms[j]*jacobian.block<6,1>(i,0);
+            jacobian.block<6,1>(0,i) = velocity_transforms[j]*jacobian.block<6,1>(0,i);
         }
     }
+
+    // Refer back to the root frame
+    jacobian.block<3,6>(0,0) = ee_transform.rotation()*jacobian.block<3,6>(0,0);
+    jacobian.block<3,6>(3,0) = ee_transform.rotation()*jacobian.block<3,6>(3,0);
+
+    std::cout << "Jacobian:" << std::endl << jacobian << std::endl;
 
     jacobian_valid = true;
 }
@@ -249,6 +270,9 @@ bool Serial::update_joint_positions() { return pimpl->update_joint_positions(); 
 bool Serial::update_joint_velocities() { return pimpl->update_joint_velocities(); }
 bool Serial::update_dependent_joints() { return true; } // Not required
 bool Serial::calculate_trajectory(const Pose &goal) { return pimpl->calculate_trajectory(goal); }
+bool Serial::is_valid(constraint_t position_constraint, constraint_t velocity_constraint) {
+    return pimpl->is_valid(position_constraint, velocity_constraint);
+}
 
 // Set trajectory constraints and get trajectory
 
