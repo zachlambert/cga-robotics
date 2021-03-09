@@ -49,7 +49,7 @@ public:
     const double &get_joint_position(const std::string &name)const;
     const double &get_joint_velocity(const std::string &name)const;
 
-    virtual bool is_valid(constraint_t position_constraint=nullptr, constraint_t velocity_constraint=nullptr);
+    bool is_valid(constraint_t constraint=nullptr);
 
     void set_trajectory_constraints(const TrajectoryConstraints &constraints);
     bool calculate_trajectory(const Pose &goal);

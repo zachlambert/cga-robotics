@@ -1,5 +1,5 @@
 #!/bin/sh
 mkdir -p build
 cd build
-cmake ..
+cmake .. -DUSE_CGA=TRUE
 cmake --build .

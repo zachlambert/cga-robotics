@@ -107,8 +107,8 @@ public:
     virtual const double &get_joint_velocity(const std::string &name)const=0;
 
     // Check if the current state is valid
-    typedef bool (*constraint_t)(const std::vector<std::string> &names, const std::vector<double> &positions);
-    virtual bool is_valid(constraint_t position_constraint=nullptr, constraint_t velocity_constraint=nullptr)=0;
+    typedef bool (*constraint_t)(const Joints &joints);
+    virtual bool is_valid(constraint_t constraint=nullptr)=0;
 
     virtual void set_trajectory_constraints(const TrajectoryConstraints &constraints)=0;
     virtual bool calculate_trajectory(const Pose &goal)=0;

@@ -29,7 +29,7 @@ struct Delta::Impl {
     bool update_joint_velocities();
     bool update_dependent_joints();
     bool calculate_trajectory(const Pose &goal);
-    bool is_valid(constraint_t position_constraint, constraint_t velocity_constraint);
+    bool is_valid(constraint_t constraint);
 
     // Implementation specific constants
     Eigen::Vector3d u[3]; // Unit vector to each base joint
@@ -46,7 +46,6 @@ struct Delta::Impl {
 
     // Implementation specific function
     void update_x();
-    void update_di();
     void update_jacobian();
 };
 
@@ -255,8 +254,15 @@ bool Delta::Impl::calculate_trajectory(const Pose &goal)
 
 // Check state validity
 
-bool Delta::Impl::is_valid(constraint_t position_constraint, constraint_t velocity_constraint)
+bool Delta::Impl::is_valid(constraint_t constraint)
 {
+    if (constraint != nullptr && !constraint(joints)) return false;
+
+    if (!jacobian_valid) update_jacobian();
+    for (int i = 0; i < 3; i++) {
+        if (std::fabs(jtheta(i,i)) < 0.2) return false;
+    }
+
     return true;
 }
 
@@ -280,17 +286,6 @@ void Delta::Impl::update_jacobian()
     jacobian_valid = true;
 }
 
-void Delta::Impl::update_di()
-{
-    double theta_i;
-    for (int i = 0; i < 3; i++) {
-        theta_i = joints.at(joint_names.theta[i]).position;
-        d[i] = u[i] * (dim.r_base + dim.l_upper*std::cos(theta_i) - dim.r_ee);
-        d[i].z() = -dim.l_upper * std::sin(theta_i);
-    }
-}
-
-
 // Constructor
 
 // ========= Pimpl stuff ==========
@@ -308,9 +303,7 @@ bool Delta::update_joint_positions() { return pimpl->update_joint_positions(); }
 bool Delta::update_joint_velocities() { return pimpl->update_joint_velocities(); }
 bool Delta::update_dependent_joints() { return pimpl->update_dependent_joints(); }
 bool Delta::calculate_trajectory(const Pose &goal) { return pimpl->calculate_trajectory(goal); }
-bool Delta::is_valid(constraint_t position_constraint, constraint_t velocity_constraint) {
-    return pimpl->is_valid(position_constraint, velocity_constraint);
-}
+bool Delta::is_valid(constraint_t constraint) { return pimpl->is_valid(constraint); }
 
 // Set trajectory constraints and get trajectory
 
