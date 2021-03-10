@@ -1,5 +1,8 @@
 #include "cbot/serial.h"
 
+#include "cga/cga.h"
+#include "cga/geometry.h"
+#include "cga/transform.h"
 #include <Eigen/Dense>
 
 #define SQ(x) (x*x)
@@ -34,9 +37,8 @@ struct Serial::Impl {
     // None
 
     // Implementation specific state and validity flags
-    Eigen::Isometry3d ee_transform;
-    std::vector<Eigen::Isometry3d> transforms;
-    std::vector<Eigen::Matrix<double, 6, 6>> velocity_transforms;
+    cga::Versor ee_transform;
+    std::vector<cga::Versor> transforms;
     Eigen::Matrix<double, 6, Eigen::Dynamic> jacobian;
     bool transforms_valid;
     bool jacobian_valid;
@@ -51,8 +53,7 @@ Serial::Impl::Impl(const Dimensions &dim, const JointNames &joint_names):
 {
     for (std::size_t i = 0; i < joint_names.size(); i++) {
         joints.emplace(joint_names[i], Joint());
-        transforms.push_back(Eigen::Isometry3d());
-        velocity_transforms.push_back(Eigen::Matrix<double, 6, 6>());
+        transforms.push_back(cga::Versor());
     }
 
     transforms_valid = false;
@@ -63,22 +64,12 @@ Serial::Impl::Impl(const Dimensions &dim, const JointNames &joint_names):
 
 // ========= Required functions ==========
 
-Eigen::Quaterniond rotation_to_quaternion(const Eigen::Matrix3d &R)
+cga::Versor get_dh_transform(const Serial::DHParameter &dh)
 {
-    Eigen::Quaterniond result;
-    result.w() = 0.5*std::sqrt(1 + R(0,0) + R(1,1) + R(2,2));
-    result.x() = 0.25*(R(2,1)-R(1,2))/result.w();
-    result.y() = 0.25*(R(0,2)-R(2,0))/result.w();
-    result.z() = 0.25*(R(1,0)-R(0,1))/result.w();
-    return result;
-}
-
-Eigen::Isometry3d get_dh_transform(const Serial::DHParameter &dh)
-{
-    return Eigen::Translation3d(dh.a, 0, 0)
-        * Eigen::AngleAxisd(dh.alpha, Eigen::Vector3d::UnitX())
-        * Eigen::Translation3d(0, 0, dh.d)
-        * Eigen::AngleAxisd(dh.theta, Eigen::Vector3d::UnitZ());
+    return cga::make_translation(dh.a, 0, 0)
+        * cga::make_rotation(dh.alpha, cga::Bivector3(1, 0, 0))
+        * cga::make_translation(0, 0, dh.d)
+        * cga::make_rotation(dh.theta, cga::Bivector3(0, 0, 1));
 }
 
 
@@ -95,16 +86,17 @@ bool Serial::Impl::update_pose()
         ee_transform = ee_transform * transforms[i];
     }
 
-    Eigen::Vector3d pos = ee_transform.translation();
-    Eigen::Quaterniond orient = rotation_to_quaternion(ee_transform.rotation());
+    cga::Rotor3 R;
+    cga::Vector3 p;
+    cga::extract_components(ee_transform, R, p);
 
-    pose.position.x = pos.x();
-    pose.position.y = pos.y();
-    pose.position.z = pos.z();
-    pose.orientation.w = orient.w();
-    pose.orientation.x = orient.x();
-    pose.orientation.y = orient.y();
-    pose.orientation.z = orient.z();
+    pose.position.x = p.e1;
+    pose.position.y = p.e2;
+    pose.position.z = p.e3;
+    pose.orientation.w = R.s;
+    pose.orientation.x = R.b.e23;
+    pose.orientation.y = R.b.e31;
+    pose.orientation.z = R.b.e12;
 
     transforms_valid = true;
 
@@ -167,18 +159,18 @@ bool Serial::Impl::update_joint_velocities()
 bool Serial::Impl::calculate_trajectory(const Pose &goal)
 {
     if (!transforms_valid) update_pose();
-    Eigen::Vector3d start_x = ee_transform.translation();
-    Eigen::Quaterniond start_q = rotation_to_quaternion(
-        ee_transform.rotation());
+    cga::Vector3 start_x;
+    cga::Rotor3 start_q;
+    cga::extract_components(ee_transform, start_q, start_x);
 
     constexpr double delta_t = 1.0/20;
 
-    Eigen::Vector3d goal_x(
+    cga::Vector3 goal_x(
         goal.position.x, goal.position.y, goal.position.z);
-    Eigen::Quaterniond goal_q(
-        goal.orientation.w, goal.orientation.x, goal.orientation.y, goal.orientation.z);
+    cga::Rotor3 goal_q(
+        goal.orientation.w, cga::Bivector3(goal.orientation.x, goal.orientation.y, goal.orientation.z));
 
-    double time = ceil((goal_x - start_x).norm() / constraints.max_linear_speed);
+    double time = ceil(cga::norm(goal_x - start_x)) / constraints.max_linear_speed;
 
     std::size_t N = ceil(time / delta_t);
 
@@ -220,40 +212,39 @@ bool Serial::Impl::is_valid(constraint_t constraint)
 void Serial::Impl::update_jacobian()
 {
     if (!transforms_valid) update_pose();
+
+    cga::Rotor3 ee_R;
+    cga::Vector3 ee_p;
+    cga::extract_components(ee_transform, ee_R, ee_p);
+
+    std::vector<cga::Bivector> columns(joint_names.size());
+
     std::cout << "Updating jacobian" << std::endl;
-    for (std::size_t i = 0; i < joint_names.size(); i++) {
-        Eigen::Vector3d pos = transforms[i].translation();
-        Eigen::Matrix3d rotation = transforms[i].rotation();
-        velocity_transforms[i].block<3,3>(0,0) = rotation.transpose();
-        velocity_transforms[i].block<3,3>(3,3) = rotation.transpose();
-        Eigen::Matrix3d skew_matrix;
-        skew_matrix << 0, -pos.z(), pos.y(),
-                       pos.z(), 0, -pos.x(),
-                       -pos.y(), pos.x(), 0;
-        velocity_transforms[i].block<3,3>(3,0) = -rotation.transpose() * skew_matrix;
-    }
 
     for (std::size_t i = 0; i < joint_names.size(); i++) {
         if (dim.dh_parameters[i].fixed_alpha) {
-            jacobian.block<6,1>(0,i) << 0, 0, 1, 0, 0, 0;
+            columns[i].e12 = 1;
         } else {
-            jacobian.block<6,1>(0,i) <<
-                std::cos(dim.dh_parameters[i].theta),
-                -std::sin(dim.dh_parameters[i].theta),
-                0,
-                -dim.dh_parameters[i].d*std::sin(dim.dh_parameters[i].theta),
-                -dim.dh_parameters[i].d*std::cos(dim.dh_parameters[i].theta),
-                0;
+            columns[i].e23 = std::cos(dim.dh_parameters[i].theta);
+            columns[i].e31 = -std::sin(dim.dh_parameters[i].theta);
+            columns[i].e1i = -dim.dh_parameters[i].d*std::sin(dim.dh_parameters[i].theta);
+            columns[i].e2i = -dim.dh_parameters[i].d*std::cos(dim.dh_parameters[i].theta);
         }
         for (std::size_t j = i+1; j < joint_names.size(); j++) {
-            jacobian.block<6,1>(0,i) = velocity_transforms[j]*jacobian.block<6,1>(0,i);
+            columns[i] = (cga::reverse(transforms[i])*columns[i]*transforms[i]).b;
         }
+        // Refer back to the root frame
+        columns[i] = (ee_R*columns[i]*cga::reverse(ee_R)).b;
     }
 
-    // Refer back to the root frame
-    jacobian.block<3,6>(0,0) = ee_transform.rotation()*jacobian.block<3,6>(0,0);
-    jacobian.block<3,6>(3,0) = ee_transform.rotation()*jacobian.block<3,6>(3,0);
-
+    for (std::size_t i = 0; i < joint_names.size(); i++) {
+        jacobian(0,i) = columns[i].e23;
+        jacobian(1,i) = columns[i].e31;
+        jacobian(2,i) = columns[i].e12;
+        jacobian(3,i) = columns[i].e1i;
+        jacobian(4,i) = columns[i].e2i;
+        jacobian(5,i) = columns[i].e3i;
+    }
     std::cout << "Jacobian:" << std::endl << jacobian << std::endl;
 
     jacobian_valid = true;
@@ -287,16 +278,12 @@ bool Serial::is_valid(constraint_t constraint) {
 
 void Serial::set_pose(const Pose &pose) {
     pimpl->pose = pose;
-    pimpl->ee_transform =
-        Eigen::Translation3d(
-            pose.position.x,
-            pose.position.y,
-            pose.position.z)
-        * Eigen::Quaterniond(
-            pose.orientation.w,
-            pose.orientation.x,
-            pose.orientation.y,
-            pose.orientation.z);
+    auto T_ee = cga::make_translation(pose.position.x, pose.position.y, pose.position.z);
+    auto R_ee = cga::make_rotation(
+        pose.orientation.w,
+        cga::Bivector3(pose.orientation.x, pose.orientation.y, pose.orientation.z)
+    );
+    pimpl->ee_transform = T_ee * R_ee;
     pimpl->transforms_valid = false;
     pimpl->jacobian_valid = false;
 }

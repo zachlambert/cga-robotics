@@ -7,17 +7,6 @@
 
 namespace cga {
 
-// Useful basis vectors
-Vector3 e1(1, 0, 0);
-Vector3 e2(0, 1, 0);
-Vector3 e3(0, 0, 1);
-Vector eo(0, 0, 0, 1, 0);
-Vector ei(0, 0, 0, 0, 1);
-
-// Pseudoscalars
-Pseudoscalar3 I3(1);
-Pseudoscalar I5(1);
-
 inline Vector make_point(const Vector3 &x)
 {
     Vector result = x;
@@ -73,7 +62,7 @@ struct GeometryResult {
     GeometryResult(){}
 };
 
-GeometryResult describe(const Vector& x)
+inline GeometryResult describe(const Vector& x)
 {
     GeometryResult result;
     if (std::fabs(x.eo) < 1e-12) { // x.eo = 0
