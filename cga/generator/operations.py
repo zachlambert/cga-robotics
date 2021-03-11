@@ -26,7 +26,7 @@ def find_return_struct(expression, available):
     return None
 
 class GeometricProduct:
-    def write_individual(self, op1, op2, available, f_h, f_cpp):
+    def write_individual(self, op1, op2, available, f_h, f_cpp, write_other=True):
         expression = (op1.expression("lhs") * op2.expression("rhs")).expand()
         ret = find_return_struct(expression, available)
         if ret is None:
@@ -43,11 +43,9 @@ class GeometricProduct:
         f_cpp.write("    return result;\n")
         f_cpp.write("}\n")
 
-        if op1.name != op2.name:
-            f_h.write("inline {ret} operator*(const {op2} &lhs, const {op1} &rhs)".format(
-                ret=ret.name, op1=op1.name, op2=op2.name) + " {\n")
-            f_h.write("    return rhs*lhs;\n")
-            f_h.write("}\n")
+        if op1.name != op2.name and write_other:
+            self.write_individual(op2, op1, available, f_h, f_cpp, False)
+            return
 
         f_h.write("\n")
         f_cpp.write("\n")
@@ -61,7 +59,7 @@ class GeometricProduct:
                 self.write_individual(structs[i], structs[j], available, f_h, f_cpp)
 
 class OuterProduct:
-    def write_individual(self, op1, op2, available, f_h, f_cpp):
+    def write_individual(self, op1, op2, available, f_h, f_cpp, write_other=True):
         expression = (op1.expression("lhs") ^ op2.expression("rhs")).expand()
         ret = find_return_struct(expression, available)
         if ret is None:
@@ -78,11 +76,9 @@ class OuterProduct:
         f_cpp.write("    return result;\n")
         f_cpp.write("}\n")
 
-        if op1.name != op2.name:
-            f_h.write("inline {ret} outer(const {op2} &lhs, const {op1} &rhs)".format(
-                ret=ret.name, op1=op1.name, op2=op2.name) + " {\n")
-            f_h.write("    return outer(rhs, lhs);\n")
-            f_h.write("}\n")
+        if op1.name != op2.name and write_other:
+            self.write_individual(op2, op1, available, f_h, f_cpp, False)
+            return
 
         f_h.write("\n")
         f_cpp.write("\n")
@@ -96,7 +92,7 @@ class OuterProduct:
                 self.write_individual(structs[i], structs[j], available, f_h, f_cpp)
 
 class InnerProduct:
-    def write_individual(self, op1, op2, available, f_h, f_cpp):
+    def write_individual(self, op1, op2, available, f_h, f_cpp, write_other=True):
         expression = (op1.expression("lhs") | op2.expression("rhs")).expand()
         ret = find_return_struct(expression, available)
         if ret is None:
@@ -113,11 +109,9 @@ class InnerProduct:
         f_cpp.write("    return result;\n")
         f_cpp.write("}\n")
 
-        if op1.name != op2.name:
-            f_h.write("inline {ret} inner(const {op2} &lhs, const {op1} &rhs)".format(
-                ret=ret.name, op1=op1.name, op2=op2.name) + " {\n")
-            f_h.write("    return inner(rhs, lhs);\n")
-            f_h.write("}\n")
+        if op1.name != op2.name and write_other:
+            self.write_individual(op2, op1, available, f_h, f_cpp, False)
+            return
 
         f_h.write("\n")
         f_cpp.write("\n")

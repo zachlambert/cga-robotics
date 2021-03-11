@@ -67,11 +67,10 @@ Serial::Impl::Impl(const Dimensions &dim, const JointNames &joint_names):
 cga::Versor get_dh_transform(const Serial::DHParameter &dh)
 {
     return cga::make_translation(dh.a, 0, 0)
-        * cga::make_rotation(dh.alpha, cga::Bivector3(1, 0, 0))
+        * cga::make_rotation(dh.alpha, cga::make_axis(1, 0, 0))
         * cga::make_translation(0, 0, dh.d)
-        * cga::make_rotation(dh.theta, cga::Bivector3(0, 0, 1));
+        * cga::make_rotation(dh.theta, cga::make_axis(0, 0, 1));
 }
-
 
 bool Serial::Impl::update_pose()
 {
@@ -94,9 +93,9 @@ bool Serial::Impl::update_pose()
     pose.position.y = p.e2;
     pose.position.z = p.e3;
     pose.orientation.w = R.s;
-    pose.orientation.x = R.b.e23;
-    pose.orientation.y = R.b.e31;
-    pose.orientation.z = R.b.e12;
+    pose.orientation.x = -R.b.e23;
+    pose.orientation.y = -R.b.e31;
+    pose.orientation.z = -R.b.e12;
 
     transforms_valid = true;
 
