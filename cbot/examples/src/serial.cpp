@@ -40,5 +40,39 @@ int main()
     } else {
         std::cerr << "Failed to update pose." << std::endl;
     }
+
+    // Test trivial IK solution (ie: starts at correct solution)
+
+    serial.set_joint_position(joints[0], 0);
+    serial.set_joint_position(joints[1], 0);
+    serial.set_joint_position(joints[2], 0);
+    serial.set_joint_position(joints[0], 0);
+    serial.set_joint_position(joints[1], 0);
+    serial.set_joint_position(joints[2], 0);
+
+    serial.update_pose();
+    cbot::Pose pose = serial.get_pose();
+    serial.set_pose(pose);
+    std::cout << "Inverse kinematics for pose" << std::endl;
+    if (serial.update_joint_positions()) {
+        for (const std::string &name: joints) {
+            std::cout << name << " = " << serial.get_joint_position(name) << std::endl;
+        }
+    } else {
+        std::cerr << "Failed to update joint positions" << std::endl;
+    }
+
+    pose.position.x = 0.1;
+    pose.position.z = 0.05;
+    serial.set_pose(pose);
+    std::cout << "Inverse kinematics for pose (again)" << std::endl;
+    if (serial.update_joint_positions()) {
+        for (const std::string &name: joints) {
+            std::cout << name << " = " << serial.get_joint_position(name) << std::endl;
+        }
+    } else {
+        std::cerr << "Failed to update joint positions" << std::endl;
+    }
+
     return 0;
 }

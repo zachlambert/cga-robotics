@@ -53,6 +53,7 @@ Serial::Impl::Impl(const Dimensions &dim, const JointNames &joint_names):
         joints.emplace(joint_names[i], Joint());
         transforms.push_back(Eigen::Isometry3d());
         velocity_transforms.push_back(Eigen::Matrix<double, 6, 6>());
+        velocity_transforms.back().setZero();
     }
 
     transforms_valid = false;
@@ -111,11 +112,56 @@ bool Serial::Impl::update_pose()
     return true;
 }
 
+Eigen::Matrix<double, 6, 1> calculate_exponential_coord_dif(const Eigen::Isometry3d &current, const Eigen::Isometry3d &goal, double k=0.5)
+{
+    Eigen::Matrix<double, 6, 1> exponential_coords;
+    Eigen::Vector3d disp = goal.translation() - current.translation();
+    auto rot = goal.rotation() * current.rotation().transpose();
+    double theta = std::acos(0.5*(rot(0,0) + rot(1,1) + rot(2,2) - 1));
+    if (std::fabs(theta) > 1e-6) {
+        Eigen::Vector3d axis = (1/std::sin(theta))*Eigen::Vector3d(
+            rot(2,1)-rot(1,2), rot(0,2)-rot(2,0), rot(0,1)-rot(1,0)
+        );
+        exponential_coords.block<3,1>(0,0) = theta*axis;
+    } else {
+        exponential_coords.block<3,1>(0,0) = Eigen::Vector3d(0, 0, 0);
+    }
+    exponential_coords.block<3,1>(3,0) = disp;
+    return exponential_coords;
+}
+
 bool Serial::Impl::update_joint_positions()
 {
-    // TODO: Not implemented at the moment
-    // Use Newton's method with jacobian, starting from current state
-    return true;
+    auto goal_transform = ee_transform;
+    update_pose();
+
+    auto exponential_coord_dif = calculate_exponential_coord_dif(ee_transform, goal_transform);
+    Eigen::VectorXd delta_q(joint_names.size());
+    Eigen::Matrix<double, Eigen::Dynamic, 6> jacobian_inv;
+
+    int max_iter = 1e3;
+    int i = 0;
+    double k = 1;
+    while (exponential_coord_dif.maxCoeff()>0.01 && i < max_iter) {
+        // std::cout << "Iteration " << i << std::endl;
+        // std::cout << "Exp dif" << std::endl << exponential_coord_dif << std::endl;
+        update_pose();
+        // std::cout << "Pose" << std::endl << pose << std::endl;
+        update_jacobian();
+        jacobian_inv = jacobian.completeOrthogonalDecomposition().pseudoInverse();
+        delta_q = jacobian_inv * exponential_coord_dif;
+        // std::cout << "Delta q" << std::endl << delta_q << std::endl;
+        for (std::size_t i = 0; i < joint_names.size(); i++) {
+            joints.at(joint_names[i]).position += k*delta_q(i);
+        }
+        exponential_coord_dif = calculate_exponential_coord_dif(ee_transform, goal_transform);
+        i++;
+    }
+    if (i >= max_iter) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 bool Serial::Impl::update_twist()
