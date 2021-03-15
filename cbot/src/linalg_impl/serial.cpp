@@ -112,22 +112,23 @@ bool Serial::Impl::update_pose()
     return true;
 }
 
-Eigen::Matrix<double, 6, 1> calculate_exponential_coord_dif(const Eigen::Isometry3d &current, const Eigen::Isometry3d &goal, double k=0.5)
+void pose_dif(const Eigen::Isometry3d &current, const Eigen::Isometry3d &goal, Eigen::Vector3d &delta_p, Eigen::Vector3d &axis, double &delta_theta)
 {
     Eigen::Matrix<double, 6, 1> exponential_coords;
-    Eigen::Vector3d disp = goal.translation() - current.translation();
-    auto rot = goal.rotation() * current.rotation().transpose();
-    double theta = std::acos(0.5*(rot(0,0) + rot(1,1) + rot(2,2) - 1));
-    if (std::fabs(theta) > 1e-6) {
-        Eigen::Vector3d axis = (1/std::sin(theta))*Eigen::Vector3d(
-            rot(2,1)-rot(1,2), rot(0,2)-rot(2,0), rot(0,1)-rot(1,0)
+    delta_p = goal.translation() - current.translation();
+    auto delta_rotation = goal.rotation() * current.rotation().transpose();
+    delta_theta = std::acos(0.5*(
+        delta_rotation(0,0) + delta_rotation(1,1) + delta_rotation(2,2) - 1
+    ));
+    if (std::fabs(delta_theta) > 1e-6) {
+        axis = (1/std::sin(delta_theta))*Eigen::Vector3d(
+            delta_rotation(2,1) - delta_rotation(1,2),
+            delta_rotation(0,2) - delta_rotation(2,0),
+            delta_rotation(0,1) - delta_rotation(1,0)
         );
-        exponential_coords.block<3,1>(0,0) = theta*axis;
     } else {
-        exponential_coords.block<3,1>(0,0) = Eigen::Vector3d(0, 0, 0);
+        axis = Eigen::Vector3d(0, 0, 0);
     }
-    exponential_coords.block<3,1>(3,0) = disp;
-    return exponential_coords;
 }
 
 bool Serial::Impl::update_joint_positions()
@@ -135,26 +136,41 @@ bool Serial::Impl::update_joint_positions()
     auto goal_transform = ee_transform;
     update_pose();
 
-    auto exponential_coord_dif = calculate_exponential_coord_dif(ee_transform, goal_transform);
+    // Parameterise pose difference
+    Eigen::Vector3d delta_p, axis;
+    double delta_theta;
+    pose_dif(ee_transform, goal_transform, delta_p, axis, delta_theta);
+
     Eigen::VectorXd delta_q(joint_names.size());
     Eigen::Matrix<double, Eigen::Dynamic, 6> jacobian_inv;
 
-    int max_iter = 1e3;
+    Eigen::Matrix<double, 3, Eigen::Dynamic> jp(3, joint_names.size());
+    Eigen::Matrix<double, 3, Eigen::Dynamic> jtheta(3, joint_names.size());
+    Eigen::Matrix<double, Eigen::Dynamic, 3> jtheta_pinv;
+
+    int max_iter = 5;
     int i = 0;
-    double k = 1;
-    while (exponential_coord_dif.maxCoeff()>0.01 && i < max_iter) {
-        // std::cout << "Iteration " << i << std::endl;
-        // std::cout << "Exp dif" << std::endl << exponential_coord_dif << std::endl;
+    double kp = 0.1;
+    double ktheta = 1e-2;
+    while ((delta_p.norm() > 1e-3 || delta_theta > 1e-2) && i < max_iter) {
+        std::cout << i << ": " << delta_p.norm() << ", " << delta_theta << std::endl;
         update_pose();
-        // std::cout << "Pose" << std::endl << pose << std::endl;
         update_jacobian();
-        jacobian_inv = jacobian.completeOrthogonalDecomposition().pseudoInverse();
-        delta_q = jacobian_inv * exponential_coord_dif;
-        // std::cout << "Delta q" << std::endl << delta_q << std::endl;
-        for (std::size_t i = 0; i < joint_names.size(); i++) {
-            joints.at(joint_names[i]).position += k*delta_q(i);
+        jp = jacobian.block(0,0, 3,joint_names.size());
+        jtheta = jacobian.block(3,0, 3,joint_names.size());
+        jtheta_pinv = jtheta.completeOrthogonalDecomposition().pseudoInverse();
+        std::cout << jtheta_pinv << std::endl;
+        std::cout << axis << std::endl;
+        delta_q = kp*jp.transpose()*delta_p + ktheta*jtheta_pinv*axis*delta_theta;
+        std::cout << "Delta q = " << std::endl << delta_q << std::endl;
+        for (std::size_t j = 0; j < joint_names.size(); j++) {
+            double pos = joints.at(joint_names[j]).position;
+            pos += delta_q(j);
+            if (pos > M_PI) pos -= 2*M_PI;
+            if (pos < -M_PI) pos += 2*M_PI;
+            joints.at(joint_names[j]).position = pos;
         }
-        exponential_coord_dif = calculate_exponential_coord_dif(ee_transform, goal_transform);
+        pose_dif(ee_transform, goal_transform, delta_p, axis, delta_theta);
         i++;
     }
     if (i >= max_iter) {
@@ -212,33 +228,50 @@ bool Serial::Impl::update_joint_velocities()
 
 bool Serial::Impl::calculate_trajectory(const Pose &goal)
 {
+    std::cout << "CALCULATING TRAJECTORY" << std::endl;
     if (!transforms_valid) update_pose();
     Eigen::Vector3d start_x = ee_transform.translation();
     Eigen::Quaterniond start_q = rotation_to_quaternion(
         ee_transform.rotation());
 
-    constexpr double delta_t = 1.0/20;
+    constexpr double delta_t = 1e-2;
 
     Eigen::Vector3d goal_x(
         goal.position.x, goal.position.y, goal.position.z);
     Eigen::Quaterniond goal_q(
         goal.orientation.w, goal.orientation.x, goal.orientation.y, goal.orientation.z);
 
-    double time = ceil((goal_x - start_x).norm() / constraints.max_linear_speed);
+    double time= ceil((goal_x - start_x).norm() / constraints.max_linear_speed);
 
     std::size_t N = ceil(time / delta_t);
+
+    std::cout << "start_x = " << start_x << std::endl;
+    std::cout << "start_q = " << start_q.coeffs() << std::endl;
+    std::cout << "goal_x = " << goal_x << std::endl;
+    std::cout << "goal_q = " << goal_q.coeffs() << std::endl;
+    std::cout << "N = " << N << std::endl;
+
+    Eigen::Vector3d x;
+    Eigen::Quaterniond q;
 
     trajectory.points.resize(N);
     trajectory.names = joint_names;
     for (std::size_t i = 0; i < N; i++) {
         // u = normalised time
         double u = ((double)i) / N;
+        std::cout << u << std::endl;
         trajectory.points[i].time = u * time;
         trajectory.points[i].positions.resize(joint_names.size());
 
-        // TODO: Update joints using jacobiana and adjusting step
-        // in position and quaternion.
-        // Then write positions to joints
+        x = start_x + u * (goal_x - start_x);
+        q = goal_q;//start_q.slerp(u, goal_q);
+        ee_transform = Eigen::Translation3d(x)*q;
+        if (!update_joint_positions()) {
+            std::cerr << "Trajectory failed" << std::endl;
+            std::cout << "x = " << x;
+            std::cout << "q = " << q.coeffs();
+            return false;
+        }
 
         for (std::size_t j = 0; j < joint_names.size(); j++) {
             trajectory.points[i].positions[j] = joints.at(joint_names[j]).position;
@@ -254,9 +287,7 @@ bool Serial::Impl::is_valid(constraint_t constraint)
     if (constraint != nullptr && !constraint(joints)) return false;
 
     if (!jacobian_valid) update_jacobian();
-    // if (std::fabs(jacobian.determinant()) < 0.015) return false;
-    // TODO: Disabling this for now, since makes control difficult.
-    // May be more suitable to only use this when planning trajectories.
+    if (std::fabs(jacobian.determinant()) < 0.015) return false;
 
     return true;
 }
@@ -266,7 +297,6 @@ bool Serial::Impl::is_valid(constraint_t constraint)
 void Serial::Impl::update_jacobian()
 {
     if (!transforms_valid) update_pose();
-    std::cout << "Updating jacobian" << std::endl;
     for (std::size_t i = 0; i < joint_names.size(); i++) {
         Eigen::Vector3d pos = transforms[i].translation();
         Eigen::Matrix3d rotation = transforms[i].rotation();
@@ -299,8 +329,6 @@ void Serial::Impl::update_jacobian()
     // Refer back to the root frame
     jacobian.block<3,6>(0,0) = ee_transform.rotation()*jacobian.block<3,6>(0,0);
     jacobian.block<3,6>(3,0) = ee_transform.rotation()*jacobian.block<3,6>(3,0);
-
-    std::cout << "Jacobian:" << std::endl << jacobian << std::endl;
 
     jacobian_valid = true;
 }
