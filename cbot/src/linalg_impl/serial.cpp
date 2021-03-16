@@ -286,8 +286,8 @@ bool Serial::Impl::is_valid(constraint_t constraint)
 {
     if (constraint != nullptr && !constraint(joints)) return false;
 
-    if (!jacobian_valid) update_jacobian();
-    if (std::fabs(jacobian.determinant()) < 0.015) return false;
+    // if (!jacobian_valid) update_jacobian();
+    // if (std::fabs(jacobian.determinant()) < 0.015) return false;
 
     return true;
 }
@@ -300,13 +300,13 @@ void Serial::Impl::update_jacobian()
     for (std::size_t i = 0; i < joint_names.size(); i++) {
         Eigen::Vector3d pos = transforms[i].translation();
         Eigen::Matrix3d rotation = transforms[i].rotation();
-        velocity_transforms[i].block<3,3>(0,0) = rotation.transpose();
-        velocity_transforms[i].block<3,3>(3,3) = rotation.transpose();
+        velocity_transforms[i].block<3,3>(0,0) = rotation;
+        velocity_transforms[i].block<3,3>(3,3) = rotation;
         Eigen::Matrix3d skew_matrix;
         skew_matrix << 0, -pos.z(), pos.y(),
                        pos.z(), 0, -pos.x(),
                        -pos.y(), pos.x(), 0;
-        velocity_transforms[i].block<3,3>(3,0) = -rotation.transpose() * skew_matrix;
+        velocity_transforms[i].block<3,3>(3,0) = skew_matrix * rotation;
     }
 
     for (std::size_t i = 0; i < joint_names.size(); i++) {
@@ -321,14 +321,24 @@ void Serial::Impl::update_jacobian()
                 -dim.dh_parameters[i].d*std::cos(dim.dh_parameters[i].theta),
                 0;
         }
-        for (std::size_t j = i+1; j < joint_names.size(); j++) {
+        for (int j = i; j >= 0; j--) {
             jacobian.block<6,1>(0,i) = velocity_transforms[j]*jacobian.block<6,1>(0,i);
         }
     }
 
-    // Refer back to the root frame
-    jacobian.block<3,6>(0,0) = ee_transform.rotation()*jacobian.block<3,6>(0,0);
-    jacobian.block<3,6>(3,0) = ee_transform.rotation()*jacobian.block<3,6>(3,0);
+    Eigen::Vector3d pos = ee_transform.translation();
+    Eigen::Matrix<double, 6, 6> adjustment;
+    adjustment.block<3,3>(0,0).setIdentity();
+    adjustment.block<3,3>(0,3).setZero();
+    adjustment.block<3,3>(3,3).setIdentity();
+    Eigen::Matrix3d skew_matrix;
+    skew_matrix << 0, -pos.z(), pos.y(),
+                   pos.z(), 0, -pos.x(),
+                   -pos.y(), pos.x(), 0;
+    adjustment.block<3,3>(3,0) = -skew_matrix;
+
+    jacobian = adjustment * jacobian;
+    std::cout << "Jacobian:" << std::endl << jacobian << std::endl;
 
     jacobian_valid = true;
 }
