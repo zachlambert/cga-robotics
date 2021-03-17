@@ -41,38 +41,36 @@ int main()
         std::cerr << "Failed to update pose." << std::endl;
     }
 
-    // Test trivial IK solution (ie: starts at correct solution)
+    std::cout << "Inverse kinematics for pose" << std::endl;
 
-    serial.set_joint_position(joints[0], 0);
-    serial.set_joint_position(joints[1], 0);
-    serial.set_joint_position(joints[2], 0);
-    serial.set_joint_position(joints[3], 0);
-    serial.set_joint_position(joints[4], 0);
-    serial.set_joint_position(joints[5], 0);
-
+    // Known, non-singular start position
+    serial.set_joint_position(joints[0], 0.8);
+    serial.set_joint_position(joints[1], 0.8);
+    serial.set_joint_position(joints[2], 0.8);
+    serial.set_joint_position(joints[3], 0.8);
+    serial.set_joint_position(joints[4], 0.8);
+    serial.set_joint_position(joints[5], 0.8);
     serial.update_pose();
     cbot::Pose pose = serial.get_pose();
-    serial.set_pose(pose);
-    std::cout << "Inverse kinematics for pose" << std::endl;
-    if (serial.update_joint_positions()) {
-        for (const std::string &name: joints) {
-            std::cout << name << " = " << serial.get_joint_position(name) << std::endl;
-        }
-    } else {
-        std::cerr << "Failed to update joint positions" << std::endl;
-    }
 
-    pose.position.x = 0.1;
-    pose.position.y = -0.02;
-    pose.position.z = 0.08;
+    // Increment position slightly
+    pose.position.x += 0.05;
+    pose.position.y -= 0.05;
+    double angle = 2*std::acos(pose.orientation.w);
+    double new_angle = angle+0.5;
+    double axis_scaling = std::sin(new_angle)/std::sin(angle);
+    pose.orientation.w = std::cos(new_angle/2);
+    pose.orientation.x *= axis_scaling;
+    pose.orientation.y *= axis_scaling;
+    pose.orientation.z *= axis_scaling;
     serial.set_pose(pose);
-    std::cout << "Inverse kinematics for pose (again)" << std::endl;
+
     if (serial.update_joint_positions()) {
+        serial.update_pose();
+        std::cout << serial.get_pose() << std::endl;
         for (const std::string &name: joints) {
             std::cout << name << " = " << serial.get_joint_position(name) << std::endl;
         }
-        serial.update_pose();
-        std::cout << "Pose:" << std::endl<<serial.get_pose()<<std::endl;
     } else {
         std::cerr << "Failed to update joint positions" << std::endl;
     }
