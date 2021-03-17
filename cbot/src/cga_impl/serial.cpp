@@ -102,11 +102,62 @@ bool Serial::Impl::update_pose()
     return true;
 }
 
+void pose_dif(const cga::Versor &current, const cga::Versor &goal, cga::Bivector &difference)
+{
+    difference = (goal * cga::reverse(current)).b;
+}
+
+bool pose_dif_is_zero(cga::Bivector &dif)
+{
+    double dist = sqrt(pow(dif.e1i, 2) + pow(dif.e2i, 2) + pow(dif.e3i, 2));
+    if (dist > 1e-3) return false;
+    double theta = sqrt(pow(dif.e23, 2) + pow(dif.e31, 2) + pow(dif.e12, 2));
+    if (theta > 1e-3) return false;
+    return true;
+}
+
 bool Serial::Impl::update_joint_positions()
 {
-    // TODO: Not implemented at the moment
-    // Use Newton's method with jacobian, starting from current state
-    return true;
+    auto goal_transform = ee_transform;
+
+    cga::Bivector dif;
+    Eigen::Matrix<double, 6, 1> dif_vec; // For using with jacobian
+
+    Eigen::VectorXd delta_q(joint_names.size());
+    Eigen::JacobiSVD<Eigen::Matrix<double, 6, Eigen::Dynamic>> j_svd;
+
+    int max_iter = 100;
+    int i = 0;
+    while (i < max_iter) {
+        // Update pose with current joints and find pose difference
+        update_pose();
+        pose_dif(ee_transform, goal_transform, dif);
+
+        // Stop if pose_dif after updating joint positions is close to zero
+        if (pose_dif_is_zero(dif)) break;
+
+        // Update jacobian, and find jacobian pseudoinverse
+        update_jacobian();
+        j_svd.compute(jacobian, Eigen::ComputeFullU | Eigen::ComputeFullV);
+
+        dif_vec << dif.e23, dif.e31, dif.e12, dif.e1i, dif.e2i, dif.e3i;
+        delta_q = j_svd.solve(dif_vec);
+        for (std::size_t j = 0; j < joint_names.size(); j++) {
+            joints[joint_names[j]].position += delta_q(j);
+        }
+        i++;
+    }
+    for (std::size_t j = 0; j < joint_names.size(); j++) {
+        double pos = joints[joint_names[j]].position;
+        while (pos < -M_PI) pos += 2*M_PI;
+        while (pos > M_PI) pos -= 2*M_PI;
+        joints[joint_names[j]].position = pos;
+    }
+    if (i >= max_iter) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 bool Serial::Impl::update_twist()
@@ -158,16 +209,19 @@ bool Serial::Impl::update_joint_velocities()
 bool Serial::Impl::calculate_trajectory(const Pose &goal)
 {
     if (!transforms_valid) update_pose();
+    cga::Versor start_transform = ee_transform;
     cga::Vector3 start_x;
     cga::Rotor3 start_q;
-    cga::extract_components(ee_transform, start_q, start_x);
+    cga::extract_components(start_transform, start_q, start_x);
 
-    constexpr double delta_t = 1.0/20;
+    constexpr double delta_t = 1e-2;
 
     cga::Vector3 goal_x(
         goal.position.x, goal.position.y, goal.position.z);
     cga::Rotor3 goal_q(
         goal.orientation.w, cga::Bivector3(goal.orientation.x, goal.orientation.y, goal.orientation.z));
+    cga::Versor goal_transform =
+        cga::make_translation(goal_x.e1, goal_x.e2, goal_x.e3) * goal_q;
 
     double time = ceil(cga::norm(goal_x - start_x)) / constraints.max_linear_speed;
 
@@ -181,9 +235,11 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
         trajectory.points[i].time = u * time;
         trajectory.points[i].positions.resize(joint_names.size());
 
-        // TODO: Update joints using jacobiana and adjusting step
-        // in position and quaternion.
-        // Then write positions to joints
+        ee_transform = start_transform * (1-u) + goal_transform * u;
+        if (!update_joint_positions()) {
+            std::cerr << "Trajectory failed" << std::endl;
+            return false;
+        }
 
         for (std::size_t j = 0; j < joint_names.size(); j++) {
             trajectory.points[i].positions[j] = joints.at(joint_names[j]).position;
@@ -218,8 +274,6 @@ void Serial::Impl::update_jacobian()
 
     std::vector<cga::Bivector> columns(joint_names.size());
 
-    std::cout << "Updating jacobian" << std::endl;
-
     for (std::size_t i = 0; i < joint_names.size(); i++) {
         if (dim.dh_parameters[i].fixed_alpha) {
             columns[i].e12 = 1;
@@ -229,11 +283,14 @@ void Serial::Impl::update_jacobian()
             columns[i].e1i = -dim.dh_parameters[i].d*std::sin(dim.dh_parameters[i].theta);
             columns[i].e2i = -dim.dh_parameters[i].d*std::cos(dim.dh_parameters[i].theta);
         }
-        for (std::size_t j = i+1; j < joint_names.size(); j++) {
-            columns[i] = (cga::reverse(transforms[i])*columns[i]*transforms[i]).b;
+        for (int j = i; j >= 0;  j--) {
+            columns[i] = (transforms[j]*columns[i]*cga::reverse(transforms[j])).b;
         }
-        // Refer back to the root frame
-        columns[i] = (ee_R*columns[i]*cga::reverse(ee_R)).b;
+    }
+
+    auto adjustment = cga::make_translation(-ee_p.e1, -ee_p.e2, -ee_p.e3);
+    for (std::size_t i = 0; i < joint_names.size(); i++) {
+        columns[i] = (adjustment*columns[i]*cga::reverse(adjustment)).b;
     }
 
     for (std::size_t i = 0; i < joint_names.size(); i++) {
@@ -244,7 +301,6 @@ void Serial::Impl::update_jacobian()
         jacobian(4,i) = columns[i].e2i;
         jacobian(5,i) = columns[i].e3i;
     }
-    std::cout << "Jacobian:" << std::endl << jacobian << std::endl;
 
     jacobian_valid = true;
 }

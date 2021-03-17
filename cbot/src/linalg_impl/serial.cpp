@@ -137,7 +137,7 @@ bool pose_dif_is_zero(const Eigen::Matrix<double, 6, 1> &dif)
     // |Position dif| < 1e-3
     if (dif.block<3,1>(3,0).norm() > 1e-3) return false;
     // |delta theta| < 1e-2
-    if (dif.block<3,1>(0,0).norm() > 1e-2) return false;
+    if (dif.block<3,1>(0,0).norm() > 1e-3) return false;
     return true;
 }
 
@@ -161,14 +161,14 @@ bool Serial::Impl::update_joint_positions()
     int max_iter = 100;
     int i = 0;
     while (i < max_iter) {
-        // Update pose with crrent joints and find pose difference
+        // Update pose with current joints and find pose difference
         update_pose();
         pose_dif(ee_transform, goal_transform, dif);
 
         // Stop if pose_dif after updating joint positions is close to zero
         if (pose_dif_is_zero(dif)) break;
 
-        // Update jacobian, and find jacobian pseudoinverse (with damping)
+        // Update jacobian, and find jacobian pseudoinverse
         update_jacobian();
         j_svd.compute(jacobian, Eigen::ComputeFullU | Eigen::ComputeFullV);
 
@@ -239,7 +239,6 @@ bool Serial::Impl::update_joint_velocities()
 
 bool Serial::Impl::calculate_trajectory(const Pose &goal)
 {
-    std::cout << "CALCULATING TRAJECTORY" << std::endl;
     if (!transforms_valid) update_pose();
     Eigen::Vector3d start_x = ee_transform.translation();
     Eigen::Quaterniond start_q = rotation_to_quaternion(
@@ -251,16 +250,15 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
         goal.position.x, goal.position.y, goal.position.z);
     Eigen::Quaterniond goal_q(
         goal.orientation.w, goal.orientation.x, goal.orientation.y, goal.orientation.z);
+    auto goal_transform = Eigen::Translation3d(goal_x)*goal_q;
 
-    double time= ceil((goal_x - start_x).norm() / constraints.max_linear_speed);
+    Eigen::Matrix<double, 6, 1> start_dif;
+    pose_dif(ee_transform, goal_transform, start_dif);
+    double time_r = ceil(start_dif.block<3,1>(0,0).norm() / constraints.max_angular_speed);
+    double time_p = ceil(start_dif.block<3,1>(3,0).norm() / constraints.max_linear_speed);
+    double time = time_r > time_p ? time_r : time_p;
 
     std::size_t N = ceil(time / delta_t);
-
-    std::cout << "start_x = " << start_x << std::endl;
-    std::cout << "start_q = " << start_q.coeffs() << std::endl;
-    std::cout << "goal_x = " << goal_x << std::endl;
-    std::cout << "goal_q = " << goal_q.coeffs() << std::endl;
-    std::cout << "N = " << N << std::endl;
 
     Eigen::Vector3d x;
     Eigen::Quaterniond q;
@@ -270,7 +268,6 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
     for (std::size_t i = 0; i < N; i++) {
         // u = normalised time
         double u = ((double)i) / N;
-        std::cout << u << std::endl;
         trajectory.points[i].time = u * time;
         trajectory.points[i].positions.resize(joint_names.size());
 
@@ -279,8 +276,6 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
         ee_transform = Eigen::Translation3d(x)*q;
         if (!update_joint_positions()) {
             std::cerr << "Trajectory failed" << std::endl;
-            std::cout << "x = " << x << ", ";
-            std::cout << "q = " << q.coeffs() << std::endl;
             return false;
         }
 
