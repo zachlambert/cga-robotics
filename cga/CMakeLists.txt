@@ -9,6 +9,6 @@ target_include_directories(cga
     PUBLIC include
 )
 
+set(INSTALL_GTEST OFF)
 add_subdirectory(lib/googletest)
-enable_testing()
 add_subdirectory(test)
