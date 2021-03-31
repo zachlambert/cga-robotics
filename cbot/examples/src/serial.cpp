@@ -57,8 +57,8 @@ int main()
     pose.position.x += 0.05;
     pose.position.y -= 0.05;
     double angle = 2*std::acos(pose.orientation.w);
-    double new_angle = angle+0.5;
-    double axis_scaling = std::sin(new_angle)/std::sin(angle);
+    double new_angle = angle-0.2;
+    double axis_scaling = std::sin(new_angle/2)/std::sin(angle/2);
     pose.orientation.w = std::cos(new_angle/2);
     pose.orientation.x *= axis_scaling;
     pose.orientation.y *= axis_scaling;

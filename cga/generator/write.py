@@ -175,16 +175,16 @@ def write_struct(struct, f_h, f_cpp):
     f_h.write("    }\n");
 
     # operator*=(scalar)
-    f_h.write("    {name}& operator*=(double s) ".format(name=struct.name)+"{\n")
+    f_h.write("    {name}& operator*=(double x) ".format(name=struct.name)+"{\n")
     for member in struct.members:
-        f_h.write("        {member} *= s;\n".format(member=member.name))
+        f_h.write("        {member} *= x;\n".format(member=member.name))
     f_h.write("        return *this;\n")
     f_h.write("    }\n");
 
     # operator/=(scalar)
-    f_h.write("    {name}& operator/=(double s) ".format(name=struct.name)+"{\n")
+    f_h.write("    {name}& operator/=(double x) ".format(name=struct.name)+"{\n")
     for member in struct.members:
-        f_h.write("        {member} /= s;\n".format(member=member.name))
+        f_h.write("        {member} /= x;\n".format(member=member.name))
     f_h.write("        return *this;\n")
     f_h.write("    }\n");
 

@@ -35,12 +35,12 @@ struct Pseudoscalar3 {
         I3 -= other.I3;
         return *this;
     }
-    Pseudoscalar3& operator*=(double s) {
-        I3 *= s;
+    Pseudoscalar3& operator*=(double x) {
+        I3 *= x;
         return *this;
     }
-    Pseudoscalar3& operator/=(double s) {
-        I3 /= s;
+    Pseudoscalar3& operator/=(double x) {
+        I3 /= x;
         return *this;
     }
     Pseudoscalar3 operator-()const {
@@ -88,12 +88,12 @@ struct Pseudoscalar {
         I5 -= other.I5;
         return *this;
     }
-    Pseudoscalar& operator*=(double s) {
-        I5 *= s;
+    Pseudoscalar& operator*=(double x) {
+        I5 *= x;
         return *this;
     }
-    Pseudoscalar& operator/=(double s) {
-        I5 /= s;
+    Pseudoscalar& operator/=(double x) {
+        I5 /= x;
         return *this;
     }
     Pseudoscalar operator-()const {
@@ -148,16 +148,16 @@ struct Vector3 {
         e3 -= other.e3;
         return *this;
     }
-    Vector3& operator*=(double s) {
-        e1 *= s;
-        e2 *= s;
-        e3 *= s;
+    Vector3& operator*=(double x) {
+        e1 *= x;
+        e2 *= x;
+        e3 *= x;
         return *this;
     }
-    Vector3& operator/=(double s) {
-        e1 /= s;
-        e2 /= s;
-        e3 /= s;
+    Vector3& operator/=(double x) {
+        e1 /= x;
+        e2 /= x;
+        e3 /= x;
         return *this;
     }
     Vector3 operator-()const {
@@ -212,16 +212,16 @@ struct Bivector3 {
         e12 -= other.e12;
         return *this;
     }
-    Bivector3& operator*=(double s) {
-        e23 *= s;
-        e31 *= s;
-        e12 *= s;
+    Bivector3& operator*=(double x) {
+        e23 *= x;
+        e31 *= x;
+        e12 *= x;
         return *this;
     }
-    Bivector3& operator/=(double s) {
-        e23 /= s;
-        e31 /= s;
-        e12 /= s;
+    Bivector3& operator/=(double x) {
+        e23 /= x;
+        e31 /= x;
+        e12 /= x;
         return *this;
     }
     Bivector3 operator-()const {
@@ -275,14 +275,14 @@ struct Rotor3 {
         b -= other.b;
         return *this;
     }
-    Rotor3& operator*=(double s) {
-        s *= s;
-        b *= s;
+    Rotor3& operator*=(double x) {
+        s *= x;
+        b *= x;
         return *this;
     }
-    Rotor3& operator/=(double s) {
-        s /= s;
-        b /= s;
+    Rotor3& operator/=(double x) {
+        s /= x;
+        b /= x;
         return *this;
     }
     Rotor3 operator-()const {
@@ -343,20 +343,20 @@ struct Vector {
         ei -= other.ei;
         return *this;
     }
-    Vector& operator*=(double s) {
-        e1 *= s;
-        e2 *= s;
-        e3 *= s;
-        eo *= s;
-        ei *= s;
+    Vector& operator*=(double x) {
+        e1 *= x;
+        e2 *= x;
+        e3 *= x;
+        eo *= x;
+        ei *= x;
         return *this;
     }
-    Vector& operator/=(double s) {
-        e1 /= s;
-        e2 /= s;
-        e3 /= s;
-        eo /= s;
-        ei /= s;
+    Vector& operator/=(double x) {
+        e1 /= x;
+        e2 /= x;
+        e3 /= x;
+        eo /= x;
+        ei /= x;
         return *this;
     }
     Vector operator-()const {
@@ -416,20 +416,20 @@ struct Quadvector {
         e12oi -= other.e12oi;
         return *this;
     }
-    Quadvector& operator*=(double s) {
-        e123o *= s;
-        e123i *= s;
-        e23oi *= s;
-        e31oi *= s;
-        e12oi *= s;
+    Quadvector& operator*=(double x) {
+        e123o *= x;
+        e123i *= x;
+        e23oi *= x;
+        e31oi *= x;
+        e12oi *= x;
         return *this;
     }
-    Quadvector& operator/=(double s) {
-        e123o /= s;
-        e123i /= s;
-        e23oi /= s;
-        e31oi /= s;
-        e12oi /= s;
+    Quadvector& operator/=(double x) {
+        e123o /= x;
+        e123i /= x;
+        e23oi /= x;
+        e31oi /= x;
+        e12oi /= x;
         return *this;
     }
     Quadvector operator-()const {
@@ -489,18 +489,18 @@ struct Multivector3 {
         I3 -= other.I3;
         return *this;
     }
-    Multivector3& operator*=(double s) {
-        s *= s;
-        v *= s;
-        b *= s;
-        I3 *= s;
+    Multivector3& operator*=(double x) {
+        s *= x;
+        v *= x;
+        b *= x;
+        I3 *= x;
         return *this;
     }
-    Multivector3& operator/=(double s) {
-        s /= s;
-        v /= s;
-        b /= s;
-        I3 /= s;
+    Multivector3& operator/=(double x) {
+        s /= x;
+        v /= x;
+        b /= x;
+        I3 /= x;
         return *this;
     }
     Multivector3 operator-()const {
@@ -576,30 +576,30 @@ struct Bivector {
         eoi -= other.eoi;
         return *this;
     }
-    Bivector& operator*=(double s) {
-        e23 *= s;
-        e31 *= s;
-        e12 *= s;
-        e1o *= s;
-        e2o *= s;
-        e3o *= s;
-        e1i *= s;
-        e2i *= s;
-        e3i *= s;
-        eoi *= s;
+    Bivector& operator*=(double x) {
+        e23 *= x;
+        e31 *= x;
+        e12 *= x;
+        e1o *= x;
+        e2o *= x;
+        e3o *= x;
+        e1i *= x;
+        e2i *= x;
+        e3i *= x;
+        eoi *= x;
         return *this;
     }
-    Bivector& operator/=(double s) {
-        e23 /= s;
-        e31 /= s;
-        e12 /= s;
-        e1o /= s;
-        e2o /= s;
-        e3o /= s;
-        e1i /= s;
-        e2i /= s;
-        e3i /= s;
-        eoi /= s;
+    Bivector& operator/=(double x) {
+        e23 /= x;
+        e31 /= x;
+        e12 /= x;
+        e1o /= x;
+        e2o /= x;
+        e3o /= x;
+        e1i /= x;
+        e2i /= x;
+        e3i /= x;
+        eoi /= x;
         return *this;
     }
     Bivector operator-()const {
@@ -674,30 +674,30 @@ struct Trivector {
         e3oi -= other.e3oi;
         return *this;
     }
-    Trivector& operator*=(double s) {
-        e123 *= s;
-        e23o *= s;
-        e31o *= s;
-        e12o *= s;
-        e23i *= s;
-        e31i *= s;
-        e12i *= s;
-        e1oi *= s;
-        e2oi *= s;
-        e3oi *= s;
+    Trivector& operator*=(double x) {
+        e123 *= x;
+        e23o *= x;
+        e31o *= x;
+        e12o *= x;
+        e23i *= x;
+        e31i *= x;
+        e12i *= x;
+        e1oi *= x;
+        e2oi *= x;
+        e3oi *= x;
         return *this;
     }
-    Trivector& operator/=(double s) {
-        e123 /= s;
-        e23o /= s;
-        e31o /= s;
-        e12o /= s;
-        e23i /= s;
-        e31i /= s;
-        e12i /= s;
-        e1oi /= s;
-        e2oi /= s;
-        e3oi /= s;
+    Trivector& operator/=(double x) {
+        e123 /= x;
+        e23o /= x;
+        e31o /= x;
+        e12o /= x;
+        e23i /= x;
+        e31i /= x;
+        e12i /= x;
+        e1oi /= x;
+        e2oi /= x;
+        e3oi /= x;
         return *this;
     }
     Trivector operator-()const {
@@ -752,14 +752,14 @@ struct Rotor {
         b -= other.b;
         return *this;
     }
-    Rotor& operator*=(double s) {
-        s *= s;
-        b *= s;
+    Rotor& operator*=(double x) {
+        s *= x;
+        b *= x;
         return *this;
     }
-    Rotor& operator/=(double s) {
-        s /= s;
-        b /= s;
+    Rotor& operator/=(double x) {
+        s /= x;
+        b /= x;
         return *this;
     }
     Rotor operator-()const {
@@ -816,16 +816,16 @@ struct Versor {
         q -= other.q;
         return *this;
     }
-    Versor& operator*=(double s) {
-        s *= s;
-        b *= s;
-        q *= s;
+    Versor& operator*=(double x) {
+        s *= x;
+        b *= x;
+        q *= x;
         return *this;
     }
-    Versor& operator/=(double s) {
-        s /= s;
-        b /= s;
-        q /= s;
+    Versor& operator/=(double x) {
+        s /= x;
+        b /= x;
+        q /= x;
         return *this;
     }
     Versor operator-()const {
@@ -894,22 +894,22 @@ struct Multivector {
         I5 -= other.I5;
         return *this;
     }
-    Multivector& operator*=(double s) {
-        s *= s;
-        v *= s;
-        b *= s;
-        t *= s;
-        q *= s;
-        I5 *= s;
+    Multivector& operator*=(double x) {
+        s *= x;
+        v *= x;
+        b *= x;
+        t *= x;
+        q *= x;
+        I5 *= x;
         return *this;
     }
-    Multivector& operator/=(double s) {
-        s /= s;
-        v /= s;
-        b /= s;
-        t /= s;
-        q /= s;
-        I5 /= s;
+    Multivector& operator/=(double x) {
+        s /= x;
+        v /= x;
+        b /= x;
+        t /= x;
+        q /= x;
+        I5 /= x;
         return *this;
     }
     Multivector operator-()const {

@@ -102,17 +102,34 @@ bool Serial::Impl::update_pose()
     return true;
 }
 
-void pose_dif(const cga::Versor &current, const cga::Versor &goal, cga::Bivector &difference)
+Eigen::Matrix<double, 6, 1> pose_dif(const cga::Versor &current, const cga::Versor &goal)
 {
-    difference = (goal * cga::reverse(current)).b;
+    Eigen::Matrix<double, 6, 1> difference;
+    cga::Vector3 current_x, goal_x;
+    cga::Rotor3 current_q, goal_q;
+    cga::extract_components(current, current_q, current_x);
+    cga::extract_components(goal, goal_q, goal_x);
+
+    difference.block<3,1>(3,0) << goal_x.e1-current_x.e1, goal_x.e2-current_x.e2, goal_x.e3-current_x.e3;
+
+    cga::Rotor3 delta_rotation = goal_q*cga::reverse(current_q);
+    double delta_theta = 2*std::acos(delta_rotation.s);
+    if (std::fabs(delta_theta) > 1e-6) {
+        cga::Bivector3 axis = -delta_rotation.b / std::sin(delta_theta/2);
+        axis *= delta_theta;
+        difference.block<3,1>(0,0) << axis.e23, axis.e31, axis.e12;
+    } else {
+        difference.block<3,1>(0,0) = Eigen::Vector3d(0, 0, 0);
+    }
+    return difference;
 }
 
-bool pose_dif_is_zero(cga::Bivector &dif)
+bool pose_dif_is_zero(const Eigen::Matrix<double, 6, 1> &dif)
 {
-    double dist = sqrt(pow(dif.e1i, 2) + pow(dif.e2i, 2) + pow(dif.e3i, 2));
-    if (dist > 1e-3) return false;
-    double theta = sqrt(pow(dif.e23, 2) + pow(dif.e31, 2) + pow(dif.e12, 2));
-    if (theta > 1e-3) return false;
+    // |Position dif| < 1e-3
+    if (dif.block<3,1>(3,0).norm() > 1e-3) return false;
+    // |delta theta| < 1e-2
+    if (dif.block<3,1>(0,0).norm() > 1e-3) return false;
     return true;
 }
 
@@ -120,8 +137,7 @@ bool Serial::Impl::update_joint_positions()
 {
     auto goal_transform = ee_transform;
 
-    cga::Bivector dif;
-    Eigen::Matrix<double, 6, 1> dif_vec; // For using with jacobian
+    Eigen::Matrix<double, 6, 1> dif;
 
     Eigen::VectorXd delta_q(joint_names.size());
     Eigen::JacobiSVD<Eigen::Matrix<double, 6, Eigen::Dynamic>> j_svd;
@@ -131,7 +147,7 @@ bool Serial::Impl::update_joint_positions()
     while (i < max_iter) {
         // Update pose with current joints and find pose difference
         update_pose();
-        pose_dif(ee_transform, goal_transform, dif);
+        dif = pose_dif(ee_transform, goal_transform);
 
         // Stop if pose_dif after updating joint positions is close to zero
         if (pose_dif_is_zero(dif)) break;
@@ -139,9 +155,7 @@ bool Serial::Impl::update_joint_positions()
         // Update jacobian, and find jacobian pseudoinverse
         update_jacobian();
         j_svd.compute(jacobian, Eigen::ComputeFullU | Eigen::ComputeFullV);
-
-        dif_vec << dif.e23, dif.e31, dif.e12, dif.e1i, dif.e2i, dif.e3i;
-        delta_q = j_svd.solve(dif_vec);
+        delta_q = j_svd.solve(dif);
         for (std::size_t j = 0; j < joint_names.size(); j++) {
             joints[joint_names[j]].position += delta_q(j);
         }
@@ -209,33 +223,40 @@ bool Serial::Impl::update_joint_velocities()
 bool Serial::Impl::calculate_trajectory(const Pose &goal)
 {
     if (!transforms_valid) update_pose();
-    cga::Versor start_transform = ee_transform;
-    cga::Vector3 start_x;
     cga::Rotor3 start_q;
-    cga::extract_components(start_transform, start_q, start_x);
+    cga::Vector3 start_x;
+    cga::extract_components(ee_transform, start_q, start_x);
 
     constexpr double delta_t = 1e-2;
 
     cga::Vector3 goal_x(
         goal.position.x, goal.position.y, goal.position.z);
     cga::Rotor3 goal_q(
-        goal.orientation.w, cga::Bivector3(goal.orientation.x, goal.orientation.y, goal.orientation.z));
+        goal.orientation.w, cga::Bivector3(-goal.orientation.x, -goal.orientation.y, -goal.orientation.z));
     cga::Versor goal_transform =
         cga::make_translation(goal_x.e1, goal_x.e2, goal_x.e3) * goal_q;
 
-    double time = ceil(cga::norm(goal_x - start_x)) / constraints.max_linear_speed;
+    auto start_dif = pose_dif(ee_transform, goal_transform);
+
+    double time_r = ceil(start_dif.block<3,1>(0,0).norm() / constraints.max_angular_speed);
+    double time_p = ceil(start_dif.block<3,1>(3,0).norm() / constraints.max_linear_speed);
+    double time = time_r > time_p ? time_r : time_p;
 
     std::size_t N = ceil(time / delta_t);
 
     trajectory.points.resize(N);
     trajectory.names = joint_names;
+    cga::Vector3 x;
+    cga::Rotor3 q;
     for (std::size_t i = 0; i < N; i++) {
         // u = normalised time
-        double u = ((double)i) / N;
+        double u = ((double)i) / (N-1);
         trajectory.points[i].time = u * time;
         trajectory.points[i].positions.resize(joint_names.size());
 
-        ee_transform = start_transform * (1-u) + goal_transform * u;
+        x = (1-u)*start_x + u*goal_x;
+        q = cga::slerp(start_q, goal_q, u);
+        ee_transform = cga::make_translation(x.e1, x.e2, x.e3) * q;
         if (!update_joint_positions()) {
             std::cerr << "Trajectory failed" << std::endl;
             return false;
@@ -334,10 +355,11 @@ bool Serial::is_valid(constraint_t constraint) {
 void Serial::set_pose(const Pose &pose) {
     pimpl->pose = pose;
     auto T_ee = cga::make_translation(pose.position.x, pose.position.y, pose.position.z);
-    auto R_ee = cga::make_rotation(
-        pose.orientation.w,
-        cga::Bivector3(pose.orientation.x, pose.orientation.y, pose.orientation.z)
-    );
+    cga::Rotor3 R_ee;
+    R_ee.s = pose.orientation.w;
+    R_ee.b.e23 = -pose.orientation.x;
+    R_ee.b.e31 = -pose.orientation.y;
+    R_ee.b.e12 = -pose.orientation.z;
     pimpl->ee_transform = T_ee * R_ee;
     pimpl->transforms_valid = false;
     pimpl->jacobian_valid = false;

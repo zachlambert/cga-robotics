@@ -1,6 +1,7 @@
 #ifndef CGA_TRANSFORM_H
 #define CGA_TRANSFORM_H
 
+#include <iostream>
 #include "cga/cga.h"
 #include "cga/constants.h"
 
@@ -47,8 +48,16 @@ inline void extract_components(const Versor &V, Rotor3 &R, Vector3 &p)
 {
     cga::Vector P = (V*eo*reverse(V)).v;
     p = cga::Vector3(P.e1, P.e2, P.e3) / P.eo;
-    Versor T(1, outer(p, ei), Quadvector());
-    R = Rotor3(Rotor(reverse(T)*V));
+    auto T = cga::make_translation(p.e1, p.e2, p.e3);
+    R = cga::Rotor3(cga::Rotor(cga::reverse(T)*V));
+}
+
+inline cga::Rotor3 slerp(const Rotor3 &a, const Rotor3 &b, double u)
+{
+    // Find angle subtended
+    cga::Rotor3 delta = b*cga::reverse(a);
+    double half_angle = std::acos(delta.s);
+    return (a*std::sin(half_angle*(1-u)) + b*std::sin(half_angle*u))/std::sin(half_angle);
 }
 
 } // namespace cga

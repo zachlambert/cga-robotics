@@ -112,13 +112,15 @@ bool Serial::Impl::update_pose()
     return true;
 }
 
-void pose_dif(const Eigen::Isometry3d &current, const Eigen::Isometry3d &goal, Eigen::Matrix<double, 6, 1> &difference)
+Eigen::Matrix<double, 6, 1> pose_dif(const Eigen::Isometry3d &current, const Eigen::Isometry3d &goal)
 {
+    Eigen::Matrix<double, 6, 1> difference;
     difference.block<3,1>(3,0) = goal.translation() - current.translation();
     auto delta_rotation = goal.rotation() * current.rotation().transpose();
     double delta_theta = std::acos(0.5*(
         delta_rotation(0,0) + delta_rotation(1,1) + delta_rotation(2,2) - 1
     ));
+    Eigen::Quaterniond q = rotation_to_quaternion(delta_rotation);
     if (std::fabs(delta_theta) > 1e-6) {
         Eigen::Vector3d axis = (0.5/std::sin(delta_theta))*Eigen::Vector3d(
             delta_rotation(2,1) - delta_rotation(1,2),
@@ -130,6 +132,7 @@ void pose_dif(const Eigen::Isometry3d &current, const Eigen::Isometry3d &goal, E
     } else {
         difference.block<3,1>(0,0) = Eigen::Vector3d(0, 0, 0);
     }
+    return difference;
 }
 
 bool pose_dif_is_zero(const Eigen::Matrix<double, 6, 1> &dif)
@@ -163,7 +166,7 @@ bool Serial::Impl::update_joint_positions()
     while (i < max_iter) {
         // Update pose with current joints and find pose difference
         update_pose();
-        pose_dif(ee_transform, goal_transform, dif);
+        dif = pose_dif(ee_transform, goal_transform);
 
         // Stop if pose_dif after updating joint positions is close to zero
         if (pose_dif_is_zero(dif)) break;
@@ -252,8 +255,7 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
         goal.orientation.w, goal.orientation.x, goal.orientation.y, goal.orientation.z);
     auto goal_transform = Eigen::Translation3d(goal_x)*goal_q;
 
-    Eigen::Matrix<double, 6, 1> start_dif;
-    pose_dif(ee_transform, goal_transform, start_dif);
+    Eigen::Matrix<double, 6, 1> start_dif = pose_dif(ee_transform, goal_transform);
     double time_r = ceil(start_dif.block<3,1>(0,0).norm() / constraints.max_angular_speed);
     double time_p = ceil(start_dif.block<3,1>(3,0).norm() / constraints.max_linear_speed);
     double time = time_r > time_p ? time_r : time_p;
