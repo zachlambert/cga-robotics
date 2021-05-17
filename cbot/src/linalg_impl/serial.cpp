@@ -117,6 +117,16 @@ bool Serial::Impl::update_pose()
 Eigen::Matrix<double, 6, 1> get_twist_coordinates(const Eigen::Isometry3d &T)
 {
     Eigen::Matrix<double, 6, 1> twist;
+    Eigen::MatrixXd approx = T.matrix();
+    Eigen::MatrixXd identity(6,6);
+    approx -= identity;
+    twist(0) = -approx(2,1);
+    twist(1) = approx(2,0);
+    twist(2) = -approx(1,0);
+    twist.block<3,1>(3,0) = approx.block<3,1>(0,3);
+    return twist;
+    // For more accurate twist. Don't think it's necessary for IK though.
+    // The above uses a first order approximation of ln(T)
     twist.setZero();
     double theta = std::acos(0.5*(T(0,0) + T(1,1) + T(2,2)-1));
     if (std::fabs(theta)>1e-6) {
