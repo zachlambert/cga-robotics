@@ -37,7 +37,8 @@ struct Serial::Impl {
     Eigen::Isometry3d ee_transform;
     std::vector<Eigen::Isometry3d> transforms;
     std::vector<Eigen::Matrix<double, 6, 6>> velocity_transforms;
-    Eigen::Matrix<double, 6, Eigen::Dynamic> jacobian;
+    Eigen::Matrix<double, 6, Eigen::Dynamic> J;
+    Eigen::Matrix<double, 6, Eigen::Dynamic> J_star;
     bool transforms_valid;
     bool jacobian_valid;
 
@@ -59,7 +60,8 @@ Serial::Impl::Impl(const Dimensions &dim, const JointNames &joint_names):
     transforms_valid = false;
     jacobian_valid = false;
 
-    jacobian = Eigen::Matrix<double, 6, Eigen::Dynamic>(6, joint_names.size());
+    J = Eigen::Matrix<double, 6, Eigen::Dynamic>(6, joint_names.size());
+    J_star = Eigen::Matrix<double, 6, Eigen::Dynamic>(6, joint_names.size());
 }
 
 // ========= Required functions ==========
@@ -112,35 +114,40 @@ bool Serial::Impl::update_pose()
     return true;
 }
 
-Eigen::Matrix<double, 6, 1> pose_dif(const Eigen::Isometry3d &current, const Eigen::Isometry3d &goal)
+Eigen::Matrix<double, 6, 1> get_twist_coordinates(const Eigen::Isometry3d &T)
 {
-    Eigen::Matrix<double, 6, 1> difference;
-    difference.block<3,1>(3,0) = goal.translation() - current.translation();
-    auto delta_rotation = goal.rotation() * current.rotation().transpose();
-    double delta_theta = std::acos(0.5*(
-        delta_rotation(0,0) + delta_rotation(1,1) + delta_rotation(2,2) - 1
-    ));
-    Eigen::Quaterniond q = rotation_to_quaternion(delta_rotation);
-    if (std::fabs(delta_theta) > 1e-6) {
-        Eigen::Vector3d axis = (0.5/std::sin(delta_theta))*Eigen::Vector3d(
-            delta_rotation(2,1) - delta_rotation(1,2),
-            delta_rotation(0,2) - delta_rotation(2,0),
-            delta_rotation(1,0) - delta_rotation(0,1)
+    Eigen::Matrix<double, 6, 1> twist;
+    twist.setZero();
+    double theta = std::acos(0.5*(T(0,0) + T(1,1) + T(2,2)-1));
+    if (std::fabs(theta)>1e-6) {
+        Eigen::Vector3d axis;
+        axis(0) = T(2,1) - T(1,2);
+        axis(1) = T(0,2) - T(2,0);
+        axis(2) = T(1,0) - T(0,1);
+        axis /= (2*std::sin(theta));
+        Eigen::Vector3d p = T.translation();
+        Eigen::Vector3d v_pll_theta = (p.dot(axis))*axis;
+        Eigen::Vector3d p_perp = p - v_pll_theta;
+        Eigen::Vector3d v_perp = 0.5*(
+            (std::sin(theta)/(1-std::cos(theta)))*p_perp
+            - axis.cross(p_perp)
         );
-        axis = axis.normalized();
-        difference.block<3,1>(0,0) = delta_theta * axis;
+        twist.block<3,1>(0,0) = axis*theta;
+        twist.block<3,1>(3,0) = v_pll_theta + v_perp*theta;
+        std::cout << "Perp: " << v_perp*theta << std::endl;
+        std::cout << "Pll: " << v_pll_theta << std::endl;
     } else {
-        difference.block<3,1>(0,0) = Eigen::Vector3d(0, 0, 0);
+        twist.block<3,1>(3,0) = T.translation();
     }
-    return difference;
+    return twist;
 }
 
-bool pose_dif_is_zero(const Eigen::Matrix<double, 6, 1> &dif)
+bool twist_is_zero(const Eigen::Matrix<double, 6, 1> &twist_vec)
 {
-    // |Position dif| < 1e-3
-    if (dif.block<3,1>(3,0).norm() > 1e-3) return false;
+    // |delta pos| < 1e-3
+    if (twist_vec.block<3,1>(3,0).norm() > 1e-3) return false;
     // |delta theta| < 1e-2
-    if (dif.block<3,1>(0,0).norm() > 1e-3) return false;
+    if (twist_vec.block<3,1>(0,0).norm() > 1e-3) return false;
     return true;
 }
 
@@ -156,7 +163,7 @@ bool Serial::Impl::update_joint_positions()
     auto goal_transform = ee_transform;
 
     // Parameterise pose difference
-    Eigen::Matrix<double, 6, 1> dif;
+    Eigen::Matrix<double, 6, 1> twist;
 
     Eigen::VectorXd delta_q(joint_names.size());
     Eigen::JacobiSVD<Eigen::Matrix<double, 6, Eigen::Dynamic>> j_svd;
@@ -166,16 +173,17 @@ bool Serial::Impl::update_joint_positions()
     while (i < max_iter) {
         // Update pose with current joints and find pose difference
         update_pose();
-        dif = pose_dif(ee_transform, goal_transform);
+        twist = get_twist_coordinates(ee_transform.inverse()*goal_transform);
+        std::cout << i << " => " << twist.block<3,1>(0,0).norm() << ", " << twist.block<3,1>(3,0).norm() << std::endl;
 
         // Stop if pose_dif after updating joint positions is close to zero
-        if (pose_dif_is_zero(dif)) break;
+        if (twist_is_zero(twist)) break;
 
         // Update jacobian, and find jacobian pseudoinverse
         update_jacobian();
-        j_svd.compute(jacobian, Eigen::ComputeFullU | Eigen::ComputeFullV);
+        j_svd.compute(J, Eigen::ComputeFullU | Eigen::ComputeFullV);
 
-        delta_q = j_svd.solve(dif);
+        delta_q = j_svd.solve(twist);
         for (std::size_t j = 0; j < joint_names.size(); j++) {
             joints[joint_names[j]].position += delta_q(j);
         }
@@ -204,7 +212,7 @@ bool Serial::Impl::update_twist()
     for (std::size_t i = 0; i < joint_names.size(); i++) {
         theta_vel[i] = joints.at(joint_names[i]).velocity;
     }
-    Eigen::Matrix<double, 6, 1> vel = jacobian * theta_vel;
+    Eigen::Matrix<double, 6, 1> vel = J_star * theta_vel;
 
     twist.angular.x = vel[0];
     twist.angular.y = vel[1];
@@ -227,7 +235,7 @@ bool Serial::Impl::update_joint_velocities()
            twist.linear.x, twist.linear.y, twist.linear.z;
 
     Eigen::Matrix<double, Eigen::Dynamic, 6> jacobian_inv =
-        jacobian.completeOrthogonalDecomposition().pseudoInverse();
+        J_star.completeOrthogonalDecomposition().pseudoInverse();
     Eigen::VectorXd theta_vel = jacobian_inv * vel;
 
     for (std::size_t i = 0; i < joint_names.size(); i++) {
@@ -242,6 +250,7 @@ bool Serial::Impl::update_joint_velocities()
 
 bool Serial::Impl::calculate_trajectory(const Pose &goal)
 {
+    /*
     if (!transforms_valid) update_pose();
     Eigen::Vector3d start_x = ee_transform.translation();
     Eigen::Quaterniond start_q = rotation_to_quaternion(
@@ -285,6 +294,7 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
             trajectory.points[i].positions[j] = joints.at(joint_names[j]).position;
         }
     }
+    */
     return true;
 }
 
@@ -308,20 +318,20 @@ void Serial::Impl::update_jacobian()
     for (std::size_t i = 0; i < joint_names.size(); i++) {
         Eigen::Vector3d pos = transforms[i].translation();
         Eigen::Matrix3d rotation = transforms[i].rotation();
-        velocity_transforms[i].block<3,3>(0,0) = rotation;
-        velocity_transforms[i].block<3,3>(3,3) = rotation;
+        velocity_transforms[i].block<3,3>(0,0) = rotation.transpose();
+        velocity_transforms[i].block<3,3>(3,3) = rotation.transpose();
         Eigen::Matrix3d skew_matrix;
         skew_matrix << 0, -pos.z(), pos.y(),
                        pos.z(), 0, -pos.x(),
                        -pos.y(), pos.x(), 0;
-        velocity_transforms[i].block<3,3>(3,0) = skew_matrix * rotation;
+        velocity_transforms[i].block<3,3>(3,0) = -rotation.transpose()*skew_matrix;
     }
 
     for (std::size_t i = 0; i < joint_names.size(); i++) {
         if (dim.dh_parameters[i].fixed_alpha) {
-            jacobian.block<6,1>(0,i) << 0, 0, 1, 0, 0, 0;
+            J.block<6,1>(0,i) << 0, 0, 1, 0, 0, 0;
         } else {
-            jacobian.block<6,1>(0,i) <<
+            J.block<6,1>(0,i) <<
                 std::cos(dim.dh_parameters[i].theta),
                 -std::sin(dim.dh_parameters[i].theta),
                 0,
@@ -329,23 +339,12 @@ void Serial::Impl::update_jacobian()
                 -dim.dh_parameters[i].d*std::cos(dim.dh_parameters[i].theta),
                 0;
         }
-        for (int j = i; j >= 0; j--) {
-            jacobian.block<6,1>(0,i) = velocity_transforms[j]*jacobian.block<6,1>(0,i);
+        for (int j = i+1; j < joint_names.size(); j++) {
+            J.block<6,1>(0,i) = velocity_transforms[j]*J.block<6,1>(0,i);
         }
+        J_star.block<3,1>(0,i) = ee_transform.rotation()*J.block<3,1>(0,i);
+        J_star.block<3,1>(3,i) = ee_transform.rotation()*J.block<3,1>(3,i);
     }
-
-    Eigen::Vector3d pos = ee_transform.translation();
-    Eigen::Matrix<double, 6, 6> adjustment;
-    Eigen::Matrix3d skew_matrix;
-    skew_matrix << 0, -pos.z(), pos.y(),
-                   pos.z(), 0, -pos.x(),
-                   -pos.y(), pos.x(), 0;
-    adjustment.block<3,3>(0,0).setIdentity();
-    adjustment.block<3,3>(0,3).setZero();
-    adjustment.block<3,3>(3,3).setIdentity();
-    adjustment.block<3,3>(3,0) = -skew_matrix;
-
-    jacobian = adjustment * jacobian;
 
     jacobian_valid = true;
 }

@@ -10,13 +10,13 @@ int main()
     dim.dh_parameters.push_back(
         cbot::Serial::DHParameter(0, 0, -M_PI/2, -M_PI/2));
     dim.dh_parameters.push_back(
-        cbot::Serial::DHParameter(0.1, 0, 0));
+        cbot::Serial::DHParameter(0.2, 0, 0));
     dim.dh_parameters.push_back(
-        cbot::Serial::DHParameter(0.05, 0, 0, 0, false));
+        cbot::Serial::DHParameter(0.1, 0, 0, 0, false));
     dim.dh_parameters.push_back(
-        cbot::Serial::DHParameter(0.05, 0, 0));
+        cbot::Serial::DHParameter(0.02, 0, 0));
     dim.dh_parameters.push_back(
-        cbot::Serial::DHParameter(0.03, 0, 0, 0, false));
+        cbot::Serial::DHParameter(0.01, 0, 0, 0, false));
 
     cbot::Serial::JointNames joint_names;
     joint_names.push_back("theta_1");
@@ -33,12 +33,22 @@ int main()
     serial.set_joint_position(joints[0], 0);
     serial.set_joint_position(joints[1], 0);
     serial.set_joint_position(joints[2], 0);
+    serial.set_joint_position(joints[3], 0);
+    serial.set_joint_position(joints[4], 0);
+    serial.set_joint_position(joints[5], 0);
 
     std::cout << "Forward kinematics for pose" << std::endl;
     if (serial.update_pose()) {
         std::cout << serial.get_pose() << std::endl;
     } else {
         std::cerr << "Failed to update pose." << std::endl;
+    }
+
+    serial.set_joint_velocity(joints[5], 1);
+    if (serial.update_twist()) {
+        std::cout << serial.get_twist() << std::endl;
+    } else {
+        std::cerr << "Failed to update twist" << std::endl;
     }
 
     std::cout << "Inverse kinematics for pose" << std::endl;
@@ -74,6 +84,8 @@ int main()
     } else {
         std::cerr << "Failed to update joint positions" << std::endl;
     }
+
+    return 0;
 
     cbot::TrajectoryConstraints constraints;
     constraints.max_linear_speed = 0.1;
