@@ -72,6 +72,7 @@ struct JointTrajectory {
 struct TrajectoryConstraints {
     double max_linear_speed;
     double max_angular_speed;
+    double max_joint_speed;
 };
 
 std::ostream& operator<<(std::ostream& outs, const Pose &pose);

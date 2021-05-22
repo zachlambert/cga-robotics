@@ -58,7 +58,7 @@ int main()
     goal.position.y = 0.1;
     goal.position.z = -0.3;
     cbot::TrajectoryConstraints constraints;
-    constraints.max_linear_speed = 0.1;
+    constraints.max_joint_speed = 2;
     delta.set_trajectory_constraints(constraints);
     delta.calculate_trajectory(goal);
 

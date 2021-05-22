@@ -88,8 +88,7 @@ int main()
     return 0;
 
     cbot::TrajectoryConstraints constraints;
-    constraints.max_linear_speed = 0.1;
-    constraints.max_angular_speed = 0.5;
+    constraints.max_joint_speed = 2;
     serial.set_trajectory_constraints(constraints);
 
     cbot::Pose goal_pose = pose;

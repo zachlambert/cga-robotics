@@ -44,6 +44,7 @@ struct Serial::Impl {
 
     // Implementation specific function
     void update_jacobian();
+    Eigen::VectorXd penalty_function();
 };
 
 
@@ -118,7 +119,7 @@ Eigen::Matrix<double, 6, 1> get_twist_coordinates(const Eigen::Isometry3d &T)
 {
     Eigen::Matrix<double, 6, 1> twist;
     Eigen::MatrixXd approx = T.matrix();
-    Eigen::MatrixXd identity(6,6);
+    Eigen::MatrixXd identity(4,4);
     approx -= identity;
     twist(0) = -approx(2,1);
     twist(1) = approx(2,0);
@@ -127,6 +128,7 @@ Eigen::Matrix<double, 6, 1> get_twist_coordinates(const Eigen::Isometry3d &T)
     return twist;
     // For more accurate twist. Don't think it's necessary for IK though.
     // The above uses a first order approximation of ln(T)
+    /*
     twist.setZero();
     double theta = std::acos(0.5*(T(0,0) + T(1,1) + T(2,2)-1));
     if (std::fabs(theta)>1e-6) {
@@ -150,13 +152,14 @@ Eigen::Matrix<double, 6, 1> get_twist_coordinates(const Eigen::Isometry3d &T)
         twist.block<3,1>(3,0) = T.translation();
     }
     return twist;
+    */
 }
 
 bool twist_is_zero(const Eigen::Matrix<double, 6, 1> &twist_vec)
 {
-    // |delta pos| < 1e-3
-    if (twist_vec.block<3,1>(3,0).norm() > 1e-3) return false;
-    // |delta theta| < 1e-2
+    // |delta pos| < 1e-6
+    if (twist_vec.block<3,1>(3,0).norm() > 1e-6) return false;
+    // |delta theta| < 1e-3
     if (twist_vec.block<3,1>(0,0).norm() > 1e-3) return false;
     return true;
 }
@@ -168,8 +171,28 @@ void get_euler_angles(const Eigen::Matrix3d &R, double &yaw, double &pitch, doub
     roll = std::atan2(R(2,1), R(2,2));
 }
 
+Eigen::VectorXd Serial::Impl::penalty_function()
+{
+    Eigen::VectorXd delta_q(joint_names.size());
+    delta_q.setZero();
+
+    double lim = M_PI/2;
+    int i = 4;
+
+    double pos = joints[joint_names[i]].position;
+    if (pos > lim) {
+        delta_q(i) -= std::pow(pos-lim, 2);
+    } else if (pos < -lim) {
+        delta_q(i) += std::pow(pos+lim, 2);
+    }
+
+    return delta_q;
+}
+
 bool Serial::Impl::update_joint_positions()
 {
+    cbot::Joints initial_joints = joints;
+
     auto goal_transform = ee_transform;
 
     // Parameterise pose difference
@@ -177,35 +200,46 @@ bool Serial::Impl::update_joint_positions()
 
     Eigen::VectorXd delta_q(joint_names.size());
     Eigen::JacobiSVD<Eigen::Matrix<double, 6, Eigen::Dynamic>> j_svd;
+    j_svd.setThreshold(0);
 
-    int max_iter = 100;
+    Eigen::DiagonalMatrix<double, Eigen::Dynamic> W1(joint_names.size());
+    W1.diagonal() << 1, 1, 1, 1, 1, 1;
+    W1 = 1*W1;
+
+    Eigen::DiagonalMatrix<double, Eigen::Dynamic> W2(joint_names.size());
+    W2.diagonal() << 1, 1, 1, 1, 1, 1;
+    W2 = 4*W2;
+
+    int max_iter = 1e3;
     int i = 0;
     while (i < max_iter) {
         // Update pose with current joints and find pose difference
         update_pose();
         twist = get_twist_coordinates(ee_transform.inverse()*goal_transform);
-        std::cout << i << " => " << twist.block<3,1>(0,0).norm() << ", " << twist.block<3,1>(3,0).norm() << std::endl;
 
+        Eigen::VectorXd penalty = penalty_function();
         // Stop if pose_dif after updating joint positions is close to zero
         if (twist_is_zero(twist)) break;
 
         // Update jacobian, and find jacobian pseudoinverse
         update_jacobian();
         j_svd.compute(J, Eigen::ComputeFullU | Eigen::ComputeFullV);
-
         delta_q = j_svd.solve(twist);
+
+        delta_q = W1*delta_q + W2*penalty;
+
         for (std::size_t j = 0; j < joint_names.size(); j++) {
-            joints[joint_names[j]].position += delta_q(j);
+            double pos = joints[joint_names[j]].position;
+            pos += delta_q(j);
+            while (pos < -M_PI) pos += 2*M_PI;
+            while (pos > M_PI) pos -= 2*M_PI;
+            joints[joint_names[j]].position = pos;
         }
         i++;
     }
-    for (std::size_t j = 0; j < joint_names.size(); j++) {
-        double pos = joints[joint_names[j]].position;
-        while (pos < -M_PI) pos += 2*M_PI;
-        while (pos > M_PI) pos -= 2*M_PI;
-        joints[joint_names[j]].position = pos;
-    }
     if (i >= max_iter) {
+        std::cout << "INVERSE KINEMATICS FAILED" << std::endl;
+        joints = initial_joints;
         return false;
     } else {
         return true;
@@ -240,16 +274,17 @@ bool Serial::Impl::update_joint_velocities()
         update_jacobian();
     }
 
-    Eigen::VectorXd vel(6);
-    vel << twist.angular.x, twist.angular.y, twist.angular.z,
+    Eigen::VectorXd twist_vec(6);
+    twist_vec << twist.angular.x, twist.angular.y, twist.angular.z,
            twist.linear.x, twist.linear.y, twist.linear.z;
 
-    Eigen::Matrix<double, Eigen::Dynamic, 6> jacobian_inv =
-        J_star.completeOrthogonalDecomposition().pseudoInverse();
-    Eigen::VectorXd theta_vel = jacobian_inv * vel;
+    Eigen::JacobiSVD<Eigen::Matrix<double, 6, Eigen::Dynamic>> j_svd;
+    j_svd.setThreshold(1e-3);
+    j_svd.compute(J_star, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    Eigen::VectorXd q_dot = j_svd.solve(twist_vec);
 
     for (std::size_t i = 0; i < joint_names.size(); i++) {
-        joints[joint_names[i]].velocity = theta_vel(i);
+        joints[joint_names[i]].velocity = q_dot(i);
     }
 
     return true;
@@ -260,51 +295,84 @@ bool Serial::Impl::update_joint_velocities()
 
 bool Serial::Impl::calculate_trajectory(const Pose &goal)
 {
-    /*
     if (!transforms_valid) update_pose();
-    Eigen::Vector3d start_x = ee_transform.translation();
-    Eigen::Quaterniond start_q = rotation_to_quaternion(
-        ee_transform.rotation());
 
-    constexpr double delta_t = 1e-2;
+    constexpr std::size_t N = 50;
 
-    Eigen::Vector3d goal_x(
-        goal.position.x, goal.position.y, goal.position.z);
-    Eigen::Quaterniond goal_q(
-        goal.orientation.w, goal.orientation.x, goal.orientation.y, goal.orientation.z);
-    auto goal_transform = Eigen::Translation3d(goal_x)*goal_q;
+    Eigen::Vector3d p0 = ee_transform.translation();
+    Eigen::Quaterniond q0(ee_transform.rotation());
 
-    Eigen::Matrix<double, 6, 1> start_dif = pose_dif(ee_transform, goal_transform);
-    double time_r = ceil(start_dif.block<3,1>(0,0).norm() / constraints.max_angular_speed);
-    double time_p = ceil(start_dif.block<3,1>(3,0).norm() / constraints.max_linear_speed);
-    double time = time_r > time_p ? time_r : time_p;
+    Eigen::Vector3d p1(
+        goal.position.x,
+        goal.position.y,
+        goal.position.z);
+    Eigen::Quaterniond q1(
+        goal.orientation.w,
+        goal.orientation.x,
+        goal.orientation.y,
+        goal.orientation.z);
 
-    std::size_t N = ceil(time / delta_t);
+    Eigen::Vector3d delta_p = p1 - p0;
 
-    Eigen::Vector3d x;
-    Eigen::Quaterniond q;
+    // Get angle and axis for computing angular velocity
+    Eigen::Quaterniond delta_q = q0.conjugate()*q1;
+    Eigen::AngleAxisd delta_R_aa(delta_q.toRotationMatrix());
+    Eigen::Vector3d axis = delta_R_aa.axis();
+    double delta_theta = delta_R_aa.angle(); Eigen::Vector3d p; Eigen::Quaterniond q;
 
     trajectory.points.resize(N);
     trajectory.names = joint_names;
+    double tau, u;
+    Eigen::Vector3d v, omega, q_dot;
+
+    double max_joint_speed = 0;
+    double T1 = 1.5*delta_p.norm() / constraints.max_linear_speed;
+    double T2 = 1.5*delta_R_aa.angle() / constraints.max_angular_speed;
+    double T = (T1 > T2 ? T1 : T2);
+
+    if (T < 1e-6) return false; // Start and end pose close together
+
     for (std::size_t i = 0; i < N; i++) {
-        // u = normalised time
-        double u = ((double)i) / N;
-        trajectory.points[i].time = u * time;
+        tau = ((double)i)/(N-1);
+        u = 3*std::pow(tau, 2) - 2*std::pow(tau, 3);
+        p = p0 + u*delta_p;
+        q = q0.slerp(u, q1);
+        ee_transform = Eigen::Translation3d(p)*q;
+
+        // IK
+        if (!update_joint_positions()) return false;
+
+        v = (6/T)*tau*(1-tau)*delta_p;
+        omega = (6/T)*tau*(1-tau)*axis*delta_theta;
+        twist.linear.x = v(0);
+        twist.linear.y = v(1);
+        twist.linear.z = v(2);
+        twist.angular.x = omega(0);
+        twist.angular.y = omega(1);
+        twist.angular.z = omega(2);
+        update_joint_velocities();
+
+        // Copy joints into trajectory and find max joint velocity
         trajectory.points[i].positions.resize(joint_names.size());
-
-        x = start_x + u * (goal_x - start_x);
-        q = start_q.slerp(u, goal_q);
-        ee_transform = Eigen::Translation3d(x)*q;
-        if (!update_joint_positions()) {
-            std::cerr << "Trajectory failed" << std::endl;
-            return false;
-        }
-
         for (std::size_t j = 0; j < joint_names.size(); j++) {
             trajectory.points[i].positions[j] = joints.at(joint_names[j]).position;
+            double joint_speed = std::abs(joints.at(joint_names[j]).velocity);
+
+            if (joint_speed > max_joint_speed) {
+                max_joint_speed = joint_speed;
+            }
         }
     }
-    */
+
+    if (max_joint_speed > constraints.max_joint_speed) {
+        T = max_joint_speed / constraints.max_joint_speed;
+    }
+    for (std::size_t i = 0; i < N; i++) {
+        trajectory.points[i].time = T*((double)i)/(N-1);
+    }
+    std::cout << "TIME = " << T << std::endl;
+    if (T > 2) return false;
+
     return true;
 }
 
@@ -314,8 +382,10 @@ bool Serial::Impl::is_valid(constraint_t constraint)
 {
     if (constraint != nullptr && !constraint(joints)) return false;
 
-    // if (!jacobian_valid) update_jacobian();
-    // if (std::fabs(jacobian.determinant()) < 0.015) return false;
+    if (!jacobian_valid) update_jacobian();
+    Eigen::JacobiSVD<Eigen::Matrix<double, 6, Eigen::Dynamic>> j_svd;
+    j_svd.compute(J, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    if (j_svd.singularValues().minCoeff() < 0.1) return false;
 
     return true;
 }
@@ -352,7 +422,7 @@ void Serial::Impl::update_jacobian()
         for (int j = i+1; j < joint_names.size(); j++) {
             J.block<6,1>(0,i) = velocity_transforms[j]*J.block<6,1>(0,i);
         }
-        J_star.block<3,1>(0,i) = ee_transform.rotation()*J.block<3,1>(0,i);
+        J_star.block<3,1>(0,i) = J.block<3,1>(0,i);
         J_star.block<3,1>(3,i) = ee_transform.rotation()*J.block<3,1>(3,i);
     }
 
