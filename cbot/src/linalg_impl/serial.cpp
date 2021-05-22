@@ -44,7 +44,6 @@ struct Serial::Impl {
 
     // Implementation specific function
     void update_jacobian();
-    Eigen::VectorXd penalty_function();
 };
 
 
@@ -117,15 +116,30 @@ bool Serial::Impl::update_pose()
 
 Eigen::Matrix<double, 6, 1> get_twist_coordinates(const Eigen::Isometry3d &T)
 {
-    Eigen::Matrix<double, 6, 1> twist;
     Eigen::MatrixXd approx = T.matrix();
     Eigen::MatrixXd identity(4,4);
     approx -= identity;
-    twist(0) = -approx(2,1);
-    twist(1) = approx(2,0);
-    twist(2) = -approx(1,0);
+
+    Eigen::Matrix<double, 6, 1> twist;
+    twist.setZero();
+
+    Eigen::Vector3d axis;
+    axis(0) = -approx(1,2);
+    axis(1) = approx(0,2);
+    axis(2) = -approx(0,1);
+    double angle = axis.norm();
+    if (angle > 0.1) 
+        std::cout << "Angle = " << angle << std::endl;
+    if (angle != 0) {
+        axis /= angle;
+        while (angle > M_PI) angle -= 2*M_PI;
+        while (angle < -M_PI) angle += 2*M_PI;
+        twist.block<3,1>(0,0) = axis*angle;
+    }
+
     twist.block<3,1>(3,0) = approx.block<3,1>(0,3);
     return twist;
+
     // For more accurate twist. Don't think it's necessary for IK though.
     // The above uses a first order approximation of ln(T)
     /*
@@ -171,24 +185,6 @@ void get_euler_angles(const Eigen::Matrix3d &R, double &yaw, double &pitch, doub
     roll = std::atan2(R(2,1), R(2,2));
 }
 
-Eigen::VectorXd Serial::Impl::penalty_function()
-{
-    Eigen::VectorXd delta_q(joint_names.size());
-    delta_q.setZero();
-
-    double lim = M_PI/2;
-    int i = 4;
-
-    double pos = joints[joint_names[i]].position;
-    if (pos > lim) {
-        delta_q(i) -= std::pow(pos-lim, 2);
-    } else if (pos < -lim) {
-        delta_q(i) += std::pow(pos+lim, 2);
-    }
-
-    return delta_q;
-}
-
 bool Serial::Impl::update_joint_positions()
 {
     cbot::Joints initial_joints = joints;
@@ -200,15 +196,7 @@ bool Serial::Impl::update_joint_positions()
 
     Eigen::VectorXd delta_q(joint_names.size());
     Eigen::JacobiSVD<Eigen::Matrix<double, 6, Eigen::Dynamic>> j_svd;
-    j_svd.setThreshold(0);
-
-    Eigen::DiagonalMatrix<double, Eigen::Dynamic> W1(joint_names.size());
-    W1.diagonal() << 1, 1, 1, 1, 1, 1;
-    W1 = 1*W1;
-
-    Eigen::DiagonalMatrix<double, Eigen::Dynamic> W2(joint_names.size());
-    W2.diagonal() << 1, 1, 1, 1, 1, 1;
-    W2 = 4*W2;
+    // j_svd.setThreshold(1e-2);
 
     int max_iter = 1e3;
     int i = 0;
@@ -216,8 +204,8 @@ bool Serial::Impl::update_joint_positions()
         // Update pose with current joints and find pose difference
         update_pose();
         twist = get_twist_coordinates(ee_transform.inverse()*goal_transform);
+        // std::cout << "Iter " << i << " : " << twist.norm() << std::endl;
 
-        Eigen::VectorXd penalty = penalty_function();
         // Stop if pose_dif after updating joint positions is close to zero
         if (twist_is_zero(twist)) break;
 
@@ -225,8 +213,7 @@ bool Serial::Impl::update_joint_positions()
         update_jacobian();
         j_svd.compute(J, Eigen::ComputeFullU | Eigen::ComputeFullV);
         delta_q = j_svd.solve(twist);
-
-        delta_q = W1*delta_q + W2*penalty;
+        // delta_q = 0.1 * J.transpose() * twist;
 
         for (std::size_t j = 0; j < joint_names.size(); j++) {
             double pos = joints[joint_names[j]].position;
@@ -242,6 +229,8 @@ bool Serial::Impl::update_joint_positions()
         joints = initial_joints;
         return false;
     } else {
+        std::cout << "ITER = " << i << std::endl;
+        std::cout << "q4 = " << joints[joint_names[4]].position << std::endl;
         return true;
     }
 }
@@ -332,14 +321,17 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
 
     if (T < 1e-6) return false; // Start and end pose close together
 
+    std::cout << "Initial q4 = " << joints[joint_names[4]].position << std::endl;
+
     for (std::size_t i = 0; i < N; i++) {
-        tau = ((double)i)/(N-1);
+        tau = ((double)(i+1))/N;
         u = 3*std::pow(tau, 2) - 2*std::pow(tau, 3);
         p = p0 + u*delta_p;
         q = q0.slerp(u, q1);
         ee_transform = Eigen::Translation3d(p)*q;
 
         // IK
+        std::cout << "TRAJ: " << i << std::endl;
         if (!update_joint_positions()) return false;
 
         v = (6/T)*tau*(1-tau)*delta_p;
