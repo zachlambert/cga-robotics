@@ -70,9 +70,15 @@ Eigen::Quaterniond rotation_to_quaternion(const Eigen::Matrix3d &R)
 {
     Eigen::Quaterniond result;
     result.w() = 0.5*std::sqrt(1 + R(0,0) + R(1,1) + R(2,2));
-    result.x() = 0.25*(R(2,1)-R(1,2))/result.w();
-    result.y() = 0.25*(R(0,2)-R(2,0))/result.w();
-    result.z() = 0.25*(R(1,0)-R(0,1))/result.w();
+    if (result.w() != 0) {
+        result.x() = 0.25*(R(2,1)-R(1,2))/result.w();
+        result.y() = 0.25*(R(0,2)-R(2,0))/result.w();
+        result.z() = 0.25*(R(1,0)-R(0,1))/result.w();
+    } else {
+        result.x() = 1; // Arbitrary axis
+        result.y() = 0;
+        result.z() = 0;
+    }
     return result;
 }
 
@@ -101,6 +107,7 @@ bool Serial::Impl::update_pose()
     Eigen::Vector3d pos = ee_transform.translation();
     Eigen::Quaterniond orient = rotation_to_quaternion(ee_transform.rotation());
 
+
     pose.position.x = pos.x();
     pose.position.y = pos.y();
     pose.position.z = pos.z();
@@ -118,63 +125,26 @@ Eigen::Matrix<double, 6, 1> get_twist_coordinates(const Eigen::Isometry3d &T)
 {
     Eigen::MatrixXd approx = T.matrix();
     Eigen::MatrixXd identity(4,4);
+    identity.setIdentity();
     approx -= identity;
 
     Eigen::Matrix<double, 6, 1> twist;
     twist.setZero();
 
     Eigen::Vector3d axis;
-    axis(0) = -approx(1,2);
-    axis(1) = approx(0,2);
-    axis(2) = -approx(0,1);
-    double angle = axis.norm();
-    if (angle > 0.1) 
-        std::cout << "Angle = " << angle << std::endl;
-    if (angle != 0) {
-        axis /= angle;
-        while (angle > M_PI) angle -= 2*M_PI;
-        while (angle < -M_PI) angle += 2*M_PI;
-        twist.block<3,1>(0,0) = axis*angle;
-    }
-
+    twist(0) = -approx(1,2);
+    twist(1) = approx(0,2);
+    twist(2) = -approx(0,1);
     twist.block<3,1>(3,0) = approx.block<3,1>(0,3);
     return twist;
-
-    // For more accurate twist. Don't think it's necessary for IK though.
-    // The above uses a first order approximation of ln(T)
-    /*
-    twist.setZero();
-    double theta = std::acos(0.5*(T(0,0) + T(1,1) + T(2,2)-1));
-    if (std::fabs(theta)>1e-6) {
-        Eigen::Vector3d axis;
-        axis(0) = T(2,1) - T(1,2);
-        axis(1) = T(0,2) - T(2,0);
-        axis(2) = T(1,0) - T(0,1);
-        axis /= (2*std::sin(theta));
-        Eigen::Vector3d p = T.translation();
-        Eigen::Vector3d v_pll_theta = (p.dot(axis))*axis;
-        Eigen::Vector3d p_perp = p - v_pll_theta;
-        Eigen::Vector3d v_perp = 0.5*(
-            (std::sin(theta)/(1-std::cos(theta)))*p_perp
-            - axis.cross(p_perp)
-        );
-        twist.block<3,1>(0,0) = axis*theta;
-        twist.block<3,1>(3,0) = v_pll_theta + v_perp*theta;
-        std::cout << "Perp: " << v_perp*theta << std::endl;
-        std::cout << "Pll: " << v_pll_theta << std::endl;
-    } else {
-        twist.block<3,1>(3,0) = T.translation();
-    }
-    return twist;
-    */
 }
 
 bool twist_is_zero(const Eigen::Matrix<double, 6, 1> &twist_vec)
 {
     // |delta pos| < 1e-6
     if (twist_vec.block<3,1>(3,0).norm() > 1e-6) return false;
-    // |delta theta| < 1e-3
-    if (twist_vec.block<3,1>(0,0).norm() > 1e-3) return false;
+    // |delta theta| < 1e-6
+    if (twist_vec.block<3,1>(0,0).norm() > 1e-6) return false;
     return true;
 }
 
@@ -196,15 +166,14 @@ bool Serial::Impl::update_joint_positions()
 
     Eigen::VectorXd delta_q(joint_names.size());
     Eigen::JacobiSVD<Eigen::Matrix<double, 6, Eigen::Dynamic>> j_svd;
-    // j_svd.setThreshold(1e-2);
+    j_svd.setThreshold(1e-3);
 
-    int max_iter = 1e3;
+    int max_iter = 1e4;
     int i = 0;
     while (i < max_iter) {
         // Update pose with current joints and find pose difference
         update_pose();
         twist = get_twist_coordinates(ee_transform.inverse()*goal_transform);
-        // std::cout << "Iter " << i << " : " << twist.norm() << std::endl;
 
         // Stop if pose_dif after updating joint positions is close to zero
         if (twist_is_zero(twist)) break;
@@ -213,7 +182,6 @@ bool Serial::Impl::update_joint_positions()
         update_jacobian();
         j_svd.compute(J, Eigen::ComputeFullU | Eigen::ComputeFullV);
         delta_q = j_svd.solve(twist);
-        // delta_q = 0.1 * J.transpose() * twist;
 
         for (std::size_t j = 0; j < joint_names.size(); j++) {
             double pos = joints[joint_names[j]].position;
@@ -225,12 +193,10 @@ bool Serial::Impl::update_joint_positions()
         i++;
     }
     if (i >= max_iter) {
-        std::cout << "INVERSE KINEMATICS FAILED" << std::endl;
+        std::cerr << "INVERSE KINEMATICS FAILED" << std::endl;
         joints = initial_joints;
         return false;
     } else {
-        std::cout << "ITER = " << i << std::endl;
-        std::cout << "q4 = " << joints[joint_names[4]].position << std::endl;
         return true;
     }
 }
@@ -286,8 +252,6 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
 {
     if (!transforms_valid) update_pose();
 
-    constexpr std::size_t N = 50;
-
     Eigen::Vector3d p0 = ee_transform.translation();
     Eigen::Quaterniond q0(ee_transform.rotation());
 
@@ -309,7 +273,6 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
     Eigen::Vector3d axis = delta_R_aa.axis();
     double delta_theta = delta_R_aa.angle(); Eigen::Vector3d p; Eigen::Quaterniond q;
 
-    trajectory.points.resize(N);
     trajectory.names = joint_names;
     double tau, u;
     Eigen::Vector3d v, omega, q_dot;
@@ -319,9 +282,12 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
     double T2 = 1.5*delta_R_aa.angle() / constraints.max_angular_speed;
     double T = (T1 > T2 ? T1 : T2);
 
+
     if (T < 1e-6) return false; // Start and end pose close together
 
-    std::cout << "Initial q4 = " << joints[joint_names[4]].position << std::endl;
+    static constexpr double delta_t = 1e-2;
+    std::size_t N = T / delta_t;
+    trajectory.points.resize(N);
 
     for (std::size_t i = 0; i < N; i++) {
         tau = ((double)(i+1))/N;
@@ -331,7 +297,6 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
         ee_transform = Eigen::Translation3d(p)*q;
 
         // IK
-        std::cout << "TRAJ: " << i << std::endl;
         if (!update_joint_positions()) return false;
 
         v = (6/T)*tau*(1-tau)*delta_p;
@@ -362,9 +327,6 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
     for (std::size_t i = 0; i < N; i++) {
         trajectory.points[i].time = T*((double)i)/(N-1);
     }
-    std::cout << "TIME = " << T << std::endl;
-    if (T > 2) return false;
-
     return true;
 }
 
