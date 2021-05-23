@@ -270,10 +270,8 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
     double T2 = 1.5*delta_R_aa.angle() / constraints.max_angular_speed;
     double T = (T1 > T2 ? T1 : T2);
 
-    if (T < 1e-6) return false; // Start and end pose close together
-
     static constexpr double delta_t = 1e-2;
-    std::size_t N = T / delta_t;
+    std::size_t N = (T / delta_t) + 1;
     trajectory.points.resize(N);
 
     Eigen::Vector3d p;
@@ -314,7 +312,7 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
         T = max_joint_speed / constraints.max_joint_speed;
     }
     for (std::size_t i = 0; i < N; i++) {
-        trajectory.points[i].time = T*((double)i)/(N-1);
+        trajectory.points[i].time = T*((double)(i+1))/N;
     }
     return true;
 }

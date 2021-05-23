@@ -142,9 +142,6 @@ bool Serial::Impl::update_joint_positions()
     int max_iter = 1e3;
     int i = 0;
     while (i < max_iter) {
-        std::cout << "Iter " << i << std::endl;
-        std::cout << "W: " << twist.block<3,1>(0,0).norm() << std::endl;
-        std::cout << "V: " << twist.block<3,1>(3,0).norm() << std::endl;
         // Update pose with current joints and find pose difference
         update_pose();
         twist = get_twist_coordinates(cga::reverse(ee_transform)*goal_transform);
@@ -258,7 +255,8 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
     double T = (T1 > T2 ? T1 : T2);
 
     static constexpr double delta_t = 1e-2;
-    std::size_t N = T / delta_t;
+    std::size_t N = (T / delta_t) + 1;
+    std::cout << "N = " << N << std::endl;
     trajectory.points.resize(N);
 
     cga::Vector3 p;
@@ -284,7 +282,9 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
         update_joint_velocities();
 
         // Copy joints into trajectory and find max joint velocity
+        std::cout << "A" << std::endl;
         trajectory.points[i].positions.resize(joint_names.size());
+        std::cout << "B" << std::endl;
         for (std::size_t j = 0; j < joint_names.size(); j++) {
             trajectory.points[i].positions[j] = joints.at(joint_names[j]).position;
             double joint_speed = std::abs(joints.at(joint_names[j]).velocity);
@@ -299,8 +299,9 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
         T = max_joint_speed / constraints.max_joint_speed;
     }
     for (std::size_t i = 0; i < N; i++) {
-        trajectory.points[i].time = T*((double)i)/(N-1);
+        trajectory.points[i].time = T*((double)(i+1))/N;
     }
+    std::cout << "RETURNING" << std::endl;
     return true;
 }
 
