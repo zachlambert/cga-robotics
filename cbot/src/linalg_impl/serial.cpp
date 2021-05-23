@@ -129,9 +129,6 @@ Eigen::Matrix<double, 6, 1> get_twist_coordinates(const Eigen::Isometry3d &T)
     approx -= identity;
 
     Eigen::Matrix<double, 6, 1> twist;
-    twist.setZero();
-
-    Eigen::Vector3d axis;
     twist(0) = -approx(1,2);
     twist(1) = approx(0,2);
     twist(2) = -approx(0,1);
@@ -148,27 +145,18 @@ bool twist_is_zero(const Eigen::Matrix<double, 6, 1> &twist_vec)
     return true;
 }
 
-void get_euler_angles(const Eigen::Matrix3d &R, double &yaw, double &pitch, double &roll)
-{
-    pitch = std::atan2(-R(2,0), std::hypot(R(0,0), R(1,0)));
-    yaw = std::atan2(R(1,0), R(0,0));
-    roll = std::atan2(R(2,1), R(2,2));
-}
-
 bool Serial::Impl::update_joint_positions()
 {
     cbot::Joints initial_joints = joints;
 
     auto goal_transform = ee_transform;
-
-    // Parameterise pose difference
     Eigen::Matrix<double, 6, 1> twist;
 
     Eigen::VectorXd delta_q(joint_names.size());
     Eigen::JacobiSVD<Eigen::Matrix<double, 6, Eigen::Dynamic>> j_svd;
     j_svd.setThreshold(1e-3);
 
-    int max_iter = 1e4;
+    int max_iter = 1e3;
     int i = 0;
     while (i < max_iter) {
         // Update pose with current joints and find pose difference
@@ -266,22 +254,21 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
         goal.orientation.z);
 
     Eigen::Vector3d delta_p = p1 - p0;
+    Eigen::Quaterniond delta_q = q0.conjugate()*q1;
 
     // Get angle and axis for computing angular velocity
-    Eigen::Quaterniond delta_q = q0.conjugate()*q1;
     Eigen::AngleAxisd delta_R_aa(delta_q.toRotationMatrix());
     Eigen::Vector3d axis = delta_R_aa.axis();
-    double delta_theta = delta_R_aa.angle(); Eigen::Vector3d p; Eigen::Quaterniond q;
+    double delta_theta = delta_R_aa.angle();
 
     trajectory.names = joint_names;
     double tau, u;
-    Eigen::Vector3d v, omega, q_dot;
+    Eigen::Vector3d v, omega;
 
     double max_joint_speed = 0;
     double T1 = 1.5*delta_p.norm() / constraints.max_linear_speed;
     double T2 = 1.5*delta_R_aa.angle() / constraints.max_angular_speed;
     double T = (T1 > T2 ? T1 : T2);
-
 
     if (T < 1e-6) return false; // Start and end pose close together
 
@@ -289,6 +276,8 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
     std::size_t N = T / delta_t;
     trajectory.points.resize(N);
 
+    Eigen::Vector3d p;
+    Eigen::Quaterniond q;
     for (std::size_t i = 0; i < N; i++) {
         tau = ((double)(i+1))/N;
         u = 3*std::pow(tau, 2) - 2*std::pow(tau, 3);
