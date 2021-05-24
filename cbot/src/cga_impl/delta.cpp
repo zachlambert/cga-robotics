@@ -62,6 +62,8 @@ Delta::Impl::Impl(const Dimensions &dim, const JointNames &joint_names):
         joints.emplace(joint_names.beta[i], Joint(true));
         joints.emplace(joint_names.gamma[i], Joint(true));
     }
+    joints.emplace(joint_names.theta_4, Joint());
+
     for (int i = 0; i < 3; i++) {
         u[i].e1 = std::cos(i*M_PI*2/3);
         u[i].e2 = std::sin(i*M_PI*2/3);
@@ -73,10 +75,8 @@ Delta::Impl::Impl(const Dimensions &dim, const JointNames &joint_names):
     jacobian_valid = false;
 
     // Set pose orientation to a constant value
-    pose.orientation.w = 1/std::sqrt(2);
-    pose.orientation.y = 1/std::sqrt(2);
+    pose.orientation.w = 1;
 
-    // Angular velocity always zero
     twist.angular.x = 0;
     twist.angular.y = 0;
     twist.angular.z = 0;
@@ -107,7 +107,11 @@ bool Delta::Impl::update_pose()
     // Read end effector position from y
     pose.position.x = x.e1;
     pose.position.y = x.e2;
-    pose.position.z = x.e3;
+    pose.position.z = x.e3 - dim.gripper_offset;
+
+    double orientation = joints.at(joint_names.theta_4).position;
+    pose.orientation.w = std::cos(orientation/2);
+    pose.orientation.z = std::sin(orientation/2);
 
     return true;
 }
@@ -133,6 +137,13 @@ bool Delta::Impl::update_joint_positions()
         upper_disp = d[i] - f;
         joints.at(joint_names.theta[i]).position = std::asin(-upper_disp.e3/dim.l_upper);
     }
+
+    if (pose.orientation.z > 0) {
+        joints.at(joint_names.theta_4).position = 2*std::acos(pose.orientation.w);
+    } else {
+        joints.at(joint_names.theta_4).position = 2*M_PI - 2*std::acos(pose.orientation.w);
+    }
+
     return true;
 }
 
@@ -151,6 +162,8 @@ bool Delta::Impl::update_twist()
     twist.linear.y = vel[1];
     twist.linear.z = vel[2];
 
+    twist.angular.z = joints.at(joint_names.theta_4).velocity;
+
     return true;
 }
 
@@ -166,6 +179,8 @@ bool Delta::Impl::update_joint_velocities()
     for (int i = 0; i < 3; i++) {
         joints[joint_names.theta[i]].velocity = theta_vel(i);
     }
+
+    joints.at(joint_names.theta_4).velocity = twist.angular.z;
 
     return true;
 }

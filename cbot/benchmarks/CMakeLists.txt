@@ -8,4 +8,5 @@ endfunction()
 
 add_benchmark(delta_fk)
 add_benchmark(delta_ik)
-# add_example(serial)
+add_benchmark(serial_fk)
+add_benchmark(serial_ik)

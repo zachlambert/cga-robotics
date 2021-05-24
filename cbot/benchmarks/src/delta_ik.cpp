@@ -9,7 +9,7 @@ void set_random_position(cbot::Delta &delta)
     static std::default_random_engine generator;
     static std::uniform_real_distribution<double> distribution(0, 1);
     static auto sample = std::bind(distribution, generator);
-    
+
     cbot::Pose pose;
     pose.position.x = -0.2 + 0.4*sample();
     pose.position.y = -0.2 + 0.4*sample();

@@ -181,7 +181,6 @@ bool Serial::Impl::update_joint_positions()
         i++;
     }
     if (i >= max_iter) {
-        std::cerr << "INVERSE KINEMATICS FAILED" << std::endl;
         joints = initial_joints;
         return false;
     } else {

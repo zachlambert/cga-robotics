@@ -13,12 +13,14 @@ public:
     struct Dimensions {
         double r_base, r_ee; // Base and end effector radius
         double l_upper, l_lower; // Upper and lower length
+        double gripper_offset;
     };
     struct JointNames {
         std::vector<std::string> theta;
         std::vector<std::string> alpha;
         std::vector<std::string> beta;
         std::vector<std::string> gamma;
+        std::string theta_4; // For orientation of gripper
     };
 
     Delta(const Dimensions &dim, const JointNames &joint_names);
