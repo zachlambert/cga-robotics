@@ -1,5 +1,23 @@
 #include "cbot/delta.h"
 #include <iostream>
+#include <chrono>
+#include <random>
+#include <functional>
+
+void set_random_joint_positions(cbot::Delta &delta)
+{
+    static std::default_random_engine generator;
+    static std::uniform_real_distribution<double> distribution(0, 1);
+    static auto sample = std::bind(distribution, generator);
+    
+    double theta[3];
+    for (int i = 0; i < 3; i++) {
+        theta[i] = (-10.0 + sample()*90)*(M_PI/180);
+    }
+    delta.set_joint_position("theta_1", theta[0]);
+    delta.set_joint_position("theta_2", theta[1]);
+    delta.set_joint_position("theta_3", theta[2]);
+}
 
 int main()
 {
@@ -24,6 +42,26 @@ int main()
     joint_names.gamma.push_back("gamma_3");
 
     cbot::Delta delta(dim, joint_names);
+
+    typedef std::chrono::high_resolution_clock clock_t;
+    typedef std::chrono::duration<double, std::ratio<1>> second_t;
+    second_t elapsed;
+    std::chrono::time_point<clock_t> start;
+
+    constexpr std::size_t N = 1e5;
+    std::size_t i = 0;
+    while (i < N) {
+        set_random_joint_positions(delta);
+        start = clock_t::now();
+        bool success = delta.update_pose();
+        elapsed = (clock_t::now() - start);
+        if (success) {
+            std::cout << elapsed.count()*1e6 << std::endl; // To us
+            i++;
+        }
+    }
+
+    return 0;
 
     auto independent_joints = delta.get_independent_joint_names();
 
