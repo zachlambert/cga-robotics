@@ -221,30 +221,73 @@ bool Delta::Impl::calculate_trajectory(const Pose &goal)
         update_pose();
     }
 
-    constexpr double delta_t = 1.0/20;
+    cga::Vector3 p0 = x;
+    cga::Vector3 p1(goal.position.x, goal.position.y, goal.position.z);
 
-    cga::Vector3 start_x = x;
-    cga::Vector3 goal_x(goal.position.x, goal.position.y, goal.position.z);
-    double time = ceil(cga::norm(goal_x - start_x) / constraints.max_linear_speed);
+    double theta0;
+    if (pose.orientation.z > 0) {
+        theta0 = 2*std::acos(pose.orientation.w);
+    } else {
+        theta0 = 2*M_PI - 2*std::acos(pose.orientation.w);
+    }
+    double theta1;
+    if (goal.orientation.z > 0) {
+        theta1 = 2*std::acos(goal.orientation.w);
+    } else {
+        theta1 = 2*M_PI - 2*std::acos(goal.orientation.w);
+    }
 
-    std::size_t N = ceil(time / delta_t);
+    cga::Vector3 delta_p = p1 - p0;
+    double delta_theta = theta1 - theta0;
+    if (delta_theta > M_PI) delta_theta -= 2*M_PI;
+    if (delta_theta < M_PI) delta_theta += 2*M_PI;
 
-    trajectory.points.resize(N);
     trajectory.names = joint_names.theta;
+    trajectory.names.push_back(joint_names.theta_4);
+    double tau, u;
+    cga::Vector3 v;
+    double omega;
+
+    double max_joint_speed = 0;
+    double T1 = 1.5*cga::norm(delta_p) / constraints.max_linear_speed;
+    double T2 = 1.5*delta_theta / constraints.max_angular_speed;
+    double T = (T1 > T2 ? T1 : T2);
+
+    static constexpr double delta_t = 1e-2;
+    std::size_t N = (T / delta_t) + 1;
+    std::cout << "N = " << N << std::endl;
+    trajectory.points.resize(N);
+
+    cga::Vector3 p;
+    double theta;
     for (std::size_t i = 0; i < N; i++) {
-        // u = normalised time
-        double u = ((double)i) / N;
-        trajectory.points[i].time = u * time;
-        trajectory.points[i].positions.resize(joint_names.theta.size());
+        tau = ((double)(i+1))/N;
+        u = 3*std::pow(tau, 2) - 2*std::pow(tau, 3);
+        p = p0 + u*delta_p;
+        theta = theta0 + u*delta_theta;
 
-        // For now just fit a linear trajectory
-        x = start_x + u * (goal_x - start_x);
-        if (!update_joint_positions()) {
-            return false;
-        }
+        // IK
+        if (!update_joint_positions()) return false;
 
-        for (std::size_t j = 0; j < joint_names.theta.size(); j++) {
-            trajectory.points[i].positions[j] = joints.at(joint_names.theta[j]).position;
+        v = (6/T)*tau*(1-tau)*delta_p;
+        omega = (6/T)*tau*(1-tau)*delta_theta;
+        twist.linear.x = v.e1;
+        twist.linear.y = v.e2;
+        twist.linear.z = v.e3;
+        twist.angular.x = 0;
+        twist.angular.y = 0;
+        twist.angular.z = omega;
+        update_joint_velocities();
+
+        // Copy joints into trajectory and find max joint velocity
+        trajectory.points[i].positions.resize(4);
+        for (std::size_t j = 0; j < 4; j++) {
+            Joint &joint = joints.at(trajectory.names[j]);
+            trajectory.points[i].positions[j] = joint.position;
+            double joint_speed = std::abs(joint.velocity);
+            if (joint_speed > max_joint_speed) {
+                max_joint_speed = joint_speed;
+            }
         }
     }
     return true;

@@ -255,7 +255,6 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
 
     static constexpr double delta_t = 1e-2;
     std::size_t N = (T / delta_t) + 1;
-    std::cout << "N = " << N << std::endl;
     trajectory.points.resize(N);
 
     cga::Vector3 p;
@@ -281,9 +280,7 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
         update_joint_velocities();
 
         // Copy joints into trajectory and find max joint velocity
-        std::cout << "A" << std::endl;
         trajectory.points[i].positions.resize(joint_names.size());
-        std::cout << "B" << std::endl;
         for (std::size_t j = 0; j < joint_names.size(); j++) {
             trajectory.points[i].positions[j] = joints.at(joint_names[j]).position;
             double joint_speed = std::abs(joints.at(joint_names[j]).velocity);
@@ -300,7 +297,6 @@ bool Serial::Impl::calculate_trajectory(const Pose &goal)
     for (std::size_t i = 0; i < N; i++) {
         trajectory.points[i].time = T*((double)(i+1))/N;
     }
-    std::cout << "RETURNING" << std::endl;
     return true;
 }
 
