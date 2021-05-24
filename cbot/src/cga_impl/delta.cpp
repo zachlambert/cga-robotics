@@ -41,6 +41,7 @@ struct Delta::Impl {
 
     // Implementation specific state and validity flags
     cga::Vector3 x;
+    double orientation;
     cga::Vector3 d[3];
     Eigen::Matrix3d jx, jtheta;
     bool x_valid;
@@ -109,7 +110,7 @@ bool Delta::Impl::update_pose()
     pose.position.y = x.e2;
     pose.position.z = x.e3 - dim.gripper_offset;
 
-    double orientation = joints.at(joint_names.theta_4).position;
+    orientation = joints.at(joint_names.theta_4).position;
     pose.orientation.w = std::cos(orientation/2);
     pose.orientation.z = std::sin(orientation/2);
 
@@ -126,7 +127,7 @@ bool Delta::Impl::update_joint_positions()
         f = u[i]*(dim.r_base - dim.r_ee);
         F = outer(
             // Intersect plane of upper link with ..
-            dual(outer(f, cga::e3)),
+            cga::dual(cga::outer(u[i], cga::e3)),
             // .. sphere about joint, of radius = upper length
             cga::make_sphere(f, dim.l_upper)
         );
@@ -138,12 +139,7 @@ bool Delta::Impl::update_joint_positions()
         joints.at(joint_names.theta[i]).position = std::asin(-upper_disp.e3/dim.l_upper);
     }
 
-    if (pose.orientation.z > 0) {
-        joints.at(joint_names.theta_4).position = 2*std::acos(pose.orientation.w);
-    } else {
-        joints.at(joint_names.theta_4).position = 2*M_PI - 2*std::acos(pose.orientation.w);
-    }
-
+    joints.at(joint_names.theta_4).position = orientation;
     return true;
 }
 
@@ -221,26 +217,21 @@ bool Delta::Impl::calculate_trajectory(const Pose &goal)
         update_pose();
     }
 
-    cga::Vector3 p0 = x;
-    cga::Vector3 p1(goal.position.x, goal.position.y, goal.position.z);
+    cga::Vector3 x0 = x;
+    cga::Vector3 x1(goal.position.x, goal.position.y, goal.position.z+dim.gripper_offset);
 
-    double theta0;
-    if (pose.orientation.z > 0) {
-        theta0 = 2*std::acos(pose.orientation.w);
-    } else {
-        theta0 = 2*M_PI - 2*std::acos(pose.orientation.w);
-    }
-    double theta1;
+    double R0 = orientation;
+    double R1;
     if (goal.orientation.z > 0) {
-        theta1 = 2*std::acos(goal.orientation.w);
+        R1 = 2*std::acos(goal.orientation.w);
     } else {
-        theta1 = 2*M_PI - 2*std::acos(goal.orientation.w);
+        R1 = 2*M_PI - 2*std::acos(goal.orientation.w);
     }
 
-    cga::Vector3 delta_p = p1 - p0;
-    double delta_theta = theta1 - theta0;
-    if (delta_theta > M_PI) delta_theta -= 2*M_PI;
-    if (delta_theta < M_PI) delta_theta += 2*M_PI;
+    cga::Vector3 delta_x = x1 - x0;
+    double delta_R = R1 - R0;
+    if (delta_R > M_PI) delta_R -= 2*M_PI;
+    if (delta_R < -M_PI) delta_R += 2*M_PI;
 
     trajectory.names = joint_names.theta;
     trajectory.names.push_back(joint_names.theta_4);
@@ -249,28 +240,25 @@ bool Delta::Impl::calculate_trajectory(const Pose &goal)
     double omega;
 
     double max_joint_speed = 0;
-    double T1 = 1.5*cga::norm(delta_p) / constraints.max_linear_speed;
-    double T2 = 1.5*delta_theta / constraints.max_angular_speed;
+    double T1 = 1.5*cga::norm(delta_x) / constraints.max_linear_speed;
+    double T2 = 1.5*delta_R / constraints.max_angular_speed;
     double T = (T1 > T2 ? T1 : T2);
 
     static constexpr double delta_t = 1e-2;
     std::size_t N = (T / delta_t) + 1;
-    std::cout << "N = " << N << std::endl;
     trajectory.points.resize(N);
 
-    cga::Vector3 p;
-    double theta;
     for (std::size_t i = 0; i < N; i++) {
         tau = ((double)(i+1))/N;
         u = 3*std::pow(tau, 2) - 2*std::pow(tau, 3);
-        p = p0 + u*delta_p;
-        theta = theta0 + u*delta_theta;
+        x = x0 + u*delta_x;
+        orientation = R0 + u*delta_R;
 
         // IK
         if (!update_joint_positions()) return false;
 
-        v = (6/T)*tau*(1-tau)*delta_p;
-        omega = (6/T)*tau*(1-tau)*delta_theta;
+        v = (6/T)*tau*(1-tau)*delta_x;
+        omega = (6/T)*tau*(1-tau)*delta_R;
         twist.linear.x = v.e1;
         twist.linear.y = v.e2;
         twist.linear.z = v.e3;
@@ -289,6 +277,13 @@ bool Delta::Impl::calculate_trajectory(const Pose &goal)
                 max_joint_speed = joint_speed;
             }
         }
+    }
+
+    if (max_joint_speed > constraints.max_joint_speed) {
+        T = max_joint_speed / constraints.max_joint_speed;
+    }
+    for (std::size_t i = 0; i < N; i++) {
+        trajectory.points[i].time = T*((double)(i+1))/N;
     }
     return true;
 }
@@ -354,7 +349,12 @@ void Delta::set_pose(const Pose &pose) {
     pimpl->pose = pose;
     pimpl->x.e1 = pose.position.x;
     pimpl->x.e2 = pose.position.y;
-    pimpl->x.e3 = pose.position.z;
+    pimpl->x.e3 = pose.position.z+pimpl->dim.gripper_offset;
+    if (pose.orientation.z > 0) {
+        pimpl->orientation = 2*std::acos(pose.orientation.w);
+    } else {
+        pimpl->orientation = 2*M_PI - 2*std::acos(pose.orientation.w);
+    }
     pimpl->x_valid = true;
     pimpl->di_valid = false;
     pimpl->jacobian_valid = false;
