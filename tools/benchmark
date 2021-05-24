@@ -5,7 +5,7 @@ if [ $# != 1 ]; then
     exit 1
 fi
 name=$1
-cd build/cbot/examples
+cd build/cbot/benchmarks
 if [ ! -e $name ]; then
     echo "File $name couldn't be found"
     exit 1

@@ -23,7 +23,7 @@ target_link_libraries(cbot
     PRIVATE cga Eigen3::Eigen
 )
 
-add_subdirectory(examples)
+add_subdirectory(benchmarks)
 
 install(TARGETS cbot EXPORT cbot-export DESTINATION lib)
 install(DIRECTORY include/cbot DESTINATION include/cbot)

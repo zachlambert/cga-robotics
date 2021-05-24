@@ -1,4 +1,4 @@
-function(add_example name)
+function(add_benchmark name)
     add_executable(${name}
         src/${name}.cpp
     )
@@ -6,5 +6,6 @@ function(add_example name)
     target_link_libraries(${name} cbot cga Eigen3::Eigen)
 endfunction()
 
-add_example(delta)
+add_benchmark(delta_fk)
+add_benchmark(delta_ik)
 # add_example(serial)
