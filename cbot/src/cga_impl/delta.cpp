@@ -77,10 +77,15 @@ Delta::Impl::Impl(const Dimensions &dim, const JointNames &joint_names):
 
     // Set pose orientation to a constant value
     pose.orientation.w = 1;
+    orientation = 0;
 
     twist.angular.x = 0;
     twist.angular.y = 0;
     twist.angular.z = 0;
+
+    constraints.max_linear_speed = 0.2;
+    constraints.max_angular_speed = 6;
+    constraints.max_joint_speed = 6;
 }
 
 // ========= Required functions ==========

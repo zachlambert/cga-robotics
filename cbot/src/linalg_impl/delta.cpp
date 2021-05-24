@@ -38,9 +38,10 @@ struct Delta::Impl {
 
     // Implementation specific state and validity flags
     Eigen::Vector3d x;
+    double orientation;
     Eigen::Vector3d d[3];
     Eigen::Matrix3d jx, jtheta;
-    bool pose_valid;
+    bool x_valid;
     bool di_valid;
     bool jacobian_valid;
 
@@ -59,6 +60,8 @@ Delta::Impl::Impl(const Dimensions &dim, const JointNames &joint_names):
         joints.emplace(joint_names.beta[i], Joint(true));
         joints.emplace(joint_names.gamma[i], Joint(true));
     }
+    joints.emplace(joint_names.theta_4, Joint());
+
     auto angle_axis= Eigen::AngleAxisd();
     angle_axis.axis() = Eigen::Vector3d(0, 0, 1);
     for (int i = 0; i < 3; i++) {
@@ -68,12 +71,12 @@ Delta::Impl::Impl(const Dimensions &dim, const JointNames &joint_names):
         v[i] = R[i].col(1);
     }
 
-    pose_valid = false;
+    x_valid = false;
     jacobian_valid = false;
 
     // Set pose orientation to a constant value
-    pose.orientation.w = 1/std::sqrt(2);
-    pose.orientation.y = 1/std::sqrt(2);
+    pose.orientation.w = 1;
+    orientation = 0;
 
     // Angular velocity always zero
     twist.angular.x = 0;
@@ -81,7 +84,8 @@ Delta::Impl::Impl(const Dimensions &dim, const JointNames &joint_names):
     twist.angular.z = 0;
 
     constraints.max_linear_speed = 0.2;
-    constraints.max_joint_speed = 1;
+    constraints.max_angular_speed = 6;
+    constraints.max_joint_speed = 6;
 }
 
 // ========= Required functions ==========
@@ -114,11 +118,15 @@ bool Delta::Impl::update_pose()
     double sin_alpha = std::sqrt(1 - SQ(cos_alpha));
 
     x = centre + r*u2*cos_alpha - r*u3*sin_alpha;
-    pose_valid = true;
+    x_valid = true;
 
     pose.position.x = x.x();
     pose.position.y = x.y();
-    pose.position.z = x.z();
+    pose.position.z = x.z() - dim.gripper_offset;
+
+    orientation = joints.at(joint_names.theta_4).position;
+    pose.orientation.w = std::cos(orientation/2);
+    pose.orientation.z = std::sin(orientation/2);
 
     return true;
 }
@@ -153,6 +161,7 @@ bool Delta::Impl::update_joint_positions()
         joints[joint_names.theta[i]].position =
             fabs(solution1) < fabs(solution2) ? solution1 : solution2;
     }
+    joints.at(joint_names.theta_4).position = orientation;
     return true;
 }
 
@@ -171,6 +180,8 @@ bool Delta::Impl::update_twist()
     twist.linear.y = vel[1];
     twist.linear.z = vel[2];
 
+    twist.angular.z = joints.at(joint_names.theta_4).velocity;
+
     return true;
 }
 
@@ -187,12 +198,14 @@ bool Delta::Impl::update_joint_velocities()
         joints[joint_names.theta[i]].velocity = theta_vel(i);
     }
 
+    joints.at(joint_names.theta_4).velocity = twist.angular.z;
+
     return true;
 }
 
 bool Delta::Impl::update_dependent_joints()
 {
-    if (!pose_valid) {
+    if (!x_valid) {
         update_pose();
     }
 
@@ -222,42 +235,66 @@ bool Delta::Impl::update_dependent_joints()
 
 bool Delta::Impl::calculate_trajectory(const Pose &goal)
 {
-    if (!pose_valid) update_pose();
-
-    constexpr std::size_t N = 50;
+    if (!x_valid) {
+        update_pose();
+    }
 
     Eigen::Vector3d x0 = x;
-    Eigen::Vector3d x1(goal.position.x, goal.position.y, goal.position.z);
-    Eigen::Vector3d delta_x = x1 - x0;
+    Eigen::Vector3d x1(goal.position.x, goal.position.y, goal.position.z+dim.gripper_offset);
 
-    trajectory.points.resize(N);
+    double R0 = orientation;
+    double R1;
+    if (goal.orientation.z > 0) {
+        R1 = 2*std::acos(goal.orientation.w);
+    } else {
+        R1 = 2*M_PI - 2*std::acos(goal.orientation.w);
+    }
+
+    Eigen::Vector3d delta_x = x1 - x0;
+    double delta_R = R1 - R0;
+    if (delta_R > M_PI) delta_R -= 2*M_PI;
+    if (delta_R < -M_PI) delta_R += 2*M_PI;
+
     trajectory.names = joint_names.theta;
+    trajectory.names.push_back(joint_names.theta_4);
     double tau, u;
-    Eigen::Vector3d v, q_dot;
+    Eigen::Vector3d v;
+    double omega;
 
     double max_joint_speed = 0;
-    double T = 1.5*delta_x.norm() / constraints.max_linear_speed;
+    double T1 = 1.5*delta_x.norm() / constraints.max_linear_speed;
+    double T2 = 1.5*delta_R / constraints.max_angular_speed;
+    double T = (T1 > T2 ? T1 : T2);
+
+    static constexpr double delta_t = 1e-2;
+    std::size_t N = (T / delta_t) + 1;
+    trajectory.points.resize(N);
 
     for (std::size_t i = 0; i < N; i++) {
-        tau = ((double)i)/(N-1);
+        tau = ((double)(i+1))/N;
         u = 3*std::pow(tau, 2) - 2*std::pow(tau, 3);
         x = x0 + u*delta_x;
+        orientation = R0 + u*delta_R;
 
         // IK
         if (!update_joint_positions()) return false;
 
         v = (6/T)*tau*(1-tau)*delta_x;
+        omega = (6/T)*tau*(1-tau)*delta_R;
         twist.linear.x = v(0);
         twist.linear.y = v(1);
         twist.linear.z = v(2);
+        twist.angular.x = 0;
+        twist.angular.y = 0;
+        twist.angular.z = omega;
         update_joint_velocities();
 
         // Copy joints into trajectory and find max joint velocity
-        trajectory.points[i].positions.resize(joint_names.theta.size());
-        for (std::size_t j = 0; j < joint_names.theta.size(); j++) {
-            trajectory.points[i].positions[j] = joints.at(joint_names.theta[j]).position;
-            double joint_speed = std::abs(joints.at(joint_names.theta[j]).velocity);
-
+        trajectory.points[i].positions.resize(4);
+        for (std::size_t j = 0; j < 4; j++) {
+            Joint &joint = joints.at(trajectory.names[j]);
+            trajectory.points[i].positions[j] = joint.position;
+            double joint_speed = std::abs(joint.velocity);
             if (joint_speed > max_joint_speed) {
                 max_joint_speed = joint_speed;
             }
@@ -268,9 +305,8 @@ bool Delta::Impl::calculate_trajectory(const Pose &goal)
         T = max_joint_speed / constraints.max_joint_speed;
     }
     for (std::size_t i = 0; i < N; i++) {
-        trajectory.points[i].time = ((double)i)/(T*(N-1));
+        trajectory.points[i].time = T*((double)(i+1))/N;
     }
-
     return true;
 }
 
@@ -292,7 +328,7 @@ bool Delta::Impl::is_valid(constraint_t constraint)
 
 void Delta::Impl::update_jacobian()
 {
-    if (!pose_valid) {
+    if (!x_valid) {
         update_pose();
     }
 
@@ -336,7 +372,7 @@ void Delta::set_pose(const Pose &pose) {
     pimpl->x.x() = pose.position.x;
     pimpl->x.y() = pose.position.y;
     pimpl->x.z() = pose.position.z;
-    pimpl->pose_valid = true;
+    pimpl->x_valid = true;
     pimpl->di_valid = false;
     pimpl->jacobian_valid = false;
 }
@@ -347,7 +383,7 @@ void Delta::set_joint_position(const std::string &name, double value) {
     if (pimpl->joints.find(name) != pimpl->joints.end() && !pimpl->joints[name].dependent) {
         pimpl->joints[name].position = value;
     }
-    pimpl->pose_valid = false;
+    pimpl->x_valid = false;
     pimpl->di_valid = false;
     pimpl->jacobian_valid = false;
 }
