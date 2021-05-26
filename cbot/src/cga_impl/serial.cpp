@@ -309,7 +309,7 @@ bool Serial::Impl::is_valid(constraint_t constraint)
     if (!jacobian_valid) update_jacobian();
     Eigen::JacobiSVD<Eigen::Matrix<double, 6, Eigen::Dynamic>> j_svd;
     j_svd.compute(J, Eigen::ComputeFullU | Eigen::ComputeFullV);
-    if (j_svd.singularValues().minCoeff() < 0.1) return false;
+    if (j_svd.singularValues().minCoeff() < 0.05) return false;
 
     return true;
 }
